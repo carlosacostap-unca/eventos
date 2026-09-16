@@ -20,6 +20,30 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## OpenSpec
+
+OpenSpec está instalado como dependencia de desarrollo y configurado para Codex.
+La configuración está en `openspec/config.yaml` y los skills en `.agents/skills/`.
+Los documentos nuevos se escriben en español.
+
+```bash
+npm run openspec -- --version
+npm run openspec -- list
+npm run openspec -- update
+```
+
+Reinicia Codex para cargar los skills. Para proponer un cambio, escribe:
+
+```text
+$openspec-propose "Descripción del cambio"
+```
+
+Después de revisar la propuesta, usa `$openspec-apply-change` para implementarla y
+`$openspec-archive-change` para archivarla. Los comandos `openspec` que aparecen en los
+skills se pueden ejecutar con `npm run openspec -- <comando>` o `npx openspec <comando>`.
+
+Documentación: [OpenSpec](https://openspec.dev/docs/setup).
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:
