@@ -1,0 +1,25 @@
+[mcp_servers.pocketbase_eventos]
+command = "node"
+args = ["node_modules/tsx/dist/cli.mjs", "mcp/pocketbase-server.ts"]
+cwd = "C:\\UNCA\\eventos"
+enabled = true
+required = false
+startup_timeout_sec = 20
+tool_timeout_sec = 60
+default_tools_approval_mode = "prompt"
+
+[mcp_servers.pocketbase_eventos.tools.pocketbase_health]
+approval_mode = "approve"
+
+[mcp_servers.pocketbase_eventos.tools.pocketbase_list_collections]
+approval_mode = "approve"
+
+[mcp_servers.pocketbase_eventos.tools.pocketbase_describe_collection]
+approval_mode = "approve"
+
+[mcp_servers.pocketbase_eventos.tools.pocketbase_list_records]
+approval_mode = "approve"
+output_token_limit = 12000
+
+[mcp_servers.pocketbase_eventos.tools.pocketbase_get_record]
+approval_mode = "approve"

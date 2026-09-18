@@ -1,60 +1,144 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Eventos UNCA
 
-## Getting Started
+Aplicación de gestión integral de eventos construida con Next.js 16 y PocketBase. Permite publicar eventos, recibir inscripciones, acreditar asistentes, registrar altas presenciales, emitir certificados PDF, encolar su envío por correo y consultar estadísticas.
 
-First, run the development server:
+Toda la lógica de negocio y el acceso a PocketBase viven en el servidor de Next.js. El navegador usa páginas y Server Actions de Next.js y nunca recibe credenciales de servicio ni usa el SDK de PocketBase.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## Requisitos
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- Node.js 22
+- npm
+- Una instancia reciente de PocketBase accesible desde el servidor de Next.js
+- Un servidor SMTP para el envío real de certificados
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Configuración local
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. Instalá dependencias:
+
+    npm install
+
+2. Copiá .env.example como .env.local y completá sus valores.
+3. Generá SESSION_SECRET e INTERNAL_JOBS_SECRET independientes, aleatorios y de al menos 32 caracteres.
+4. Para PocketBase solo se requieren POCKETBASE_URL, POCKETBASE_ADMIN_EMAIL y POCKETBASE_ADMIN_PASSWORD.
+
+El aprovisionador usa esas credenciales de superusuario para crear el esquema. También crea automáticamente una cuenta técnica derivada y limitada por las reglas de las colecciones; las operaciones normales de la aplicación usan esa cuenta limitada.
+
+## Aprovisionamiento de PocketBase
+
+El comando importa de forma no destructiva las colecciones, campos, reglas e índices. Luego crea o sincroniza la cuenta técnica y el administrador del panel con el email y la contraseña indicados:
+
+    npm run schema:apply
+
+Se puede ejecutar nuevamente después de un despliegue: usa identificadores estables, actualiza el esquema y no elimina datos ajenos al manifiesto. Para comprobar una instalación nueva, ejecutalo dos veces y confirmá que ambas corridas finalicen con “Esquema de PocketBase actualizado correctamente”.
+
+Colecciones creadas:
+
+- administradores
+- cuentas_servicio
+- eventos
+- inscripciones
+- auditoria
+- certificados
+- envios_certificados
+
+Los índices únicos impiden repetir el slug de un evento, el documento de una persona dentro del mismo evento, el número de cupo público y el certificado o trabajo de correo asociado.
+
+## Desarrollo y verificación
+
+    npm run dev
+    npm run lint
+    npm run typecheck
+    npm test
+    npm run build
+
+La aplicación queda disponible en http://localhost:3000. El acceso administrativo está en /iniciar-sesion.
+
+## Flujo operativo
+
+1. Iniciá sesión con POCKETBASE_ADMIN_EMAIL y POCKETBASE_ADMIN_PASSWORD.
+2. Creá un evento como borrador o con la inscripción deshabilitada.
+3. Revisá su página pública y, cuando corresponda, publicalo y habilitá la inscripción.
+4. Durante el evento, usá Acreditación para marcar asistentes o crear altas presenciales. Estas altas se acreditan de inmediato y pueden superar el cupo público.
+5. En Certificados, validá la vista previa, generá el lote y controlá la cola.
+6. En Reportes, filtrá participantes y exportá CSV.
+
+## Procesador de correo
+
+La generación de certificados crea trabajos persistentes pendientes. Un programador externo debe invocar periódicamente:
+
+    curl -X POST \
+      -H "Authorization: Bearer $INTERNAL_JOBS_SECRET" \
+      https://eventos.example.com/api/internal/certificados/procesar
+
+Una frecuencia de uno a cinco minutos es suficiente. Cada ejecución procesa hasta 20 trabajos. Los errores que se muestran en el panel se sanitizan y cada intento queda en el historial. Un envío fallido puede volver a encolarse desde la pantalla de certificados.
+
+## Despliegue en Dokploy
+
+Creá una aplicación desde este repositorio y elegí Nixpacks. El proyecto declara Node 22 en package.json.
+
+- Comando de build: npm run build
+- Comando de inicio: npm run start
+- Puerto: 3000
+- Health check sugerido: /
+- Réplicas iniciales: 1, para evitar procesadores de correo simultáneos
+
+Cargá en Dokploy las variables de .env.example. Para PocketBase son únicamente la URL, el email y la contraseña administrativa. La URL debe ser alcanzable desde el contenedor.
+
+Después de desplegar:
+
+1. Mantené los eventos como borrador o con inscripción deshabilitada.
+2. Ejecutá npm run schema:apply en un trabajo temporal con las credenciales de superusuario.
+3. Iniciá sesión y creá un evento de prueba.
+4. Registrá una persona, acreditala y agregá un alta presencial.
+5. Generá la vista previa y un certificado.
+6. Ejecutá manualmente el endpoint interno y confirmá la recepción del correo.
+7. Revisá estadísticas y el CSV.
+8. Recién entonces habilitá la inscripción pública.
+
+## Seguridad y rotación de secretos
+
+- SESSION_SECRET cifra la cookie HttpOnly, Secure en producción y SameSite=Lax. Rotarlo cierra todas las sesiones administrativas.
+- INTERNAL_JOBS_SECRET protege el procesador de correo. Rotá primero el valor en Dokploy y luego actualizá el programador.
+- Al cambiar la contraseña administrativa de PocketBase, actualizala en Dokploy y ejecutá nuevamente npm run schema:apply para sincronizar la cuenta técnica y el acceso al panel.
+- Usá TLS tanto para PocketBase como para la aplicación y SMTP.
+- No expongas variables POCKETBASE_*, SMTP_* o secretos con prefijo NEXT_PUBLIC_.
+- Las descargas, vistas previas y exportaciones administrativas vuelven a validar la sesión y deshabilitan caché.
+
+## Respaldo y recuperación
+
+Respaldá con regularidad el directorio pb_data de PocketBase y cualquier volumen asociado. Antes de una migración, hacé un respaldo consistente y probá la restauración en otra instancia.
+
+Para recuperar el servicio:
+
+1. Restaurá PocketBase y verificá sus colecciones.
+2. Configurá POCKETBASE_URL, POCKETBASE_ADMIN_EMAIL y POCKETBASE_ADMIN_PASSWORD en Next.js.
+3. Ejecutá npm run schema:apply para reconciliar el esquema sin borrar registros.
+4. Rotá SESSION_SECRET e INTERNAL_JOBS_SECRET si el incidente pudo exponerlos.
+5. Reanudá el procesador y reenviá solamente los trabajos fallidos desde el panel.
 
 ## OpenSpec
 
-OpenSpec está instalado como dependencia de desarrollo y configurado para Codex.
-La configuración está en `openspec/config.yaml` y los skills en `.agents/skills/`.
-Los documentos nuevos se escriben en español.
+OpenSpec está instalado como dependencia de desarrollo. La configuración está en openspec/config.yaml y los skills en .agents/skills. Los cambios se documentan en español dentro de openspec/changes.
 
-```bash
-npm run openspec -- --version
-npm run openspec -- list
-npm run openspec -- update
-```
 
-Reinicia Codex para cargar los skills. Para proponer un cambio, escribe:
 
-```text
-$openspec-propose "Descripción del cambio"
-```
+## MCP de PocketBase para Codex
 
-Después de revisar la propuesta, usa `$openspec-apply-change` para implementarla y
-`$openspec-archive-change` para archivarla. Los comandos `openspec` que aparecen en los
-skills se pueden ejecutar con `npm run openspec -- <comando>` o `npx openspec <comando>`.
+El proyecto incluye un servidor MCP local por `stdio` en `mcp/pocketbase-server.ts`. Lee `POCKETBASE_URL`, `POCKETBASE_ADMIN_EMAIL` y `POCKETBASE_ADMIN_PASSWORD` desde `.env.local`; las credenciales no se copian a la configuración de Codex ni se devuelven en las respuestas de las herramientas.
 
-Documentación: [OpenSpec](https://openspec.dev/docs/setup).
+La configuración de proyecto está en `.codex/config.toml`. Abrí una nueva sesión de Codex dentro de este proyecto para cargar el servidor `pocketbase_eventos`. Las consultas se ejecutan directamente y las herramientas que escriben requieren aprobación según la política configurada. La eliminación también exige el argumento `confirm=true`.
 
-## Learn More
+Herramientas disponibles:
 
-To learn more about Next.js, take a look at the following resources:
+- `pocketbase_health`
+- `pocketbase_list_collections`
+- `pocketbase_describe_collection`
+- `pocketbase_list_records`
+- `pocketbase_get_record`
+- `pocketbase_create_record`
+- `pocketbase_update_record`
+- `pocketbase_delete_record`
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+El MCP limita el acceso a las colecciones funcionales del proyecto y excluye `cuentas_servicio` y las colecciones internas de PocketBase. Para probar el protocolo, el arranque y la conectividad:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+    npm run mcp:check

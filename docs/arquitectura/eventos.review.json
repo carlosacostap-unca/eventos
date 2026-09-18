@@ -1,0 +1,13 @@
+{
+  "diagram_type": "architecture",
+  "output": "C:/UNCA/eventos/docs/arquitectura/eventos.html",
+  "specification_sha256": "3ebb24f2ad541a2b22c84fc31219b1f9c54d5bb35ec442fb38602c83b309f7d7",
+  "artifact_sha256": "64403bdb8e5d84457e405170bc7c93bd2e066fd64ee5121d42f6844d6fc8c6dd",
+  "validation": "9/9 showcase, 0 errors, 0 warnings",
+  "browser_evidence": "passed",
+  "visual_review": "passed",
+  "correction_rounds": 0,
+  "perceptual_review_scope": ["1440x900 light screenshot", "2048x1320 dark screenshot"],
+  "observations": "Main path and asynchronous email path are distinguishable. Labels, cards, boundaries and routes fit without overlaps. Both themes are legible; composition fills the desktop height.",
+  "limitations": "Perceptual review used static screenshots; search, focus and export interactions were not manually exercised. External services and live deployment were not tested."
+}

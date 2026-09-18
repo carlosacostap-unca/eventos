@@ -1,69 +1,117 @@
-import Image from "next/image";
+import Link from "next/link";
 
-export default function Home() {
+import { getRegistrationAvailability } from "@/lib/domain/events";
+import { listPublishedEvents } from "@/lib/services/events";
+import { countPublicRegistrations } from "@/lib/services/registrations";
+
+export const dynamic = "force-dynamic";
+
+function formatDate(value: string) {
+  return new Intl.DateTimeFormat("es-AR", {
+    dateStyle: "long",
+    timeStyle: "short",
+    timeZone: "America/Argentina/Buenos_Aires",
+  }).format(new Date(value));
+}
+
+const availabilityLabels = {
+  disponible: "Inscripción abierta",
+  cerrado: "Inscripción cerrada",
+  completo: "Cupo completo",
+  finalizado: "Evento finalizado",
+} as const;
+
+export default async function Home() {
+  const events = await listPublishedEvents();
+  const cards = await Promise.all(
+    events.map(async (event) => {
+      const count = await countPublicRegistrations(event.id);
+      return {
+        event,
+        availability: getRegistrationAvailability(event, count),
+      };
+    }),
+  );
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <main>
+      <section className="hero">
+        <div className="container hero-grid">
+          <div>
+            <span className="brand-mark">UNCA</span>
+            <p className="eyebrow">Universidad Nacional de Catamarca</p>
+            <h1>Encuentros que dejan huella.</h1>
+            <p className="hero-copy">
+              Descubrí jornadas, conferencias y actividades abiertas. Inscribite en
+              pocos pasos y recibí tu certificado después de participar.
+            </p>
+          </div>
+          <div className="hero-card" aria-hidden="true">
+            <span>Agenda</span>
+            <strong>{events.length}</strong>
+            <small>
+              {events.length === 1 ? "evento publicado" : "eventos publicados"}
+            </small>
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+      </section>
+
+      <section className="container section">
+        <div className="section-heading">
+          <div>
+            <p className="eyebrow">Próximas actividades</p>
+            <h2>Elegí tu próximo evento</h2>
+          </div>
+          <Link className="text-link" href="/iniciar-sesion">
+            Acceso administrativo
+          </Link>
         </div>
-      </main>
-    </div>
+
+        {cards.length === 0 ? (
+          <div className="empty-state">
+            <h3>No hay eventos publicados todavía</h3>
+            <p>Volvé pronto para conocer las próximas actividades.</p>
+          </div>
+        ) : (
+          <div className="event-grid">
+            {cards.map(({ event, availability }) => (
+              <article className="event-card" key={event.id}>
+                <div className="event-date">
+                  <span>{new Date(event.inicio).getDate()}</span>
+                  <small>
+                    {new Intl.DateTimeFormat("es-AR", { month: "short" })
+                      .format(new Date(event.inicio))
+                      .replace(".", "")}
+                  </small>
+                </div>
+                <div className="event-content">
+                  <span className={"badge badge-" + availability}>
+                    {availabilityLabels[availability]}
+                  </span>
+                  <h3>{event.titulo}</h3>
+                  <p>{event.descripcion}</p>
+                  <dl className="event-meta">
+                    <div>
+                      <dt>Cuándo</dt>
+                      <dd>{formatDate(event.inicio)}</dd>
+                    </div>
+                    <div>
+                      <dt>Dónde</dt>
+                      <dd>{event.lugar}</dd>
+                    </div>
+                  </dl>
+                  <Link
+                    className="button button-primary"
+                    href={"/eventos/" + event.slug}
+                  >
+                    Ver evento
+                  </Link>
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
+      </section>
+    </main>
   );
 }

@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "ok": true,
+  "command": "deliver",
+  "type": "architecture",
+  "input": "C:\\UNCA\\eventos\\docs\\arquitectura\\eventos.architecture.json",
+  "output": "C:\\UNCA\\eventos\\docs\\arquitectura\\eventos.html",
+  "specification": {
+    "sha256": "3ebb24f2ad541a2b22c84fc31219b1f9c54d5bb35ec442fb38602c83b309f7d7",
+    "bytes": 3255
+  },
+  "artifact": {
+    "sha256": "64403bdb8e5d84457e405170bc7c93bd2e066fd64ee5121d42f6844d6fc8c6dd",
+    "bytes": 809270
+  },
+  "validation": {
+    "checksPassed": 9,
+    "checkCount": 9,
+    "compositionProfile": "showcase",
+    "compositionStatus": "pass",
+    "errors": 0,
+    "warnings": 0
+  }
+}
