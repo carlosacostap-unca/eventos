@@ -26,7 +26,6 @@ export function RegistrationForm({
   return (
     <form ref={formRef} action={action} className="panel form-stack">
       <div>
-        <p className="eyebrow">Formulario de inscripción</p>
         <h2>Reservá tu lugar</h2>
       </div>
       <FormMessage message={state.message} success={state.ok} />
