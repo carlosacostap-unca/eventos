@@ -2,6 +2,8 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { getRegistrationAvailability } from "@/lib/domain/events";
+import { eventTypeName } from "@/lib/domain/event-types";
+import { listEventTypes } from "@/lib/services/event-types";
 import { listPublishedEvents } from "@/lib/services/events";
 import { countPublicRegistrations } from "@/lib/services/registrations";
 
@@ -23,7 +25,7 @@ const availabilityLabels = {
 } as const;
 
 export default async function Home() {
-  const events = await listPublishedEvents();
+  const [events, types] = await Promise.all([listPublishedEvents(), listEventTypes()]);
   const cards = await Promise.all(
     events.map(async (event) => {
       const count = await countPublicRegistrations(event.id);
@@ -71,6 +73,7 @@ export default async function Home() {
                   <span className={"badge badge-" + availability}>
                     {availabilityLabels[availability]}
                   </span>
+                  {event.tipo_evento && <p className="event-type-label">{eventTypeName(event.tipo_evento, types)}</p>}
                   <h2>{event.titulo}</h2>
                   <p>{event.descripcion}</p>
                   <dl className="event-meta">

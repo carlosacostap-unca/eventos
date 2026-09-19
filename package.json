@@ -12,6 +12,7 @@
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "schema:apply": "tsx scripts/setup-pocketbase.ts",
+    "schema:import": "tsx scripts/import-pocketbase-schema.ts",
     "mcp:pocketbase": "tsx mcp/pocketbase-server.ts",
     "mcp:check": "tsx scripts/check-pocketbase-mcp.ts"
   },

@@ -14,6 +14,7 @@ const requiredText = (label: string, min = 2, max = 160) =>
 export const eventInputSchema = z
   .object({
     titulo: requiredText("El título", 3, 160),
+    tipoEvento: z.string().trim().min(1, "Seleccioná un tipo de evento"),
     descripcion: requiredText("La descripción", 10, 5000),
     slug: z
       .string()
@@ -55,6 +56,13 @@ export function normalizeDocument(value: string): string {
 }
 
 export type EventInput = z.infer<typeof eventInputSchema>;
+export const eventTypeInputSchema = z.object({
+  nombre: requiredText("El nombre", 2, 80),
+  descripcion: z.string().trim().max(500, "La descripción es demasiado larga"),
+  activo: z.boolean(),
+});
+export type EventTypeInput = z.infer<typeof eventTypeInputSchema>;
+export type EventTypeRecord = EventTypeInput & { id: string; created: string; updated: string };
 export type RegistrationInput = z.infer<typeof registrationInputSchema>;
 export type EventStatus = (typeof EVENT_STATUS)[number];
 export type RegistrationSource = (typeof REGISTRATION_SOURCE)[number];
@@ -62,6 +70,7 @@ export type DeliveryStatus = (typeof DELIVERY_STATUS)[number];
 
 export type EventRecord = {
   id: string;
+  tipo_evento?: string;
   titulo: string;
   descripcion: string;
   slug: string;

@@ -8,17 +8,21 @@ import type { ActionState } from "@/app/actions/state";
 import { parseArgentinaDateTime } from "@/lib/domain/dates";
 import { requireAdmin } from "@/lib/auth/session";
 import { eventInputSchema } from "@/lib/domain/models";
+import { canAssignEventType } from "@/lib/domain/event-types";
 import { audit } from "@/lib/services/audit";
 import {
   createEvent,
+  getEventById,
   updateCertificateTemplate,
   updateEvent,
 } from "@/lib/services/events";
 import { validateCertificateTemplate } from "@/lib/certificates/pdf";
+import { getEventTypeById } from "@/lib/services/event-types";
 
 function inputFromForm(formData: FormData) {
   return {
     titulo: formData.get("titulo"),
+    tipoEvento: formData.get("tipoEvento"),
     descripcion: formData.get("descripcion"),
     slug: formData.get("slug"),
     inicio: parseArgentinaDateTime(formData.get("inicio")),
@@ -47,13 +51,17 @@ export async function createEventAction(
 
   let event;
   try {
+    const type = await getEventTypeById(parsed.data.tipoEvento);
+    if (!canAssignEventType(type)) {
+      return { fields: { tipoEvento: ["Seleccioná un tipo activo."] } };
+    }
     event = await createEvent(parsed.data);
     await audit({
       adminId: admin.adminId,
       action: "evento.creado",
       entity: "evento",
       entityId: event.id,
-      data: { slug: event.slug },
+      data: { slug: event.slug, tipoEvento: event.tipo_evento },
     });
   } catch (error) {
     return errorState(error);
@@ -71,13 +79,19 @@ export async function updateEventAction(
   if (!parsed.success) return { fields: parsed.error.flatten().fieldErrors };
 
   try {
+    const current = await getEventById(id);
+    if (!current) return { message: "El evento ya no existe." };
+    const type = await getEventTypeById(parsed.data.tipoEvento);
+    if (!canAssignEventType(type, current.tipo_evento)) {
+      return { fields: { tipoEvento: ["Seleccioná un tipo activo."] } };
+    }
     await updateEvent(id, parsed.data);
     await audit({
       adminId: admin.adminId,
       action: "evento.actualizado",
       entity: "evento",
       entityId: id,
-      data: { slug: parsed.data.slug, cupo: parsed.data.cupo },
+      data: { slug: parsed.data.slug, cupo: parsed.data.cupo, tipoEvento: parsed.data.tipoEvento },
     });
   } catch (error) {
     return errorState(error);

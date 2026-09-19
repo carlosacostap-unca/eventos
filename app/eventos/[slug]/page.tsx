@@ -4,6 +4,8 @@ import { notFound } from "next/navigation";
 
 import { RegistrationForm } from "@/components/registration-form";
 import { getRegistrationAvailability } from "@/lib/domain/events";
+import { eventTypeName } from "@/lib/domain/event-types";
+import { listEventTypes } from "@/lib/services/event-types";
 import { getEventBySlug } from "@/lib/services/events";
 import { countPublicRegistrations } from "@/lib/services/registrations";
 
@@ -25,7 +27,7 @@ export default async function PublicEventPage({
   const { slug } = await params;
   const event = await getEventBySlug(slug);
   if (!event || event.estado === "borrador") notFound();
-  const count = await countPublicRegistrations(event.id);
+  const [count, types] = await Promise.all([countPublicRegistrations(event.id), listEventTypes()]);
   const availability = getRegistrationAvailability(event, count);
 
   return (
@@ -44,6 +46,7 @@ export default async function PublicEventPage({
           </Link>
           <div className="event-hero-copy">
             <span className={"badge badge-" + availability}>{availability}</span>
+            {event.tipo_evento && <p className="event-type-label">{eventTypeName(event.tipo_evento, types)}</p>}
             <h1>{event.titulo}</h1>
             <p>{event.descripcion}</p>
             <dl className="public-event-meta">

@@ -4,6 +4,7 @@ export const COLLECTION_IDS = {
   administradores: "evadmin00000001",
   cuentasServicio: "evservice000001",
   eventos: "evevents0000001",
+  tiposEvento: "evtypes00000001",
   inscripciones: "evregist0000001",
   auditoria: "evaudit0000001",
   certificados: "evcerts0000001",
@@ -55,11 +56,30 @@ export const pocketBaseSchema = [
   },
   {
     ...protectedCollection,
+    id: COLLECTION_IDS.tiposEvento,
+    name: "tipos_evento",
+    type: "base",
+    fields: [
+      { name: "nombre", type: "text", required: true, max: 80 },
+      { name: "descripcion", type: "text", max: 500 },
+      { name: "activo", type: "bool" },
+    ],
+    indexes: ["CREATE UNIQUE INDEX idx_tipos_evento_nombre ON tipos_evento (nombre COLLATE NOCASE)"],
+  },
+  {
+    ...protectedCollection,
     id: COLLECTION_IDS.eventos,
     name: "eventos",
     type: "base",
     fields: [
       { name: "titulo", type: "text", required: true, max: 160 },
+      {
+        name: "tipo_evento",
+        type: "relation",
+        maxSelect: 1,
+        collectionId: COLLECTION_IDS.tiposEvento,
+        cascadeDelete: false,
+      },
       { name: "descripcion", type: "editor", required: true, maxSize: 20000 },
       {
         name: "slug",

@@ -25,9 +25,13 @@ El aprovisionador usa esas credenciales de superusuario para crear el esquema. T
 
 ## Aprovisionamiento de PocketBase
 
-El comando importa de forma no destructiva las colecciones, campos, reglas e índices. Luego crea o sincroniza la cuenta técnica y el administrador del panel con el email y la contraseña indicados:
+El comando siguiente importa las colecciones, campos, reglas e índices y sincroniza la cuenta técnica y el administrador del panel con el email y la contraseña indicados:
 
     npm run schema:apply
+
+Para actualizar solamente el esquema de una instancia ya configurada, sin cambiar las contraseñas de las cuentas, ejecutá:
+
+    npm run schema:import
 
 Se puede ejecutar nuevamente después de un despliegue: usa identificadores estables, actualiza el esquema y no elimina datos ajenos al manifiesto. Para comprobar una instalación nueva, ejecutalo dos veces y confirmá que ambas corridas finalicen con “Esquema de PocketBase actualizado correctamente”.
 
@@ -35,6 +39,7 @@ Colecciones creadas:
 
 - administradores
 - cuentas_servicio
+- tipos_evento
 - eventos
 - inscripciones
 - auditoria
@@ -56,11 +61,12 @@ La aplicación queda disponible en http://localhost:3000. El acceso administrati
 ## Flujo operativo
 
 1. Iniciá sesión con una cuenta de la colección administradores. También se acepta el superusuario de PocketBase configurado en el despliegue.
-2. Creá un evento como borrador o con la inscripción deshabilitada.
-3. Revisá su página pública y, cuando corresponda, publicalo y habilitá la inscripción.
-4. Durante el evento, usá Acreditación para marcar asistentes o crear altas presenciales. Estas altas se acreditan de inmediato y pueden superar el cupo público.
-5. En Certificados, validá la vista previa, generá el lote y controlá la cola.
-6. En Reportes, filtrá participantes y exportá CSV.
+2. En Tipos de eventos, creá las categorías necesarias; podés editarlas y desactivarlas sin cambiar los eventos existentes.
+3. Creá un evento, asignale un tipo y dejalo como borrador o con la inscripción deshabilitada.
+4. Revisá su página pública y, cuando corresponda, publicalo y habilitá la inscripción.
+5. Durante el evento, usá Acreditación para marcar asistentes o crear altas presenciales. Estas altas se acreditan de inmediato y pueden superar el cupo público.
+6. En Certificados, validá la vista previa, generá el lote y controlá la cola.
+7. En Reportes, filtrá participantes y exportá CSV.
 
 ## Procesador de correo
 

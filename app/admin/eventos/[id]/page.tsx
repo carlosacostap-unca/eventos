@@ -5,6 +5,8 @@ import { EventAdminNav } from "@/components/event-admin-nav";
 import { EventSharePanel } from "@/components/event-share-panel";
 import { calculateEventMetrics } from "@/lib/domain/metrics";
 import { getRegistrationAvailability } from "@/lib/domain/events";
+import { eventTypeName } from "@/lib/domain/event-types";
+import { listEventTypes } from "@/lib/services/event-types";
 import { getEventById } from "@/lib/services/events";
 import {
   countPublicRegistrations,
@@ -19,7 +21,7 @@ export default async function EventDashboardPage({
   const { id } = await params;
   const event = await getEventById(id);
   if (!event) notFound();
-  const registrations = await listRegistrations(id);
+  const [registrations, types] = await Promise.all([listRegistrations(id), listEventTypes()]);
   const metrics = calculateEventMetrics(registrations);
   const availability = getRegistrationAvailability(
     event,
@@ -38,7 +40,7 @@ export default async function EventDashboardPage({
             <span className={"badge badge-" + availability}>{availability}</span>
           </div>
           <h1>{event.titulo}</h1>
-          <p>{event.lugar}</p>
+          <p>{eventTypeName(event.tipo_evento, types)} · {event.lugar}</p>
         </div>
         <Link className="button button-secondary" href={"/eventos/" + event.slug}>
           Ver página pública

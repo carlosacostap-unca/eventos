@@ -14,6 +14,7 @@ describe("modelos de dominio", () => {
   it("acepta un evento válido y rechaza un rango de fechas invertido", () => {
     const base = {
       titulo: "Jornada universitaria",
+      tipoEvento: "evtypeexample01",
       descripcion: "Una descripción suficientemente extensa",
       slug: "jornada-universitaria",
       inicio: "2027-05-20T10:00:00.000Z",

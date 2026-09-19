@@ -47,6 +47,7 @@ export async function getEventBySlug(slug: string): Promise<EventRecord | null> 
 function eventPayload(input: EventInput) {
   return {
     titulo: input.titulo,
+    tipo_evento: input.tipoEvento,
     descripcion: input.descripcion,
     slug: input.slug,
     inicio: input.inicio.toISOString(),

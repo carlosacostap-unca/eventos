@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { EventAdminNav } from "@/components/event-admin-nav";
 import { EventForm } from "@/components/event-form";
 import { getEventById } from "@/lib/services/events";
+import { listEventTypes } from "@/lib/services/event-types";
 
 export default async function EditEventPage({
   params,
@@ -13,6 +14,7 @@ export default async function EditEventPage({
   const { id } = await params;
   const event = await getEventById(id);
   if (!event) notFound();
+  const types = await listEventTypes();
   return (
     <main className="admin-main narrow">
       <Link className="back-link" href={"/admin/eventos/" + id}>
@@ -25,7 +27,7 @@ export default async function EditEventPage({
         </div>
       </div>
       <EventAdminNav event={event} />
-      <EventForm event={event} />
+      <EventForm event={event} types={types} />
     </main>
   );
 }

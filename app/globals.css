@@ -1286,3 +1286,8 @@ td small {
 .pagination a:last-child {
   text-align: right;
 }
+
+.event-types-list { margin-top: 3rem; }
+.event-types-list > h2 { margin-bottom: 1rem; }
+.event-type-label { color: var(--teal); font-size: .82rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+.event-hero .event-type-label { color: #9ce5dd; margin-top: 1rem; }

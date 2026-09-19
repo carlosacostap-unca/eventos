@@ -10,10 +10,11 @@ import { initialActionState } from "@/app/actions/state";
 import { FieldError, FormMessage } from "@/components/form-feedback";
 import { SubmitButton } from "@/components/submit-button";
 import { toArgentinaDateTimeLocal } from "@/lib/domain/dates";
-import type { EventRecord } from "@/lib/domain/models";
+import type { EventRecord, EventTypeRecord } from "@/lib/domain/models";
+import Link from "next/link";
 
 
-export function EventForm({ event }: { event?: EventRecord }) {
+export function EventForm({ event, types }: { event?: EventRecord; types: EventTypeRecord[] }) {
   const action = event ? updateEventAction.bind(null, event.id) : createEventAction;
   const [state, formAction] = useActionState(action, initialActionState);
 
@@ -25,6 +26,21 @@ export function EventForm({ event }: { event?: EventRecord }) {
           <span>Título</span>
           <input name="titulo" defaultValue={event?.titulo} required />
           <FieldError errors={state.fields?.titulo} />
+        </label>
+        <label className="field">
+          <span>Tipo de evento</span>
+          <select name="tipoEvento" defaultValue={event?.tipo_evento ?? ""} required>
+            <option value="" disabled>Seleccioná un tipo</option>
+            {types.filter((type) => type.activo || type.id === event?.tipo_evento).map((type) => (
+              <option key={type.id} value={type.id}>
+                {type.nombre}{type.activo ? "" : " (inactivo)"}
+              </option>
+            ))}
+          </select>
+          <FieldError errors={state.fields?.tipoEvento} />
+          {!types.some((type) => type.activo || type.id === event?.tipo_evento) && (
+            <small>Primero <Link href="/admin/tipos">activá o creá un tipo de evento</Link>.</small>
+          )}
         </label>
         <label className="field">
           <span>Identificador público</span>

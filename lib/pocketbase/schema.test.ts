@@ -7,12 +7,15 @@ describe("esquema PocketBase", () => {
     expect(pocketBaseSchema.map((collection) => collection.name)).toEqual([
       "administradores",
       "cuentas_servicio",
+      "tipos_evento",
       "eventos",
       "inscripciones",
       "auditoria",
       "certificados",
       "envios_certificados",
     ]);
+    const events = pocketBaseSchema.find((collection) => collection.name === "eventos");
+    expect(events?.fields.some((field) => field.name === "tipo_evento")).toBe(true);
     const registrations = pocketBaseSchema.find(
       (collection) => collection.name === "inscripciones",
     );

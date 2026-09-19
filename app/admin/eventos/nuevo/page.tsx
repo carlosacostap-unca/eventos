@@ -1,8 +1,10 @@
 import Link from "next/link";
 
 import { EventForm } from "@/components/event-form";
+import { listEventTypes } from "@/lib/services/event-types";
 
-export default function NewEventPage() {
+export default async function NewEventPage() {
+  const types = await listEventTypes();
   return (
     <main className="admin-main narrow">
       <Link className="back-link" href="/admin">
@@ -14,7 +16,7 @@ export default function NewEventPage() {
           <h1>Configuración inicial</h1>
         </div>
       </div>
-      <EventForm />
+      <EventForm types={types} />
     </main>
   );
 }
