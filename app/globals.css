@@ -974,6 +974,10 @@ td small {
   min-height: 100vh;
 }
 
+.public-event .container {
+  width: min(850px, calc(100% - 40px));
+}
+
 .event-hero {
   padding: 1.4rem 0 5rem;
   background: var(--navy);
@@ -990,17 +994,17 @@ td small {
 }
 
 .event-hero-copy {
-  max-width: 850px;
-  padding-top: 5rem;
+  padding-top: 0.75rem;
 }
 
 .event-hero h1 {
   margin-bottom: 1.4rem;
   color: white;
+  font-size: clamp(2rem, 4vw, 3.5rem);
 }
 
 .event-hero-copy > p:not(.eyebrow) {
-  max-width: 720px;
+  max-width: 100%;
   color: #ccd8e1;
   font-size: 1.08rem;
   line-height: 1.7;
@@ -1014,7 +1018,7 @@ td small {
 }
 
 .closed-panel {
-  max-width: 720px;
+  max-width: 100%;
 }
 
 .auth-shell {
@@ -1103,6 +1107,10 @@ td small {
 }
 
 @media (max-width: 680px) {
+  .public-event .container {
+    width: calc(100% - 24px);
+  }
+
   .container,
   .admin-main,
   .admin-main.narrow {
@@ -1290,7 +1298,7 @@ td small {
 .event-types-list { margin-top: 3rem; }
 .event-types-list > h2 { margin-bottom: 1rem; }
 .event-type-label { color: var(--teal); font-size: .82rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
-.event-hero .event-type-label { color: #9ce5dd; margin-top: 1rem; }
+.event-hero .event-type-label { color: #9ce5dd; margin-top: 0; }
 
 .event-attribute-line { color: var(--teal-dark); font-weight: 700; }
 .speaker-section { margin-top: 4rem; }
