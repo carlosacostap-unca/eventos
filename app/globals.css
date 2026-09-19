@@ -1302,6 +1302,13 @@ td small {
 .speaker-card h3 { margin: 0 0 .35rem; font-size: 1.25rem; overflow-wrap: anywhere; }
 .speaker-title { margin: 0 0 .15rem; color: var(--teal-dark); font-size: .8rem; font-weight: 800; }
 .speaker-universities { margin: 0; color: var(--ink-soft); font-size: .88rem; line-height: 1.5; white-space: pre-line; overflow-wrap: anywhere; }
+.public-event .event-hero-copy > p:not(.event-type-label),
+.public-event .speaker-universities,
+.public-event .privacy-note,
+.public-event .closed-panel > p:not(.eyebrow) {
+  text-align: justify;
+  hyphens: auto;
+}
 .speakers-admin-section { margin-top: 2.5rem; }
 .speakers-admin-section > h2 { margin-bottom: 1.1rem; }
 .speaker-admin-item { display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: var(--radius); background: white; }
