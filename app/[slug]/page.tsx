@@ -85,8 +85,9 @@ export default async function PublicEventPage({
           </div>
           {speakers.length > 0 && (
             <section className="speaker-section" aria-labelledby="speakers-heading">
-              <p className="eyebrow">Participan</p>
-              <h2 id="speakers-heading">Disertantes</h2>
+              <h2 id="speakers-heading">
+                {speakers.length === 1 ? "Disertante" : "Disertantes"}
+              </h2>
               <div className="speaker-grid">
                 {speakers.map((speaker) => <SpeakerCard speaker={speaker} key={speaker.id} />)}
               </div>
