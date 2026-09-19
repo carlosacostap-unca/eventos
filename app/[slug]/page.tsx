@@ -45,7 +45,15 @@ export default async function PublicEventPage({
             />
           </Link>
           <div className="event-hero-copy">
-            <span className={"badge badge-" + availability}>{availability}</span>
+            {availability !== "disponible" && (
+              <span className={"badge badge-" + availability}>
+                {availability === "completo"
+                  ? "Cupo completo"
+                  : availability === "finalizado"
+                    ? "Evento finalizado"
+                    : "Inscripción cerrada"}
+              </span>
+            )}
             {event.tipo_evento && <p className="event-type-label">{eventTypeName(event.tipo_evento, types)}</p>}
             <h1>{event.titulo}</h1>
             <p>{event.descripcion}</p>
