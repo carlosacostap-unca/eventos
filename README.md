@@ -55,7 +55,7 @@ La aplicación queda disponible en http://localhost:3000. El acceso administrati
 
 ## Flujo operativo
 
-1. Iniciá sesión con POCKETBASE_ADMIN_EMAIL y POCKETBASE_ADMIN_PASSWORD.
+1. Iniciá sesión con una cuenta de la colección administradores. También se acepta el superusuario de PocketBase configurado en el despliegue.
 2. Creá un evento como borrador o con la inscripción deshabilitada.
 3. Revisá su página pública y, cuando corresponda, publicalo y habilitá la inscripción.
 4. Durante el evento, usá Acreditación para marcar asistentes o crear altas presenciales. Estas altas se acreditan de inmediato y pueden superar el cupo público.

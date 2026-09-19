@@ -1019,16 +1019,21 @@ td small {
 
 .auth-shell {
   display: grid;
-  min-height: 100vh;
-  grid-template-columns: minmax(400px, 0.9fr) minmax(480px, 1.1fr);
+  min-height: 100svh;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
 }
 
 .auth-panel {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: center;
+  gap: clamp(2rem, 5vh, 4rem);
   padding: clamp(2rem, 5vw, 5rem);
   background: white;
+}
+
+.auth-panel > .form-stack {
+  width: min(100%, 440px);
 }
 
 .auth-copy {
@@ -1040,21 +1045,36 @@ td small {
 }
 
 .auth-art {
-  display: grid;
+  display: flex;
   overflow: hidden;
-  place-items: center;
+  flex-direction: column;
+  justify-content: center;
+  gap: clamp(1.5rem, 5vh, 3.5rem);
+  padding: clamp(2rem, 5vw, 5rem);
   background:
     linear-gradient(135deg, rgba(8, 127, 120, 0.9), rgba(16, 42, 67, 0.97)),
     var(--navy);
 }
 
-.auth-art-number {
-  color: rgba(255, 255, 255, 0.15);
-  font-family: var(--font-serif), serif;
-  font-size: clamp(12rem, 30vw, 32rem);
-  line-height: 0.7;
+.auth-step {
+  display: flex;
+  align-items: center;
+  gap: clamp(1rem, 2.5vw, 2rem);
 }
 
+.auth-step > span:last-child {
+  color: #e5f1f3;
+  font-size: clamp(1.1rem, 2vw, 1.45rem);
+  font-weight: 700;
+}
+
+.auth-art-number {
+  flex: 0 0 auto;
+  color: rgba(255, 255, 255, 0.28);
+  font-family: var(--font-serif), serif;
+  font-size: clamp(5rem, 10vw, 9rem);
+  line-height: 1;
+}
 @media (max-width: 900px) {
   .metric-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));

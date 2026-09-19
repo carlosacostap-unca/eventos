@@ -31,12 +31,18 @@ export default async function LoginPage() {
         )}
       </section>
       <aside className="auth-art" aria-hidden="true">
-        <div className="auth-art-number">01</div>
-        <p>Organizar</p>
-        <div className="auth-art-number">02</div>
-        <p>Acreditar</p>
-        <div className="auth-art-number">03</div>
-        <p>Reconocer</p>
+        <div className="auth-step">
+          <span className="auth-art-number">01</span>
+          <span>Organizar</span>
+        </div>
+        <div className="auth-step">
+          <span className="auth-art-number">02</span>
+          <span>Acreditar</span>
+        </div>
+        <div className="auth-step">
+          <span className="auth-art-number">03</span>
+          <span>Reconocer</span>
+        </div>
       </aside>
     </main>
   );
