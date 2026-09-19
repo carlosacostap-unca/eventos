@@ -89,7 +89,7 @@ export default async function PublicEventPage({
                 {speakers.length === 1 ? "Disertante" : "Disertantes"}
               </h2>
               <div className="speaker-grid">
-                {speakers.map((speaker) => <SpeakerCard speaker={speaker} key={speaker.id} />)}
+                {speakers.map((speaker) => <SpeakerCard speaker={speaker} key={speaker.id} unoptimized />)}
               </div>
             </section>
           )}
