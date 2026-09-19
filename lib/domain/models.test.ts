@@ -21,6 +21,8 @@ describe("modelos de dominio", () => {
       fin: "2027-05-20T12:00:00.000Z",
       lugar: "Aula Magna",
       cupo: 100,
+      costo: "gratuito",
+      certificadoAsistencia: "si",
       inscripcionHabilitada: true,
       estado: "publicado",
     };

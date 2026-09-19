@@ -91,6 +91,22 @@ export function EventForm({ event, types }: { event?: EventRecord; types: EventT
           <FieldError errors={state.fields?.cupo} />
         </label>
         <label className="field">
+          <span>Participación</span>
+          <select name="costo" defaultValue={event?.costo || "gratuito"}>
+            <option value="gratuito">Gratuito</option>
+            <option value="arancelado">Arancelado</option>
+          </select>
+          <FieldError errors={state.fields?.costo} />
+        </label>
+        <label className="field">
+          <span>Certificado de asistencia</span>
+          <select name="certificadoAsistencia" defaultValue={event?.certificado_asistencia || "si"}>
+            <option value="si">Sí, se entregará</option>
+            <option value="no">No se entregará</option>
+          </select>
+          <FieldError errors={state.fields?.certificadoAsistencia} />
+        </label>
+        <label className="field">
           <span>Estado</span>
           <select name="estado" defaultValue={event?.estado ?? "borrador"}>
             <option value="borrador">Borrador</option>
@@ -121,6 +137,11 @@ export function EventForm({ event, types }: { event?: EventRecord; types: EventT
           <small>También se cerrará automáticamente cuando se complete el cupo.</small>
         </span>
       </label>
+      {event ? (
+        <p className="muted">Podés agregar varios disertantes desde la sección Disertantes de este evento.</p>
+      ) : (
+        <p className="muted">Después de crear el evento podrás agregar sus disertantes y fotos.</p>
+      )}
       <div className="actions-row">
         <SubmitButton>{event ? "Guardar cambios" : "Crear evento"}</SubmitButton>
       </div>

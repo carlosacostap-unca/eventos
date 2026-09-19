@@ -9,6 +9,7 @@ export class DomainError extends Error {
       | "UNAUTHORIZED"
       | "NOT_ELIGIBLE"
       | "NOT_CONFIGURED"
+      | "DISABLED"
       | "CONFIRMATION_REQUIRED",
     message: string,
   ) {

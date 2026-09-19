@@ -4,6 +4,7 @@ import type { RecordModel } from "pocketbase";
 
 import { createCertificatePdf } from "@/lib/certificates/pdf";
 import { DomainError } from "@/lib/domain/errors";
+import { offersAttendanceCertificate } from "@/lib/domain/event-details";
 import type {
   CertificateRecord,
   DeliveryRecord,
@@ -82,6 +83,9 @@ async function loadTemplate(event: EventRecord) {
 export async function previewCertificate(eventId: string) {
   const event = await getEventById(eventId);
   if (!event) throw new DomainError("NOT_FOUND", "El evento no existe.");
+  if (!offersAttendanceCertificate(event)) {
+    throw new DomainError("DISABLED", "Este evento no entrega certificados.");
+  }
   return createCertificatePdf({
     event,
     registration: {
@@ -96,6 +100,9 @@ export async function previewCertificate(eventId: string) {
 export async function generateCertificates(eventId: string, adminId: string) {
   const event = await getEventById(eventId);
   if (!event) throw new DomainError("NOT_FOUND", "El evento no existe.");
+  if (!offersAttendanceCertificate(event)) {
+    throw new DomainError("DISABLED", "Este evento no entrega certificados.");
+  }
   const registrations = (await listRegistrations(eventId)).filter(
     (registration) => registration.acreditado,
   );
@@ -183,6 +190,11 @@ export async function listCertificateRows(eventId: string): Promise<CertificateR
 
 export async function requeueDelivery(deliveryId: string, adminId: string) {
   const pb = await createServicePocketBase();
+  const current = toDelivery(await pb.collection("envios_certificados").getOne(deliveryId));
+  const event = await getEventById(current.evento);
+  if (!event || !offersAttendanceCertificate(event)) {
+    throw new DomainError("DISABLED", "Este evento no entrega certificados.");
+  }
   const delivery = toDelivery(
     await pb.collection("envios_certificados").update(deliveryId, {
       estado: "pendiente",
@@ -228,15 +240,19 @@ export async function processPendingDeliveries(limit = 20) {
     const delivery = toDelivery(record);
     const payload = await loadDeliveryPayload(delivery);
     const status = await processDeliveryAttempt(delivery, {
-      send: () =>
-        sendCertificateEmail({
+      send: () => {
+        if (!offersAttendanceCertificate(payload.event)) {
+          throw new DomainError("DISABLED", "Este evento no entrega certificados.");
+        }
+        return sendCertificateEmail({
           to: payload.registration.email,
           participantName:
             payload.registration.nombres + " " + payload.registration.apellidos,
           eventTitle: payload.event.titulo,
           pdf: payload.file.bytes,
           filename: payload.certificate.archivo,
-        }),
+        });
+      },
       update: async (data) => {
         const updateClient = await createServicePocketBase();
         await updateClient

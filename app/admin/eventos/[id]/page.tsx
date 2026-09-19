@@ -5,6 +5,7 @@ import { EventAdminNav } from "@/components/event-admin-nav";
 import { EventSharePanel } from "@/components/event-share-panel";
 import { calculateEventMetrics } from "@/lib/domain/metrics";
 import { getRegistrationAvailability } from "@/lib/domain/events";
+import { isEventFree, offersAttendanceCertificate } from "@/lib/domain/event-details";
 import { eventTypeName } from "@/lib/domain/event-types";
 import { listEventTypes } from "@/lib/services/event-types";
 import { getEventById } from "@/lib/services/events";
@@ -23,6 +24,7 @@ export default async function EventDashboardPage({
   if (!event) notFound();
   const [registrations, types] = await Promise.all([listRegistrations(id), listEventTypes()]);
   const metrics = calculateEventMetrics(registrations);
+  const certificateEnabled = offersAttendanceCertificate(event);
   const availability = getRegistrationAvailability(
     event,
     await countPublicRegistrations(id),
@@ -41,6 +43,7 @@ export default async function EventDashboardPage({
           </div>
           <h1>{event.titulo}</h1>
           <p>{eventTypeName(event.tipo_evento, types)} · {event.lugar}</p>
+          <p>{isEventFree(event) ? "Gratuito" : "Arancelado"} · {certificateEnabled ? "Con certificado" : "Sin certificado"}</p>
         </div>
         <Link className="button button-secondary" href={"/" + event.slug}>
           Ver página pública
@@ -92,20 +95,29 @@ export default async function EventDashboardPage({
               <small>Cupo, fechas, publicación y formulario.</small>
             </div>
           </Link>
-          <Link href={"/admin/eventos/" + id + "/acreditacion"}>
+          <Link href={"/admin/eventos/" + id + "/disertantes"}>
             <span>02</span>
+            <div>
+              <strong>Cargar disertantes</strong>
+              <small>Títulos, universidades y fotos para la página pública.</small>
+            </div>
+          </Link>
+          <Link href={"/admin/eventos/" + id + "/acreditacion"}>
+            <span>03</span>
             <div>
               <strong>Acreditar asistentes</strong>
               <small>Buscar inscriptos o agregar personas en puerta.</small>
             </div>
           </Link>
-          <Link href={"/admin/eventos/" + id + "/certificados"}>
-            <span>03</span>
-            <div>
-              <strong>Emitir certificados</strong>
-              <small>Previsualizar, generar y controlar los envíos.</small>
-            </div>
-          </Link>
+          {certificateEnabled && (
+            <Link href={"/admin/eventos/" + id + "/certificados"}>
+              <span>04</span>
+              <div>
+                <strong>Emitir certificados</strong>
+                <small>Previsualizar, generar y controlar los envíos.</small>
+              </div>
+            </Link>
+          )}
         </div>
       </section>
     </main>

@@ -40,6 +40,8 @@ export const eventInputSchema = z
     fin: z.coerce.date(),
     lugar: requiredText("El lugar", 2, 240),
     cupo: z.coerce.number().int().min(1).max(100000),
+    costo: z.enum(["gratuito", "arancelado"]),
+    certificadoAsistencia: z.enum(["si", "no"]),
     inscripcionHabilitada: z.coerce.boolean(),
     estado: z.enum(EVENT_STATUS),
   })
@@ -70,6 +72,20 @@ export function normalizeDocument(value: string): string {
 }
 
 export type EventInput = z.infer<typeof eventInputSchema>;
+
+export const speakerInputSchema = z.object({
+  titulo: requiredText("El título", 2, 80),
+  nombre: requiredText("El nombre", 2, 160),
+  universidades: requiredText("La universidad de origen", 2, 500),
+});
+export type SpeakerInput = z.infer<typeof speakerInputSchema>;
+export type SpeakerRecord = SpeakerInput & {
+  id: string;
+  evento: string;
+  foto: string;
+  created: string;
+  updated: string;
+};
 export const eventTypeInputSchema = z.object({
   nombre: requiredText("El nombre", 2, 80),
   descripcion: z.string().trim().max(500, "La descripción es demasiado larga"),
@@ -92,6 +108,8 @@ export type EventRecord = {
   fin: string;
   lugar: string;
   cupo: number;
+  costo?: "gratuito" | "arancelado" | "";
+  certificado_asistencia?: "si" | "no" | "";
   inscripcion_habilitada: boolean;
   estado: EventStatus;
   plantilla_certificado?: string;

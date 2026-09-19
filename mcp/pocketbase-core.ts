@@ -6,6 +6,7 @@ import PocketBase, { ClientResponseError } from "pocketbase";
 export const readableCollections = [
   "administradores",
   "eventos",
+  "disertantes",
   "tipos_evento",
   "inscripciones",
   "auditoria",
@@ -15,6 +16,7 @@ export const readableCollections = [
 
 export const writableCollections = [
   "eventos",
+  "disertantes",
   "tipos_evento",
   "inscripciones",
   "certificados",

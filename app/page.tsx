@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { getRegistrationAvailability } from "@/lib/domain/events";
+import { isEventFree, offersAttendanceCertificate } from "@/lib/domain/event-details";
 import { eventTypeName } from "@/lib/domain/event-types";
 import { listEventTypes } from "@/lib/services/event-types";
 import { listPublishedEvents } from "@/lib/services/events";
@@ -75,6 +76,10 @@ export default async function Home() {
                   </span>
                   {event.tipo_evento && <p className="event-type-label">{eventTypeName(event.tipo_evento, types)}</p>}
                   <h2>{event.titulo}</h2>
+                  <p className="event-attribute-line">
+                    {isEventFree(event) ? "Gratuito" : "Arancelado"} ·{" "}
+                    {offersAttendanceCertificate(event) ? "Con certificado" : "Sin certificado"}
+                  </p>
                   <p>{event.descripcion}</p>
                   <dl className="event-meta">
                     <div>

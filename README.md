@@ -1,6 +1,6 @@
 # Eventos UNCA
 
-Aplicación de gestión integral de eventos construida con Next.js 16 y PocketBase. Permite publicar eventos, recibir inscripciones, acreditar asistentes, registrar altas presenciales, emitir certificados PDF, encolar su envío por correo y consultar estadísticas.
+Aplicación de gestión integral de eventos construida con Next.js 16 y PocketBase. Permite publicar eventos con su tipo, costo y opción de certificado, cargar disertantes con fotos, recibir inscripciones, acreditar asistentes, registrar altas presenciales, emitir certificados PDF cuando corresponda, encolar su envío por correo y consultar estadísticas.
 
 Toda la lógica de negocio y el acceso a PocketBase viven en el servidor de Next.js. El navegador usa páginas y Server Actions de Next.js y nunca recibe credenciales de servicio ni usa el SDK de PocketBase.
 
@@ -41,6 +41,7 @@ Colecciones creadas:
 - cuentas_servicio
 - tipos_evento
 - eventos
+- disertantes
 - inscripciones
 - auditoria
 - certificados
@@ -62,8 +63,8 @@ La aplicación queda disponible en http://localhost:3000. El acceso administrati
 
 1. Iniciá sesión con una cuenta de la colección administradores. También se acepta el superusuario de PocketBase configurado en el despliegue.
 2. En Tipos de eventos, creá las categorías necesarias; podés editarlas y desactivarlas sin cambiar los eventos existentes.
-3. Creá un evento, asignale un tipo y dejalo como borrador o con la inscripción deshabilitada.
-4. Revisá su página pública en /identificador-publico y, cuando corresponda, publicalo y habilitá la inscripción. Los enlaces antiguos /eventos/identificador-publico redirigen a la URL corta.
+3. Creá un evento, asignale un tipo, indicá si es gratuito y si se entregará certificado, y dejalo como borrador o con la inscripción deshabilitada.
+4. En la pestaña Disertantes agregá tantas personas como necesites, con título, nombre, universidad(es) y foto JPG, PNG o WebP de hasta 5 MB. Revisá su página pública en /identificador-publico y, cuando corresponda, publicalo y habilitá la inscripción. Los enlaces antiguos /eventos/identificador-publico redirigen a la URL corta.
 5. Durante el evento, usá Acreditación para marcar asistentes o crear altas presenciales. Estas altas se acreditan de inmediato y pueden superar el cupo público.
 6. En Certificados, validá la vista previa, generá el lote y controlá la cola.
 7. En Reportes, filtrá participantes y exportá CSV.

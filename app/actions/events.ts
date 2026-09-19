@@ -9,6 +9,7 @@ import { parseArgentinaDateTime } from "@/lib/domain/dates";
 import { requireAdmin } from "@/lib/auth/session";
 import { eventInputSchema } from "@/lib/domain/models";
 import { canAssignEventType } from "@/lib/domain/event-types";
+import { offersAttendanceCertificate } from "@/lib/domain/event-details";
 import { audit } from "@/lib/services/audit";
 import {
   createEvent,
@@ -29,6 +30,8 @@ function inputFromForm(formData: FormData) {
     fin: parseArgentinaDateTime(formData.get("fin")),
     lugar: formData.get("lugar"),
     cupo: formData.get("cupo"),
+    costo: formData.get("costo"),
+    certificadoAsistencia: formData.get("certificadoAsistencia"),
     inscripcionHabilitada: formData.get("inscripcionHabilitada") === "on",
     estado: formData.get("estado"),
   };
@@ -103,6 +106,10 @@ export async function updateEventAction(
 
 export async function uploadTemplateAction(eventId: string, formData: FormData) {
   const admin = await requireAdmin();
+  const event = await getEventById(eventId);
+  if (!event || !offersAttendanceCertificate(event)) {
+    redirect("/admin/eventos/" + eventId + "/certificados?error=deshabilitado");
+  }
   const file = formData.get("plantilla");
   if (!(file instanceof File) || file.size === 0) {
     redirect("/admin/eventos/" + eventId + "/certificados?error=archivo");

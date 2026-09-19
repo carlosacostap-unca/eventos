@@ -3,6 +3,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { RegistrationForm } from "@/components/registration-form";
+import { SpeakerCard } from "@/components/speaker-card";
+import { isEventFree, offersAttendanceCertificate } from "@/lib/domain/event-details";
+import { listSpeakersByEvent } from "@/lib/services/speakers";
 import { getRegistrationAvailability } from "@/lib/domain/events";
 import { eventTypeName } from "@/lib/domain/event-types";
 import { listEventTypes } from "@/lib/services/event-types";
@@ -27,7 +30,11 @@ export default async function PublicEventPage({
   const { slug } = await params;
   const event = await getEventBySlug(slug);
   if (!event || event.estado === "borrador") notFound();
-  const [count, types] = await Promise.all([countPublicRegistrations(event.id), listEventTypes()]);
+  const [count, types, speakers] = await Promise.all([
+    countPublicRegistrations(event.id),
+    listEventTypes(),
+    listSpeakersByEvent(event.id),
+  ]);
   const availability = getRegistrationAvailability(event, count);
 
   return (
@@ -66,13 +73,30 @@ export default async function PublicEventPage({
                 <dt>Lugar</dt>
                 <dd>{event.lugar}</dd>
               </div>
+              <div>
+                <dt>Participación</dt>
+                <dd>{isEventFree(event) ? "Gratuita" : "Arancelada"}</dd>
+              </div>
+              <div>
+                <dt>Certificado de asistencia</dt>
+                <dd>{offersAttendanceCertificate(event) ? "Se entregará" : "No se entregará"}</dd>
+              </div>
             </dl>
           </div>
+          {speakers.length > 0 && (
+            <section className="speaker-section" aria-labelledby="speakers-heading">
+              <p className="eyebrow">Participan</p>
+              <h2 id="speakers-heading">Disertantes</h2>
+              <div className="speaker-grid">
+                {speakers.map((speaker) => <SpeakerCard speaker={speaker} key={speaker.id} />)}
+              </div>
+            </section>
+          )}
         </div>
       </section>
       <section className="container registration-section">
         {availability === "disponible" ? (
-          <RegistrationForm slug={slug} />
+          <RegistrationForm slug={slug} offersCertificate={offersAttendanceCertificate(event)} />
         ) : (
           <div className="panel closed-panel">
             <p className="eyebrow">Inscripción</p>

@@ -7,6 +7,7 @@ import {
 } from "@/app/actions/certificates";
 import { uploadTemplateAction } from "@/app/actions/events";
 import { EventAdminNav } from "@/components/event-admin-nav";
+import { offersAttendanceCertificate } from "@/lib/domain/event-details";
 import { getEventById } from "@/lib/services/events";
 import { listCertificateRows } from "@/lib/services/certificates";
 import { listRegistrations } from "@/lib/services/registrations";
@@ -34,6 +35,7 @@ export default async function CertificatesPage({
   const notice = await searchParams;
   const event = await getEventById(id);
   if (!event) notFound();
+  const enabled = offersAttendanceCertificate(event);
 
   const [rows, registrations] = await Promise.all([
     listCertificateRows(id),
@@ -54,17 +56,25 @@ export default async function CertificatesPage({
           <h1>Certificados</h1>
           <p>{event.titulo}</p>
         </div>
-        <a
+        {enabled && (
+          <a
           className="button button-secondary"
           href={"/api/admin/eventos/" + id + "/certificados/preview"}
           target="_blank"
           rel="noreferrer"
         >
           Vista previa PDF
-        </a>
+          </a>
+        )}
       </div>
       <EventAdminNav event={event} />
 
+      {!enabled && (
+        <div className="notice notice-error" role="status">
+          Este evento no entrega certificados de asistencia. Podés cambiarlo en la{" "}
+          <Link className="text-link" href={"/admin/eventos/" + id + "/editar"}>configuración</Link>.
+        </div>
+      )}
       {notice.eligible ? (
         <div className="notice notice-success" role="status">
           Lote procesado: {notice.created || 0} certificados nuevos y{" "}
@@ -78,12 +88,14 @@ export default async function CertificatesPage({
       ) : null}
       {notice.error ? (
         <div className="notice notice-error" role="alert">
-          No se pudo guardar la plantilla. Usá un PDF, PNG o JPG válido de hasta
-          10 MB.
+          {notice.error === "deshabilitado"
+            ? "Este evento no entrega certificados de asistencia."
+            : "No se pudo guardar la plantilla. Usá un PDF, PNG o JPG válido de hasta 10 MB."}
         </div>
       ) : null}
 
-      <section className="certificate-setup">
+      {enabled && (
+        <section className="certificate-setup">
         <article className="panel">
           <div className="section-heading compact">
             <div>
@@ -131,7 +143,8 @@ export default async function CertificatesPage({
           </form>
           <small>Repetir el lote reutiliza certificados existentes.</small>
         </article>
-      </section>
+        </section>
+      )}
 
       <section className="panel">
         <div className="section-heading compact">
@@ -189,7 +202,7 @@ export default async function CertificatesPage({
                       >
                         Descargar
                       </a>
-                      {delivery.estado !== "pendiente" ? (
+                      {enabled && delivery.estado !== "pendiente" ? (
                         <form action={requeueDeliveryAction}>
                           <input type="hidden" name="deliveryId" value={delivery.id} />
                           <input type="hidden" name="eventId" value={event.id} />

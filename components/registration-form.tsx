@@ -7,7 +7,13 @@ import { initialActionState } from "@/app/actions/state";
 import { FieldError, FormMessage } from "@/components/form-feedback";
 import { SubmitButton } from "@/components/submit-button";
 
-export function RegistrationForm({ slug }: { slug: string }) {
+export function RegistrationForm({
+  slug,
+  offersCertificate,
+}: {
+  slug: string;
+  offersCertificate: boolean;
+}) {
   const [state, action] = useActionState(
     registerAction.bind(null, slug),
     initialActionState,
@@ -50,7 +56,7 @@ export function RegistrationForm({ slug }: { slug: string }) {
           </div>
           <p className="privacy-note">
             Usaremos estos datos exclusivamente para gestionar tu inscripción,
-            asistencia y certificado.
+            asistencia{offersCertificate ? " y certificado" : ""}.
           </p>
           <SubmitButton pendingLabel="Confirmando inscripción…">
             Confirmar inscripción
