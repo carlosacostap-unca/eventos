@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { EventAdminNav } from "@/components/event-admin-nav";
+import { EventSharePanel } from "@/components/event-share-panel";
 import { calculateEventMetrics } from "@/lib/domain/metrics";
 import { getRegistrationAvailability } from "@/lib/domain/events";
 import { getEventById } from "@/lib/services/events";
@@ -67,6 +68,12 @@ export default async function EventDashboardPage({
           <small>sin acreditación</small>
         </article>
       </section>
+
+      <EventSharePanel
+        eventTitle={event.titulo}
+        publicPath={`/eventos/${encodeURIComponent(event.slug)}`}
+        slug={event.slug}
+      />
 
       <section className="panel">
         <div className="section-heading compact">

@@ -7,7 +7,6 @@ import type { ActionState } from "@/app/actions/state";
 import { clearSession, setSession } from "@/lib/auth/session";
 import { loginInputSchema } from "@/lib/domain/models";
 import { getServerEnv } from "@/lib/env";
-import { createServicePocketBase } from "@/lib/pocketbase/client";
 import { createPocketBaseClient } from "@/lib/pocketbase/factory";
 
 export async function loginAction(
@@ -29,11 +28,10 @@ export async function loginAction(
       .collection("_superusers")
       .authWithPassword(parsed.data.email, parsed.data.password);
 
-    const service = await createServicePocketBase();
-    const administrator = await service
+    const administrator = await client
       .collection("administradores")
       .getFirstListItem(
-        service.filter("email = {:email}", { email: parsed.data.email }),
+        client.filter("email = {:email}", { email: parsed.data.email }),
       );
 
     await setSession({

@@ -51,8 +51,8 @@ export async function getAuthenticatedAdmin(): Promise<AdminSession | null> {
     const client = await createServicePocketBase();
     const administrator = await client
       .collection("administradores")
-      .getOne(session.adminId, { fields: "id,email" });
-    return String(administrator.email).toLowerCase() === session.email.toLowerCase()
+      .getOne(session.adminId, { fields: "id,role" });
+    return administrator.id === session.adminId && administrator.role === "admin"
       ? session
       : null;
   } catch {

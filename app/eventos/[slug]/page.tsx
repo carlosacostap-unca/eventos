@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -26,15 +27,20 @@ export default async function PublicEventPage({
   if (!event || event.estado === "borrador") notFound();
   const count = await countPublicRegistrations(event.id);
   const availability = getRegistrationAvailability(event, count);
-  const remaining = Math.max(0, event.cupo - count);
 
   return (
     <main className="public-event">
       <section className="event-hero">
         <div className="container">
-          <Link className="brand-link brand-link-light" href="/">
-            <span className="brand-mark">UNCA</span>
-            <span>Eventos</span>
+          <Link className="public-event-logo-link" href="/">
+            <Image
+              className="public-event-logo"
+              src="/images/logo-ftyca-blanco.png"
+              alt="Facultad de Tecnología y Ciencias Aplicadas"
+              width={96}
+              height={113}
+              priority
+            />
           </Link>
           <div className="event-hero-copy">
             <span className={"badge badge-" + availability}>{availability}</span>
@@ -48,17 +54,6 @@ export default async function PublicEventPage({
               <div>
                 <dt>Lugar</dt>
                 <dd>{event.lugar}</dd>
-              </div>
-              <div>
-                <dt>Disponibilidad</dt>
-                <dd>
-                  {availability === "disponible"
-                    ? remaining +
-                      (remaining === 1
-                        ? " lugar disponible"
-                        : " lugares disponibles")
-                    : "Inscripción no disponible"}
-                </dd>
               </div>
             </dl>
           </div>

@@ -27,7 +27,8 @@ export const pocketBaseSchema = [
     name: "administradores",
     type: "auth",
     listRule: null,
-    viewRule: "id = @request.auth.id",
+    viewRule:
+      'id = @request.auth.id || @request.auth.role = "service"',
     createRule: null,
     updateRule: "id = @request.auth.id",
     deleteRule: null,
@@ -236,4 +237,11 @@ export const pocketBaseSchema = [
       "CREATE UNIQUE INDEX idx_envios_certificado ON envios_certificados (certificado)",
     ],
   },
-] as unknown as CollectionModel[];
+].map((collection) => ({
+  ...collection,
+  fields: [
+    ...collection.fields,
+    { name: "created", type: "autodate", onCreate: true, onUpdate: false },
+    { name: "updated", type: "autodate", onCreate: true, onUpdate: true },
+  ],
+})) as unknown as CollectionModel[];

@@ -21,6 +21,11 @@ describe("sesión administrativa", () => {
     expect(await unsealAdminSession(token, secret)).toEqual(session);
   });
 
+  it("acepta secretos de más de 32 bytes", async () => {
+    const secret = "a".repeat(64);
+    const token = await sealAdminSession(session, secret);
+    expect(await unsealAdminSession(token, secret)).toEqual(session);
+  });
   it("rechaza una sesión cifrada con otro secreto", async () => {
     const token = await sealAdminSession(session, "a".repeat(32));
     expect(await unsealAdminSession(token, "b".repeat(32))).toBeNull();

@@ -20,5 +20,12 @@ describe("esquema PocketBase", () => {
       "idx_inscripciones_documento",
     );
     expect(registrations?.indexes?.join(" ")).toContain("idx_inscripciones_cupo");
+
+    const administrators = pocketBaseSchema.find(
+      (collection) => collection.name === "administradores",
+    );
+    expect(administrators?.viewRule).toContain(
+      '@request.auth.role = "service"',
+    );
   });
 });

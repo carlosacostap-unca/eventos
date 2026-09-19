@@ -180,6 +180,29 @@ h3 {
 .section {
   padding-block: 5rem;
 }
+.landing-header {
+  background: var(--navy);
+  color: white;
+}
+
+.landing-brand {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  padding-block: 1.25rem;
+}
+
+.landing-brand h1 {
+  margin: 0;
+  color: white;
+  font-size: clamp(2rem, 4vw, 3rem);
+}
+
+.landing-logo {
+  width: clamp(4rem, 7vw, 5.5rem);
+  height: auto;
+  object-fit: contain;
+}
 
 .section-heading,
 .page-heading {
@@ -248,7 +271,7 @@ h3 {
   padding: 2rem;
 }
 
-.event-content h3 {
+.event-content h2 {
   margin: 1rem 0 0.65rem;
   font-size: 1.8rem;
 }
@@ -569,6 +592,80 @@ h3 {
 .metric-card small {
   color: var(--ink-soft);
 }
+.share-panel {
+  margin-bottom: 1.25rem;
+}
+
+.share-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(240px, 320px);
+  gap: 2rem;
+  align-items: center;
+}
+
+.share-copy {
+  display: grid;
+  gap: 1rem;
+}
+
+.share-copy > p,
+.share-feedback {
+  margin: 0;
+}
+
+.share-url-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.65rem;
+}
+
+.share-url-row input {
+  font-family: monospace;
+}
+
+.share-qr {
+  display: grid;
+  gap: 1rem;
+  justify-items: center;
+}
+
+.share-qr-frame {
+  display: grid;
+  width: min(100%, 300px);
+  aspect-ratio: 1;
+  place-items: center;
+  padding: 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: white;
+  color: var(--ink-soft);
+}
+
+.share-qr-frame img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.share-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.65rem;
+}
+
+.share-feedback {
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.share-feedback-success {
+  color: var(--success);
+}
+
+.share-feedback-error {
+  color: var(--danger);
+}
 
 .step-list {
   display: grid;
@@ -882,6 +979,15 @@ td small {
   background: var(--navy);
   color: white;
 }
+.public-event-logo-link {
+  display: inline-flex;
+}
+
+.public-event-logo {
+  width: clamp(4.75rem, 8vw, 7rem);
+  height: auto;
+  object-fit: contain;
+}
 
 .event-hero-copy {
   max-width: 850px;
@@ -956,6 +1062,10 @@ td small {
 
   .accreditation-layout,
   .certificate-setup {
+    grid-template-columns: 1fr;
+  }
+
+  .share-layout {
     grid-template-columns: 1fr;
   }
 
@@ -1038,6 +1148,10 @@ td small {
   .metric-grid,
   .form-grid,
   .filter-bar {
+    grid-template-columns: 1fr;
+  }
+
+  .share-url-row {
     grid-template-columns: 1fr;
   }
 

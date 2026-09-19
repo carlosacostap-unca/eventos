@@ -1,3 +1,5 @@
+import { createHash } from "node:crypto";
+
 import { EncryptJWT, jwtDecrypt } from "jose";
 
 export const ADMIN_SESSION_COOKIE = "eventos_admin_session";
@@ -10,7 +12,7 @@ export type AdminSession = {
 };
 
 function secretKey(secret: string) {
-  return new TextEncoder().encode(secret);
+  return createHash("sha256").update(secret, "utf8").digest();
 }
 
 export function adminCookieOptions(isProduction: boolean) {

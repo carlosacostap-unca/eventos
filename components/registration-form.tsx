@@ -38,14 +38,14 @@ export function RegistrationForm({ slug }: { slug: string }) {
               <FieldError errors={state.fields?.apellidos} />
             </label>
             <label className="field">
-              <span>Email</span>
-              <input name="email" type="email" autoComplete="email" required />
-              <FieldError errors={state.fields?.email} />
-            </label>
-            <label className="field">
               <span>Número de documento</span>
               <input name="documento" inputMode="numeric" required />
               <FieldError errors={state.fields?.documento} />
+            </label>
+            <label className="field">
+              <span>Email</span>
+              <input name="email" type="email" autoComplete="email" required />
+              <FieldError errors={state.fields?.email} />
             </label>
           </div>
           <p className="privacy-note">

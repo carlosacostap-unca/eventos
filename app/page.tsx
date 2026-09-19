@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 
 import { getRegistrationAvailability } from "@/lib/domain/events";
@@ -35,41 +36,23 @@ export default async function Home() {
 
   return (
     <main>
-      <section className="hero">
-        <div className="container hero-grid">
-          <div>
-            <span className="brand-mark">UNCA</span>
-            <p className="eyebrow">Universidad Nacional de Catamarca</p>
-            <h1>Encuentros que dejan huella.</h1>
-            <p className="hero-copy">
-              Descubrí jornadas, conferencias y actividades abiertas. Inscribite en
-              pocos pasos y recibí tu certificado después de participar.
-            </p>
-          </div>
-          <div className="hero-card" aria-hidden="true">
-            <span>Agenda</span>
-            <strong>{events.length}</strong>
-            <small>
-              {events.length === 1 ? "evento publicado" : "eventos publicados"}
-            </small>
-          </div>
+      <header className="landing-header">
+        <div className="container landing-brand">
+          <Image
+            className="landing-logo"
+            src="/images/logo-ftyca-blanco.png"
+            alt="Facultad de Tecnología y Ciencias Aplicadas"
+            width={80}
+            height={94}
+            priority
+          />
+          <h1>Eventos</h1>
         </div>
-      </section>
-
+      </header>
       <section className="container section">
-        <div className="section-heading">
-          <div>
-            <p className="eyebrow">Próximas actividades</p>
-            <h2>Elegí tu próximo evento</h2>
-          </div>
-          <Link className="text-link" href="/iniciar-sesion">
-            Acceso administrativo
-          </Link>
-        </div>
-
         {cards.length === 0 ? (
           <div className="empty-state">
-            <h3>No hay eventos publicados todavía</h3>
+            <h2>No hay eventos publicados todavía</h2>
             <p>Volvé pronto para conocer las próximas actividades.</p>
           </div>
         ) : (
@@ -88,7 +71,7 @@ export default async function Home() {
                   <span className={"badge badge-" + availability}>
                     {availabilityLabels[availability]}
                   </span>
-                  <h3>{event.titulo}</h3>
+                  <h2>{event.titulo}</h2>
                   <p>{event.descripcion}</p>
                   <dl className="event-meta">
                     <div>
