@@ -25,6 +25,8 @@ describe("modelos de dominio", () => {
       estado: "publicado",
     };
     expect(eventInputSchema.safeParse(base).success).toBe(true);
+    expect(eventInputSchema.safeParse({ ...base, slug: "admin" }).success).toBe(false);
+    expect(eventInputSchema.safeParse({ ...base, slug: "eventos" }).success).toBe(false);
     expect(
       eventInputSchema.safeParse({ ...base, fin: "2027-05-20T09:00:00.000Z" }).success,
     ).toBe(false);

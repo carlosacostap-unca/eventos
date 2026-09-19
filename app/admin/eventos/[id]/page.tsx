@@ -42,7 +42,7 @@ export default async function EventDashboardPage({
           <h1>{event.titulo}</h1>
           <p>{eventTypeName(event.tipo_evento, types)} · {event.lugar}</p>
         </div>
-        <Link className="button button-secondary" href={"/eventos/" + event.slug}>
+        <Link className="button button-secondary" href={"/" + event.slug}>
           Ver página pública
         </Link>
       </div>
@@ -73,7 +73,7 @@ export default async function EventDashboardPage({
 
       <EventSharePanel
         eventTitle={event.titulo}
-        publicPath={`/eventos/${encodeURIComponent(event.slug)}`}
+        publicPath={`/${encodeURIComponent(event.slug)}`}
         slug={event.slug}
       />
 

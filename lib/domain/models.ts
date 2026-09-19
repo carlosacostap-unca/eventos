@@ -4,6 +4,19 @@ export const EVENT_STATUS = ["borrador", "publicado", "finalizado"] as const;
 export const REGISTRATION_SOURCE = ["publica", "presencial"] as const;
 export const DELIVERY_STATUS = ["pendiente", "enviado", "fallido"] as const;
 
+const reservedPublicSlugs = new Set([
+  "admin",
+  "api",
+  "eventos",
+  "iniciar-sesion",
+  "icon",
+  "favicon",
+  "apple-icon",
+  "manifest",
+  "robots",
+  "sitemap",
+]);
+
 const requiredText = (label: string, min = 2, max = 160) =>
   z
     .string()
@@ -21,7 +34,8 @@ export const eventInputSchema = z
       .trim()
       .min(3, "El identificador público es obligatorio")
       .max(100)
-      .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Usá minúsculas, números y guiones"),
+      .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Usá minúsculas, números y guiones")
+      .refine((slug) => !reservedPublicSlugs.has(slug), "Ese identificador público está reservado"),
     inicio: z.coerce.date(),
     fin: z.coerce.date(),
     lugar: requiredText("El lugar", 2, 240),

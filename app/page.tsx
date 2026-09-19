@@ -88,7 +88,7 @@ export default async function Home() {
                   </dl>
                   <Link
                     className="button button-primary"
-                    href={"/eventos/" + event.slug}
+                    href={"/" + event.slug}
                   >
                     Ver evento
                   </Link>

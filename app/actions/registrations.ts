@@ -35,7 +35,7 @@ export async function registerAction(
 
   try {
     await registerPublic(event, parsed.data);
-    revalidatePath("/eventos/" + slug);
+    revalidatePath("/" + slug);
     return {
       ok: true,
       message: "Tu inscripción quedó confirmada. Te esperamos en el evento.",
