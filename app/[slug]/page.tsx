@@ -22,6 +22,23 @@ function formatDate(value: string) {
   }).format(new Date(value));
 }
 
+function formatDuration(start: string, end: string) {
+  const totalMinutes = Math.round((Date.parse(end) - Date.parse(start)) / 60000);
+  if (!Number.isFinite(totalMinutes) || totalMinutes <= 0) return "No especificada";
+
+  const days = Math.floor(totalMinutes / 1440);
+  const hours = Math.floor((totalMinutes % 1440) / 60);
+  const minutes = totalMinutes % 60;
+  const parts = [
+    days ? `${days} ${days === 1 ? "día" : "días"}` : "",
+    hours ? `${hours} ${hours === 1 ? "hora" : "horas"}` : "",
+    minutes ? `${minutes} ${minutes === 1 ? "minuto" : "minutos"}` : "",
+  ].filter(Boolean);
+  return parts.length === 1
+    ? parts[0]
+    : `${parts.slice(0, -1).join(", ")} y ${parts.at(-1)}`;
+}
+
 export default async function PublicEventPage({
   params,
 }: {
@@ -68,6 +85,10 @@ export default async function PublicEventPage({
               <div>
                 <dt>Fecha y hora</dt>
                 <dd>{formatDate(event.inicio)}</dd>
+              </div>
+              <div>
+                <dt>Duración</dt>
+                <dd>{formatDuration(event.inicio, event.fin)}</dd>
               </div>
               <div>
                 <dt>Lugar</dt>
