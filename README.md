@@ -29,11 +29,11 @@ El comando siguiente importa las colecciones, campos, reglas e índices y sincro
 
     npm run schema:apply
 
-Para actualizar solamente el esquema de una instancia ya configurada, sin cambiar las contraseñas de las cuentas, ejecutá:
+Para actualizar solamente el esquema de una instancia ya configurada, sin cambiar las contraseñas de las cuentas, y migrar las vinculaciones existentes de disertantes, ejecutá:
 
     npm run schema:import
 
-Se puede ejecutar nuevamente después de un despliegue: usa identificadores estables, actualiza el esquema y no elimina datos ajenos al manifiesto. Para comprobar una instalación nueva, ejecutalo dos veces y confirmá que ambas corridas finalicen con “Esquema de PocketBase actualizado correctamente”.
+Se puede ejecutar nuevamente después de un despliegue: usa identificadores estables, actualiza el esquema y no elimina datos ajenos al manifiesto. Para comprobar una instalación nueva, ejecutalo dos veces y confirmá que la segunda corrida indique 0 vinculaciones de disertantes migradas.
 
 Colecciones creadas:
 
@@ -42,12 +42,13 @@ Colecciones creadas:
 - tipos_evento
 - eventos
 - disertantes
+- participaciones_disertantes
 - inscripciones
 - auditoria
 - certificados
 - envios_certificados
 
-Los índices únicos impiden repetir el slug de un evento, el documento de una persona dentro del mismo evento, el número de cupo público y el certificado o trabajo de correo asociado.
+Los índices únicos impiden repetir el slug de un evento, el documento de una persona dentro del mismo evento, el número de cupo público, la participación de un disertante en un mismo evento y el certificado o trabajo de correo asociado.
 
 ## Desarrollo y verificación
 
@@ -64,7 +65,7 @@ La aplicación queda disponible en http://localhost:3000. El acceso administrati
 1. Iniciá sesión con una cuenta de la colección administradores. También se acepta el superusuario de PocketBase configurado en el despliegue.
 2. En Tipos de eventos, creá las categorías necesarias; podés editarlas y desactivarlas sin cambiar los eventos existentes.
 3. Creá un evento, asignale un tipo, indicá si es gratuito y si se entregará certificado, y dejalo como borrador o con la inscripción deshabilitada.
-4. En la pestaña Disertantes agregá tantas personas como necesites, con título, nombre, universidad(es) y foto JPG, PNG o WebP de hasta 5 MB. Revisá su página pública en /identificador-publico y, cuando corresponda, publicalo y habilitá la inscripción. Los enlaces antiguos /eventos/identificador-publico redirigen a la URL corta.
+4. En la pestaña Disertantes agregá personas nuevas o reutilizá perfiles ya cargados en otros eventos, incluidos sus datos y foto. Las fotos nuevas admiten JPG, PNG o WebP de hasta 5 MB. Quitar un disertante de un evento solo elimina su participación; editar su perfil actualiza todos los eventos donde participa. Revisá la página pública en /identificador-publico y, cuando corresponda, publicá el evento y habilitá la inscripción. Los enlaces antiguos /eventos/identificador-publico redirigen a la URL corta.
 5. Durante el evento, usá Acreditación para marcar asistentes o crear altas presenciales. Estas altas se acreditan de inmediato y pueden superar el cupo público.
 6. En Certificados, validá la vista previa, generá el lote y controlá la cola.
 7. En Reportes, filtrá participantes y exportá CSV.

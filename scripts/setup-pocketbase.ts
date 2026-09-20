@@ -3,6 +3,7 @@ import { pathToFileURL } from "node:url";
 import { loadEnvConfig } from "@next/env";
 import PocketBase, { ClientResponseError } from "pocketbase";
 
+import { migrateSpeakerLinks } from "../lib/pocketbase/migrate-speaker-links";
 import { pocketBaseSchema } from "../lib/pocketbase/schema";
 import { deriveServiceCredentials } from "../lib/pocketbase/service-credentials";
 
@@ -59,6 +60,7 @@ async function main() {
 
   await pb.collection("_superusers").authWithPassword(email, password);
   await applyPocketBaseSchema(pb);
+  const migrated = await migrateSpeakerLinks(pb);
 
   const service = deriveServiceCredentials({
     url,
@@ -78,7 +80,7 @@ async function main() {
     role: "admin",
   });
 
-  console.log("Esquema y accesos de PocketBase actualizados correctamente.");
+  console.log(`Esquema y accesos actualizados; vinculaciones de disertantes migradas: ${migrated}.`);
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {

@@ -1,6 +1,7 @@
 import { loadEnvConfig } from "@next/env";
 import PocketBase from "pocketbase";
 
+import { migrateSpeakerLinks } from "../lib/pocketbase/migrate-speaker-links";
 import { pocketBaseSchema } from "../lib/pocketbase/schema";
 
 loadEnvConfig(process.cwd());
@@ -17,7 +18,8 @@ async function main() {
   pb.autoCancellation(false);
   await pb.collection("_superusers").authWithPassword(email, password);
   await pb.collections.import(pocketBaseSchema, false);
-  console.log("Esquema de PocketBase actualizado sin modificar las cuentas.");
+  const migrated = await migrateSpeakerLinks(pb);
+  console.log(`Esquema actualizado; vinculaciones de disertantes migradas: ${migrated}.`);
 }
 
 main().catch((error) => {

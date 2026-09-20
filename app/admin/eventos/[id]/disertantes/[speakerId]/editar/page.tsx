@@ -5,7 +5,7 @@ import { EventAdminNav } from "@/components/event-admin-nav";
 import { SpeakerForm } from "@/components/speaker-form";
 import { SpeakerCard } from "@/components/speaker-card";
 import { getEventById } from "@/lib/services/events";
-import { getSpeakerById } from "@/lib/services/speakers";
+import { getSpeakerById, isSpeakerLinkedToEvent } from "@/lib/services/speakers";
 
 export default async function EditSpeakerPage({
   params,
@@ -13,11 +13,12 @@ export default async function EditSpeakerPage({
   params: Promise<{ id: string; speakerId: string }>;
 }) {
   const { id, speakerId } = await params;
-  const [event, speaker] = await Promise.all([
+  const [event, speaker, linked] = await Promise.all([
     getEventById(id),
     getSpeakerById(speakerId),
+    isSpeakerLinkedToEvent(id, speakerId),
   ]);
-  if (!event || !speaker || speaker.evento !== id) notFound();
+  if (!event || !speaker || !linked) notFound();
 
   return (
     <main className="admin-main narrow">
@@ -32,6 +33,7 @@ export default async function EditSpeakerPage({
       </div>
       <EventAdminNav event={event} />
       <div className="speaker-edit-preview"><SpeakerCard speaker={speaker} unoptimized /></div>
+      <p className="muted">Los cambios de este perfil se verán en todos los eventos donde participe.</p>
       <SpeakerForm eventId={id} speaker={speaker} />
     </main>
   );

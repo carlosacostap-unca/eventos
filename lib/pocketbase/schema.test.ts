@@ -10,6 +10,7 @@ describe("esquema PocketBase", () => {
       "tipos_evento",
       "eventos",
       "disertantes",
+      "participaciones_disertantes",
       "inscripciones",
       "auditoria",
       "certificados",
@@ -21,6 +22,14 @@ describe("esquema PocketBase", () => {
     expect(events?.fields.some((field) => field.name === "certificado_asistencia")).toBe(true);
     const speakers = pocketBaseSchema.find((collection) => collection.name === "disertantes");
     expect(speakers?.fields.some((field) => field.name === "foto")).toBe(true);
+    const origin = speakers?.fields.find((field) => field.name === "evento");
+    expect(origin).toMatchObject({ cascadeDelete: false });
+    const links = pocketBaseSchema.find(
+      (collection) => collection.name === "participaciones_disertantes",
+    );
+    expect(links?.indexes?.join(" ")).toContain(
+      "idx_participaciones_evento_disertante",
+    );
     const registrations = pocketBaseSchema.find(
       (collection) => collection.name === "inscripciones",
     );

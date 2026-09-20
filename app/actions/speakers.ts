@@ -11,8 +11,11 @@ import { audit } from "@/lib/services/audit";
 import { getEventById } from "@/lib/services/events";
 import {
   createSpeaker,
-  deleteSpeaker,
   getSpeakerById,
+  isSpeakerLinkedToEvent,
+  linkSpeakerToEvent,
+  listSpeakerEventIds,
+  unlinkSpeakerFromEvent,
   updateSpeaker,
 } from "@/lib/services/speakers";
 
@@ -61,6 +64,39 @@ export async function createSpeakerAction(
   redirect("/admin/eventos/" + eventId + "/disertantes");
 }
 
+export async function linkExistingSpeakerAction(
+  eventId: string,
+  _state: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const admin = await requireAdmin();
+  const speakerId = formData.get("disertante");
+  if (typeof speakerId !== "string" || !/^[a-z0-9]{15}$/.test(speakerId)) {
+    return { fields: { disertante: ["Seleccioná un disertante."] } };
+  }
+  const [event, speaker] = await Promise.all([
+    getEventById(eventId),
+    getSpeakerById(speakerId),
+  ]);
+  if (!event || !speaker) return { message: "El evento o el disertante ya no existe." };
+
+  try {
+    const linked = await linkSpeakerToEvent(eventId, speakerId);
+    if (!linked) return { message: "Este disertante ya participa en el evento." };
+    await audit({
+      adminId: admin.adminId,
+      action: "disertante.vinculado",
+      entity: "disertante",
+      entityId: speakerId,
+      data: { evento: eventId, nombre: speaker.nombre },
+    });
+  } catch {
+    return { message: "No se pudo vincular el disertante. Intentá nuevamente." };
+  }
+  refreshEvent(eventId, event.slug);
+  redirect("/admin/eventos/" + eventId + "/disertantes");
+}
+
 export async function updateSpeakerAction(
   eventId: string,
   speakerId: string,
@@ -73,11 +109,12 @@ export async function updateSpeakerAction(
   const validation = await validateSpeakerPhoto(formData.get("foto"), false);
   if (validation.error) return { fields: { foto: [validation.error] } };
 
-  const [event, speaker] = await Promise.all([
+  const [event, speaker, linked] = await Promise.all([
     getEventById(eventId),
     getSpeakerById(speakerId),
+    isSpeakerLinkedToEvent(eventId, speakerId),
   ]);
-  if (!event || !speaker || speaker.evento !== eventId) {
+  if (!event || !speaker || !linked) {
     return { message: "El disertante no pertenece a este evento." };
   }
   try {
@@ -92,26 +129,26 @@ export async function updateSpeakerAction(
   } catch {
     return { message: "No se pudo guardar el disertante. Intentá nuevamente." };
   }
-  refreshEvent(eventId, event.slug);
+  const eventIds = await listSpeakerEventIds(speakerId);
+  const events = await Promise.all(eventIds.map(getEventById));
+  for (const linkedEvent of events) {
+    if (linkedEvent) refreshEvent(linkedEvent.id, linkedEvent.slug);
+  }
   redirect("/admin/eventos/" + eventId + "/disertantes");
 }
 
-export async function deleteSpeakerAction(
-  eventId: string,
-  speakerId: string,
-) {
+export async function unlinkSpeakerAction(eventId: string, speakerId: string) {
   const admin = await requireAdmin();
   const [event, speaker] = await Promise.all([
     getEventById(eventId),
     getSpeakerById(speakerId),
   ]);
-  if (!event || !speaker || speaker.evento !== eventId) {
+  if (!event || !speaker || !(await unlinkSpeakerFromEvent(eventId, speakerId))) {
     redirect("/admin/eventos/" + eventId + "/disertantes");
   }
-  await deleteSpeaker(speakerId);
   await audit({
     adminId: admin.adminId,
-    action: "disertante.eliminado",
+    action: "disertante.desvinculado",
     entity: "disertante",
     entityId: speakerId,
     data: { evento: eventId, nombre: speaker.nombre },

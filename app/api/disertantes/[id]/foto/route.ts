@@ -2,7 +2,7 @@ import { getAuthenticatedAdmin } from "@/lib/auth/session";
 import type { SpeakerRecord } from "@/lib/domain/models";
 import { createServicePocketBase } from "@/lib/pocketbase/client";
 import { getEventById } from "@/lib/services/events";
-import { getSpeakerById } from "@/lib/services/speakers";
+import { getSpeakerById, listSpeakerEventIds } from "@/lib/services/speakers";
 import type { RecordModel } from "pocketbase";
 
 export const dynamic = "force-dynamic";
@@ -14,8 +14,10 @@ export async function GET(
   const { id } = await params;
   const speaker = await getSpeakerById(id);
   if (!speaker?.foto) return new Response("Foto no encontrada.", { status: 404 });
-  const event = await getEventById(speaker.evento);
-  if (!event || (event.estado === "borrador" && !(await getAuthenticatedAdmin()))) {
+  const eventIds = await listSpeakerEventIds(id);
+  const events = await Promise.all(eventIds.map(getEventById));
+  if (!events.some((event) => event && event.estado !== "borrador") &&
+      !(await getAuthenticatedAdmin())) {
     return new Response("Foto no encontrada.", { status: 404 });
   }
 

@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { deleteSpeakerAction } from "@/app/actions/speakers";
+import { unlinkSpeakerAction } from "@/app/actions/speakers";
 import { EventAdminNav } from "@/components/event-admin-nav";
 import { SpeakerCard } from "@/components/speaker-card";
 import { SpeakerForm } from "@/components/speaker-form";
+import { SpeakerReuseForm } from "@/components/speaker-reuse-form";
 import { getEventById } from "@/lib/services/events";
-import { listSpeakersByEvent } from "@/lib/services/speakers";
+import { listAllSpeakers, listSpeakersByEvent } from "@/lib/services/speakers";
 
 export default async function EventSpeakersPage({
   params,
@@ -16,7 +17,12 @@ export default async function EventSpeakersPage({
   const { id } = await params;
   const event = await getEventById(id);
   if (!event) notFound();
-  const speakers = await listSpeakersByEvent(id);
+  const [speakers, catalog] = await Promise.all([
+    listSpeakersByEvent(id),
+    listAllSpeakers(),
+  ]);
+  const linkedIds = new Set(speakers.map((speaker) => speaker.id));
+  const availableSpeakers = catalog.filter((speaker) => !linkedIds.has(speaker.id));
 
   return (
     <main className="admin-main">
@@ -46,8 +52,8 @@ export default async function EventSpeakersPage({
                   >
                     Editar
                   </Link>
-                  <form action={deleteSpeakerAction.bind(null, id, speaker.id)}>
-                    <button className="text-button" type="submit">Eliminar</button>
+                  <form action={unlinkSpeakerAction.bind(null, id, speaker.id)}>
+                    <button className="text-button" type="submit">Quitar del evento</button>
                   </form>
                 </div>
               </div>
@@ -59,7 +65,17 @@ export default async function EventSpeakersPage({
       </section>
 
       <section className="speakers-admin-section narrow">
-        <h2>Agregar disertante</h2>
+        <h2>Reutilizar disertante</h2>
+        <p className="muted">Elegí un perfil ya cargado para usar su nombre, universidades y foto en este evento.</p>
+        {availableSpeakers.length ? (
+          <SpeakerReuseForm eventId={id} speakers={availableSpeakers} />
+        ) : (
+          <p>No hay otros disertantes disponibles todavía.</p>
+        )}
+      </section>
+
+      <section className="speakers-admin-section narrow">
+        <h2>Agregar nuevo disertante</h2>
         <SpeakerForm eventId={id} />
       </section>
     </main>

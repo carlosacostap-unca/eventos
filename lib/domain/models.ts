@@ -81,7 +81,7 @@ export const speakerInputSchema = z.object({
 export type SpeakerInput = z.infer<typeof speakerInputSchema>;
 export type SpeakerRecord = SpeakerInput & {
   id: string;
-  evento: string;
+  evento?: string;
   foto: string;
   created: string;
   updated: string;
