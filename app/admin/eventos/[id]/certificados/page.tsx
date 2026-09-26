@@ -1,22 +1,13 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import {
-  generateCertificatesAction,
-  requeueDeliveryAction,
-} from "@/app/actions/certificates";
+import { generateCertificatesAction } from "@/app/actions/certificates";
 import { uploadTemplateAction } from "@/app/actions/events";
 import { EventAdminNav } from "@/components/event-admin-nav";
 import { offersAttendanceCertificate } from "@/lib/domain/event-details";
 import { getEventById } from "@/lib/services/events";
 import { listCertificateRows } from "@/lib/services/certificates";
 import { listRegistrations } from "@/lib/services/registrations";
-
-const statusLabels = {
-  pendiente: "Pendiente",
-  enviado: "Enviado",
-  fallido: "Fallido",
-} as const;
 
 export default async function CertificatesPage({
   params,
@@ -42,8 +33,6 @@ export default async function CertificatesPage({
     listRegistrations(id),
   ]);
   const accredited = registrations.filter((item) => item.acreditado).length;
-  const sent = rows.filter((row) => row.delivery.estado === "enviado").length;
-  const failed = rows.filter((row) => row.delivery.estado === "fallido").length;
 
   return (
     <main className="admin-main">
@@ -108,7 +97,7 @@ export default async function CertificatesPage({
           </div>
           <p className="muted">
             Podés usar la plantilla institucional incluida o cargar un fondo PDF,
-            PNG o JPG. La vista previa nunca crea certificados ni envíos.
+            PNG o JPG. La vista previa nunca crea certificados.
           </p>
           <form
             className="upload-form"
@@ -134,11 +123,11 @@ export default async function CertificatesPage({
           <h2>Generar lote</h2>
           <p>
             Hay <strong>{accredited}</strong> personas acreditadas. Solo ellas
-            recibirán certificado.
+            tendrán certificado disponible en el portal público.
           </p>
           <form action={generateCertificatesAction.bind(null, id)}>
             <button className="button button-primary" type="submit">
-              Generar y encolar certificados
+              Generar certificados
             </button>
           </form>
           <small>Repetir el lote reutiliza certificados existentes.</small>
@@ -149,13 +138,11 @@ export default async function CertificatesPage({
       <section className="panel">
         <div className="section-heading compact">
           <div>
-            <p className="eyebrow">Cola de correo</p>
-            <h2>Estado de los envíos</h2>
+            <p className="eyebrow">Documentos emitidos</p>
+            <h2>Certificados generados</h2>
           </div>
           <div className="inline-stats">
             <span>{rows.length} generados</span>
-            <span>{sent} enviados</span>
-            <span>{failed} fallidos</span>
           </div>
         </div>
 
@@ -164,36 +151,23 @@ export default async function CertificatesPage({
             <thead>
               <tr>
                 <th>Participante</th>
-                <th>Estado</th>
-                <th>Intentos</th>
-                <th>Último detalle</th>
+                <th>Generado</th>
                 <th>Acciones</th>
               </tr>
             </thead>
             <tbody>
-              {rows.map(({ delivery, registration, certificate }) => (
-                <tr key={delivery.id}>
+              {rows.map(({ registration, certificate }) => (
+                <tr key={certificate.id}>
                   <td>
                     <strong>
                       {registration.apellidos}, {registration.nombres}
                     </strong>
                     <small>{registration.email}</small>
                   </td>
-                  <td>
-                    <span className={"status-dot status-" + delivery.estado}>
-                      {statusLabels[delivery.estado]}
-                    </span>
-                  </td>
-                  <td>{delivery.intentos}</td>
-                  <td className="error-cell">
-                    {delivery.error ||
-                      (delivery.enviado_en
-                        ? new Intl.DateTimeFormat("es-AR", {
-                            dateStyle: "short",
-                            timeStyle: "short",
-                          }).format(new Date(delivery.enviado_en))
-                        : "A la espera del procesador")}
-                  </td>
+                  <td>{new Intl.DateTimeFormat("es-AR", {
+                    dateStyle: "short",
+                    timeStyle: "short",
+                  }).format(new Date(certificate.generado_en))}</td>
                   <td>
                     <div className="row-actions">
                       <a
@@ -202,15 +176,6 @@ export default async function CertificatesPage({
                       >
                         Descargar
                       </a>
-                      {enabled && delivery.estado !== "pendiente" ? (
-                        <form action={requeueDeliveryAction}>
-                          <input type="hidden" name="deliveryId" value={delivery.id} />
-                          <input type="hidden" name="eventId" value={event.id} />
-                          <button className="text-button" type="submit">
-                            Reenviar
-                          </button>
-                        </form>
-                      ) : null}
                     </div>
                   </td>
                 </tr>

@@ -15,14 +15,14 @@ El contenido está en español. Los controles fijos del visor y su atributo HTML
 | Validación, cupos, métricas y CSV | `lib/domain/` |
 | Cliente y esquema de PocketBase | `lib/pocketbase/client.ts`, `lib/pocketbase/factory.ts`, `lib/pocketbase/schema.ts` |
 | Certificados PDF | `lib/services/certificates.ts`, `lib/certificates/pdf.ts` |
-| Procesamiento y SMTP | `app/api/internal/certificados/procesar/route.ts`, `lib/email/queue.ts`, `lib/email/mailer.ts` |
+| Portal y autorización de certificados | `app/mis-certificados/`, `app/api/certificados/[id]/route.ts`, `lib/certificates/public-access.ts`, `lib/services/certificate-lookup.ts` |
 | Configuración operativa | `README.md`, `scripts/setup-pocketbase.ts`, `nixpacks.toml` |
 
-Las flechas representan invocaciones o accesos iniciados por el origen; las respuestas están implícitas. Los servicios de negocio y el procesador de correo son módulos del mismo servidor Next.js. El login y la renovación del token acceden directamente a PocketBase desde la capa de autenticación; se resumen en la tarjeta de acceso para mantener el mapa legible.
+Las flechas representan invocaciones o accesos iniciados por el origen; las respuestas están implícitas. El login y la renovación del token acceden directamente a PocketBase desde la capa de autenticación; se resumen en la tarjeta de acceso para mantener el mapa legible.
 
-PocketBase contiene siete colecciones: administradores, cuentas_servicio, eventos, inscripciones, auditoria, certificados y envios_certificados. La cola es esta última colección. El procesador consulta pendientes, obtiene el PDF, envía con Nodemailer y guarda el resultado e historial. El panel permite reencolar fallos.
+PocketBase guarda administradores, la cuenta técnica, eventos, inscripciones, auditoría, certificados y límites de consulta. `envios_certificados` se conserva como historial, pero ya no recibe escrituras. El portal busca una coincidencia exacta de DNI y email, aplica un límite persistente mediante una clave HMAC y emite una autorización firmada de corta duración para los PDF encontrados.
 
-La generación de PDF ocurre durante la acción administrativa; únicamente el envío queda pendiente. El programador externo debe configurarse para invocar el endpoint protegido. El esquema se aprovisiona por separado mediante `npm run schema:apply`, usando credenciales administrativas. Las operaciones habituales utilizan una cuenta técnica con reglas de colección.
+La generación de PDF ocurre durante la acción administrativa y el asistente lo descarga desde el portal público. No se requiere correo ni un programador externo. El esquema se aprovisiona por separado mediante `npm run schema:apply`, usando credenciales administrativas. Las operaciones habituales utilizan una cuenta técnica con reglas de colección.
 
 ## Archivos y comprobación
 

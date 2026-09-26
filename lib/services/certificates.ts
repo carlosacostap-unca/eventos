@@ -7,12 +7,9 @@ import { DomainError } from "@/lib/domain/errors";
 import { offersAttendanceCertificate } from "@/lib/domain/event-details";
 import type {
   CertificateRecord,
-  DeliveryRecord,
   EventRecord,
   RegistrationRecord,
 } from "@/lib/domain/models";
-import { processDeliveryAttempt } from "@/lib/email/queue";
-import { sendCertificateEmail } from "@/lib/email/mailer";
 import { createServicePocketBase } from "@/lib/pocketbase/client";
 import { audit } from "@/lib/services/audit";
 import { getEventById } from "@/lib/services/events";
@@ -20,10 +17,6 @@ import { listRegistrations } from "@/lib/services/registrations";
 
 function toCertificate(record: RecordModel): CertificateRecord {
   return record as unknown as CertificateRecord;
-}
-
-function toDelivery(record: RecordModel): DeliveryRecord {
-  return record as unknown as DeliveryRecord;
 }
 
 async function fetchProtectedFile(
@@ -57,21 +50,6 @@ async function findCertificate(registrationId: string) {
   }
 }
 
-async function findDelivery(certificateId: string) {
-  const pb = await createServicePocketBase();
-  try {
-    return toDelivery(
-      await pb
-        .collection("envios_certificados")
-        .getFirstListItem(
-          pb.filter("certificado = {:certificateId}", { certificateId }),
-        ),
-    );
-  } catch {
-    return null;
-  }
-}
-
 async function loadTemplate(event: EventRecord) {
   if (!event.plantilla_certificado) return undefined;
   return fetchProtectedFile(
@@ -92,6 +70,7 @@ export async function previewCertificate(eventId: string) {
       id: "vista-previa",
       nombres: "Nombre",
       apellidos: "Apellido",
+      documento: "00.000.000",
     },
     template: await loadTemplate(event),
   });
@@ -135,17 +114,6 @@ export async function generateCertificates(eventId: string, adminId: string) {
       reused += 1;
     }
 
-    if (!(await findDelivery(certificate.id))) {
-      const pb = await createServicePocketBase();
-      await pb.collection("envios_certificados").create({
-        evento: event.id,
-        inscripcion: registration.id,
-        certificado: certificate.id,
-        estado: "pendiente",
-        intentos: 0,
-        historial: [],
-      });
-    }
   }
 
   await audit({
@@ -160,110 +128,28 @@ export async function generateCertificates(eventId: string, adminId: string) {
 }
 
 export type CertificateRow = {
-  delivery: DeliveryRecord;
   registration: RegistrationRecord;
   certificate: CertificateRecord;
 };
 
 export async function listCertificateRows(eventId: string): Promise<CertificateRow[]> {
   const pb = await createServicePocketBase();
-  const records = await pb.collection("envios_certificados").getFullList({
+  const records = await pb.collection("certificados").getFullList({
     filter: pb.filter("evento = {:eventId}", { eventId }),
-    sort: "created",
-    expand: "inscripcion,certificado",
+    sort: "generado_en",
+    expand: "inscripcion",
   });
 
   return records.flatMap((record) => {
-    const expanded = record.expand as
-      | { inscripcion?: RecordModel; certificado?: RecordModel }
-      | undefined;
-    if (!expanded?.inscripcion || !expanded.certificado) return [];
+    const expanded = record.expand as { inscripcion?: RecordModel } | undefined;
+    if (!expanded?.inscripcion) return [];
     return [
       {
-        delivery: toDelivery(record),
         registration: expanded.inscripcion as unknown as RegistrationRecord,
-        certificate: toCertificate(expanded.certificado),
+        certificate: toCertificate(record),
       },
     ];
   });
-}
-
-export async function requeueDelivery(deliveryId: string, adminId: string) {
-  const pb = await createServicePocketBase();
-  const current = toDelivery(await pb.collection("envios_certificados").getOne(deliveryId));
-  const event = await getEventById(current.evento);
-  if (!event || !offersAttendanceCertificate(event)) {
-    throw new DomainError("DISABLED", "Este evento no entrega certificados.");
-  }
-  const delivery = toDelivery(
-    await pb.collection("envios_certificados").update(deliveryId, {
-      estado: "pendiente",
-      error: "",
-    }),
-  );
-  await audit({
-    adminId,
-    action: "certificado.reenvio_solicitado",
-    entity: "envio_certificado",
-    entityId: deliveryId,
-  });
-  return delivery;
-}
-
-async function loadDeliveryPayload(delivery: DeliveryRecord) {
-  const pb = await createServicePocketBase();
-  const registration = (await pb
-    .collection("inscripciones")
-    .getOne(delivery.inscripcion)) as unknown as RegistrationRecord;
-  const event = (await pb
-    .collection("eventos")
-    .getOne(delivery.evento)) as unknown as EventRecord;
-  const certificate = toCertificate(
-    await pb.collection("certificados").getOne(delivery.certificado),
-  );
-  const file = await fetchProtectedFile(
-    certificate as unknown as RecordModel,
-    certificate.archivo,
-  );
-  return { registration, event, certificate, file };
-}
-
-export async function processPendingDeliveries(limit = 20) {
-  const pb = await createServicePocketBase();
-  const page = await pb.collection("envios_certificados").getList(1, limit, {
-    filter: 'estado = "pendiente"',
-    sort: "created",
-  });
-
-  const results = { processed: 0, sent: 0, failed: 0 };
-  for (const record of page.items) {
-    const delivery = toDelivery(record);
-    const payload = await loadDeliveryPayload(delivery);
-    const status = await processDeliveryAttempt(delivery, {
-      send: () => {
-        if (!offersAttendanceCertificate(payload.event)) {
-          throw new DomainError("DISABLED", "Este evento no entrega certificados.");
-        }
-        return sendCertificateEmail({
-          to: payload.registration.email,
-          participantName:
-            payload.registration.nombres + " " + payload.registration.apellidos,
-          eventTitle: payload.event.titulo,
-          pdf: payload.file.bytes,
-          filename: payload.certificate.archivo,
-        });
-      },
-      update: async (data) => {
-        const updateClient = await createServicePocketBase();
-        await updateClient
-          .collection("envios_certificados")
-          .update(delivery.id, data);
-      },
-    });
-    results.processed += 1;
-    results[status === "enviado" ? "sent" : "failed"] += 1;
-  }
-  return results;
 }
 
 export async function getCertificateDownload(certificateId: string) {

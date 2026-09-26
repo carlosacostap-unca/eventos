@@ -7,7 +7,6 @@ const valid = {
   POCKETBASE_ADMIN_EMAIL: "admin@example.com",
   POCKETBASE_ADMIN_PASSWORD: "clave-segura",
   SESSION_SECRET: "s".repeat(32),
-  INTERNAL_JOBS_SECRET: "j".repeat(32),
 };
 
 describe("configuración del servidor", () => {

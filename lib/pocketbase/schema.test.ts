@@ -15,6 +15,7 @@ describe("esquema PocketBase", () => {
       "auditoria",
       "certificados",
       "envios_certificados",
+      "limites_consulta_certificados",
     ]);
     const events = pocketBaseSchema.find((collection) => collection.name === "eventos");
     expect(events?.fields.some((field) => field.name === "tipo_evento")).toBe(true);
@@ -36,6 +37,9 @@ describe("esquema PocketBase", () => {
     expect(registrations?.indexes?.join(" ")).toContain(
       "idx_inscripciones_documento",
     );
+    expect(registrations?.indexes?.join(" ")).toContain(
+      "idx_inscripciones_documento_global",
+    );
     expect(registrations?.indexes?.join(" ")).toContain("idx_inscripciones_cupo");
 
     const administrators = pocketBaseSchema.find(
@@ -44,5 +48,11 @@ describe("esquema PocketBase", () => {
     expect(administrators?.viewRule).toContain(
       '@request.auth.role = "service"',
     );
+
+    const lookupLimits = pocketBaseSchema.find(
+      (collection) => collection.name === "limites_consulta_certificados",
+    );
+    expect(lookupLimits?.listRule).toContain('@request.auth.role = "service"');
+    expect(lookupLimits?.indexes?.join(" ")).toContain("idx_limites_consulta_clave");
   });
 });

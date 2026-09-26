@@ -1,8 +1,8 @@
 ## 1. Base técnica y PocketBase
 
-- [x] 1.1 Instalar el SDK de PocketBase, validación de esquemas, generación de PDF y el adaptador de correo, y verificar que `npm install` y `npm run build` finalicen correctamente.
-- [x] 1.2 Definir y validar variables de entorno exclusivamente del servidor para PocketBase, sesiones, aprovisionamiento, trabajos internos y correo; verificar que la aplicación falle al iniciar con un mensaje seguro cuando falte una variable obligatoria.
-- [x] 1.3 Implementar tipos y modelos de dominio para eventos, administradores, inscripciones, auditoría, certificados y envíos; verificar con pruebas de validación casos válidos y límites inválidos.
+- [x] 1.1 Instalar el SDK de PocketBase, validación de esquemas y generación de PDF, y verificar que `npm install` y `npm run build` finalicen correctamente.
+- [x] 1.2 Definir y validar variables de entorno exclusivamente del servidor para PocketBase, sesiones y aprovisionamiento; verificar que la aplicación falle al iniciar con un mensaje seguro cuando falte una variable obligatoria.
+- [x] 1.3 Implementar tipos y modelos de dominio para eventos, administradores, inscripciones, auditoría y certificados; verificar con pruebas de validación casos válidos y límites inválidos.
 - [x] 1.4 Crear un comando idempotente de aprovisionamiento de PocketBase para colecciones, campos, reglas e índices únicos; verificar ejecutándolo dos veces en un entorno de prueba sin duplicar ni eliminar datos.
 - [x] 1.5 Implementar clientes PocketBase aislados por solicitud para sesión administrativa y acceso de servicio, sin SDK en módulos cliente; verificar mediante una prueba que dos sesiones concurrentes no compartan autenticación.
 
@@ -34,14 +34,16 @@
 - [x] 5.3 Implementar el alta presencial con validación de duplicados, acreditación inmediata, origen presencial y excepción explícita de cupo; verificar el flujo en un evento completo.
 - [x] 5.4 Crear la interfaz operativa de acreditación con búsqueda rápida, estados visibles, confirmación de excepciones y respuesta inmediata; verificar el flujo completo en pantalla móvil.
 
-## 6. Certificados y correo
+## 6. Certificados y descarga pública
 
 - [x] 6.1 Implementar carga y configuración de una plantilla por evento, incluyendo validación de formato y dimensiones; verificar rechazo de archivos inválidos y persistencia de una plantilla válida.
-- [x] 6.2 Implementar la composición y vista previa PDF con datos de ejemplo; verificar que la vista previa no cree certificados ni trabajos de correo.
+- [x] 6.2 Implementar la composición y vista previa PDF con datos de ejemplo; verificar que la vista previa no cree certificados definitivos.
 - [x] 6.3 Implementar generación idempotente para todas las personas acreditadas y almacenamiento del PDF; verificar que ausentes queden excluidos y que repetir el lote no duplique archivos ni registros.
-- [x] 6.4 Implementar la cola persistente de envíos, el adaptador de correo y el procesador interno autenticado por secreto; verificar estados pendiente, enviado y fallido con un proveedor simulado.
-- [x] 6.5 Implementar reintentos seguros, descarga y reenvío individual desde el panel; verificar que cada intento conserve historial sin regenerar certificados existentes.
-- [x] 6.6 Crear la vista administrativa del lote con progreso y detalle de errores sanitizados; verificar que una falla parcial no marque como enviados los trabajos restantes.
+- [x] 6.4 Incorporar el índice global por documento y el límite persistente de consultas con claves derivadas; verificar ventanas, bloqueo, reinicios y ausencia de DNI o IP en claro.
+- [x] 6.5 Implementar la consulta exacta por documento y email y la autorización temporal limitada a certificados concretos; verificar coincidencias múltiples, respuestas genéricas y vencimiento.
+- [x] 6.6 Crear `/mis-certificados` y la descarga pública protegida, sin caché ni indexación; verificar resultados vacíos, varios eventos, acceso directo rechazado y diseño móvil.
+- [x] 6.7 Refactorizar la generación y la vista administrativa para trabajar directamente con certificados, sin crear trabajos de correo; verificar generación, listado y descarga administrativa.
+- [x] 6.8 Retirar adaptador, procesador, dependencias, variables y documentación de correo sin eliminar automáticamente registros históricos; verificar que no queden rutas programadas ni secretos obsoletos.
 
 ## 7. Estadísticas y exportaciones
 
@@ -52,8 +54,8 @@
 
 ## 8. Integración, seguridad y despliegue
 
-- [ ] 8.1 Añadir pruebas integrales del flujo crear evento -> inscribir -> completar cupo -> acreditar -> agregar presencial -> generar certificado -> enviar -> reportar; verificar que el escenario finalice sin accesos directos del navegador a PocketBase.
+- [x] 8.1 Añadir pruebas integrales del flujo crear evento -> inscribir -> completar cupo -> acreditar -> agregar presencial -> generar certificado -> consultar -> descargar -> reportar; verificar que el escenario finalice sin accesos directos del navegador a PocketBase.
 - [x] 8.2 Revisar caché, mensajes de error y respuestas para evitar exposición de credenciales, tokens o datos personales; verificar con pruebas de rutas públicas y privadas.
-- [x] 8.3 Documentar configuración local y de Dokploy, aprovisionamiento, creación del primer administrador, programador del procesador de correo, rotación de secretos y recuperación; verificar las instrucciones en un entorno limpio.
+- [x] 8.3 Actualizar la documentación local y de Dokploy para la consulta pública, límites, secretos y recuperación, retirando la configuración del procesador de correo; verificar las instrucciones en un entorno limpio.
 - [x] 8.4 Ejecutar lint, pruebas y build de producción, corregir fallos y verificar que todos finalicen correctamente con Node 22.
-- [ ] 8.5 Desplegar primero con inscripciones deshabilitadas, ejecutar una prueba de humo contra PocketBase y el proveedor de correo, y verificar el primer evento de prueba antes de habilitar acceso público.
+- [ ] 8.5 Desplegar primero con inscripciones deshabilitadas, ejecutar una prueba de humo contra PocketBase y el portal de certificados, y verificar el primer evento de prueba antes de habilitar acceso público.

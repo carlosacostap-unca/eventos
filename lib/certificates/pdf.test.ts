@@ -27,11 +27,43 @@ describe("certificados PDF", () => {
         id: "registro1",
         nombres: "Ana",
         apellidos: "Pérez",
+        documento: "35.500.599",
       },
     });
     const document = await PDFDocument.load(bytes);
     expect(document.getPageCount()).toBe(1);
-    expect(bytes.byteLength).toBeGreaterThan(500);
+    expect(document.getPage(0).getSize()).toEqual({ width: 842, height: 595 });
+    expect(bytes.byteLength).toBeGreaterThan(100_000);
+  });
+
+  it("ajusta nombres y títulos extensos sin impedir la generación", async () => {
+    const bytes = await createCertificatePdf({
+      event: {
+        id: "evento-extenso",
+        titulo:
+          "Seminario de actualización profesional en innovación tecnológica, comunicación institucional y desarrollo sostenible",
+        descripcion: "Evento",
+        slug: "seminario-extenso",
+        inicio: "2027-04-02T10:00:00.000Z",
+        fin: "2027-04-02T12:00:00.000Z",
+        lugar: "San Fernando del Valle de Catamarca",
+        cupo: 100,
+        inscripcion_habilitada: false,
+        estado: "finalizado",
+        created: "",
+        updated: "",
+      },
+      registration: {
+        id: "registro-extenso",
+        nombres: "María de los Ángeles",
+        apellidos: "Fernández de la Fuente",
+        documento: "40.123.456",
+      },
+    });
+
+    const document = await PDFDocument.load(bytes);
+    expect(document.getPageCount()).toBe(1);
+    expect(bytes.byteLength).toBeGreaterThan(100_000);
   });
 
   it("acepta una plantilla PDF con dimensiones suficientes", async () => {

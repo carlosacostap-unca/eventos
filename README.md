@@ -1,6 +1,6 @@
 # Eventos UNCA
 
-Aplicación de gestión integral de eventos construida con Next.js 16 y PocketBase. Permite publicar eventos con su tipo, costo y opción de certificado, cargar disertantes con fotos, recibir inscripciones, acreditar asistentes, registrar altas presenciales, emitir certificados PDF cuando corresponda, encolar su envío por correo y consultar estadísticas.
+Aplicación de gestión integral de eventos construida con Next.js 16 y PocketBase. Permite publicar eventos con su tipo, costo y opción de certificado, cargar disertantes con fotos, recibir inscripciones, acreditar asistentes, registrar altas presenciales, emitir certificados PDF, ofrecer su descarga segura y consultar estadísticas.
 
 Toda la lógica de negocio y el acceso a PocketBase viven en el servidor de Next.js. El navegador usa páginas y Server Actions de Next.js y nunca recibe credenciales de servicio ni usa el SDK de PocketBase.
 
@@ -9,7 +9,6 @@ Toda la lógica de negocio y el acceso a PocketBase viven en el servidor de Next
 - Node.js 22
 - npm
 - Una instancia reciente de PocketBase accesible desde el servidor de Next.js
-- Un servidor SMTP para el envío real de certificados
 
 ## Configuración local
 
@@ -18,7 +17,7 @@ Toda la lógica de negocio y el acceso a PocketBase viven en el servidor de Next
     npm install
 
 2. Copiá .env.example como .env.local y completá sus valores.
-3. Generá SESSION_SECRET e INTERNAL_JOBS_SECRET independientes, aleatorios y de al menos 32 caracteres.
+3. Generá SESSION_SECRET aleatorio y de al menos 32 caracteres.
 4. Para PocketBase solo se requieren POCKETBASE_URL, POCKETBASE_ADMIN_EMAIL y POCKETBASE_ADMIN_PASSWORD.
 
 El aprovisionador usa esas credenciales de superusuario para crear el esquema. También crea automáticamente una cuenta técnica derivada y limitada por las reglas de las colecciones; las operaciones normales de la aplicación usan esa cuenta limitada.
@@ -47,8 +46,9 @@ Colecciones creadas:
 - auditoria
 - certificados
 - envios_certificados
+- limites_consulta_certificados
 
-Los índices únicos impiden repetir el slug de un evento, el documento de una persona dentro del mismo evento, el número de cupo público, la participación de un disertante en un mismo evento y el certificado o trabajo de correo asociado.
+`envios_certificados` se conserva únicamente como historial de instalaciones anteriores. La aplicación no crea ni procesa nuevos envíos. Los índices impiden repetir el slug de un evento, el documento de una persona dentro del mismo evento, el número de cupo público, la participación de un disertante en un mismo evento y el certificado asociado. Un índice global por documento acelera el portal de certificados.
 
 ## Desarrollo y verificación
 
@@ -58,7 +58,7 @@ Los índices únicos impiden repetir el slug de un evento, el documento de una p
     npm test
     npm run build
 
-La aplicación queda disponible en http://localhost:3000. El acceso administrativo está en /iniciar-sesion.
+El acceso administrativo está en `/iniciar-sesion`. El portal público de certificados está en `/mis-certificados`.
 
 ## Flujo operativo
 
@@ -67,18 +67,14 @@ La aplicación queda disponible en http://localhost:3000. El acceso administrati
 3. Creá un evento, asignale un tipo, indicá si es gratuito y si se entregará certificado, y dejalo como borrador o con la inscripción deshabilitada.
 4. En la pestaña Disertantes agregá personas nuevas o reutilizá perfiles ya cargados en otros eventos, incluidos sus datos y foto. Las fotos nuevas admiten JPG, PNG o WebP de hasta 5 MB. Quitar un disertante de un evento solo elimina su participación; editar su perfil actualiza todos los eventos donde participa. Revisá la página pública en /identificador-publico y, cuando corresponda, publicá el evento y habilitá la inscripción. Los enlaces antiguos /eventos/identificador-publico redirigen a la URL corta.
 5. Durante el evento, usá Acreditación para marcar asistentes o crear altas presenciales. Estas altas se acreditan de inmediato y pueden superar el cupo público.
-6. En Certificados, validá la vista previa, generá el lote y controlá la cola.
+6. En Certificados, validá la vista previa y generá el lote. Cada asistente podrá descargar sus PDF desde `/mis-certificados` usando el mismo DNI y email de la inscripción.
 7. En Reportes, filtrá participantes y exportá CSV.
 
-## Procesador de correo
+## Portal público de certificados
 
-La generación de certificados crea trabajos persistentes pendientes. Un programador externo debe invocar periódicamente:
+La consulta exige una coincidencia exacta entre el DNI normalizado y el email normalizado de una inscripción acreditada. Una consulta válida crea una autorización firmada, HttpOnly y válida por diez minutos, limitada a los identificadores concretos encontrados. La descarga vuelve a validar esa autorización y responde con `Cache-Control: private, no-store`.
 
-    curl -X POST \
-      -H "Authorization: Bearer $INTERNAL_JOBS_SECRET" \
-      https://eventos.example.com/api/internal/certificados/procesar
-
-Una frecuencia de uno a cinco minutos es suficiente. Cada ejecución procesa hasta 20 trabajos. Los errores que se muestran en el panel se sanitizan y cada intento queda en el historial. Un envío fallido puede volver a encolarse desde la pantalla de certificados.
+El límite inicial es de cinco intentos por combinación de origen y DNI en una ventana de quince minutos. PocketBase guarda solamente una clave HMAC derivada con `SESSION_SECRET`; no guarda el DNI ni la IP en claro. La colección de límites y las inscripciones no tienen reglas públicas: todas las consultas pasan por Next.js con la cuenta técnica.
 
 ## Despliegue en Dokploy
 
@@ -88,9 +84,9 @@ Creá una aplicación desde este repositorio y elegí Nixpacks. El proyecto decl
 - Comando de inicio: npm run start
 - Puerto: 3000
 - Health check sugerido: /
-- Réplicas iniciales: 1, para evitar procesadores de correo simultáneos
+- Réplicas iniciales: 1
 
-Cargá en Dokploy las variables de .env.example. Para PocketBase son únicamente la URL, el email y la contraseña administrativa. La URL debe ser alcanzable desde el contenedor.
+Cargá en Dokploy las variables de `.env.example`. PocketBase debe ser alcanzable desde el contenedor. No se requiere un proveedor de correo ni un programador externo.
 
 Después de desplegar:
 
@@ -99,18 +95,18 @@ Después de desplegar:
 3. Iniciá sesión y creá un evento de prueba.
 4. Registrá una persona, acreditala y agregá un alta presencial.
 5. Generá la vista previa y un certificado.
-6. Ejecutá manualmente el endpoint interno y confirmá la recepción del correo.
-7. Revisá estadísticas y el CSV.
-8. Recién entonces habilitá la inscripción pública.
+6. Abrí `/mis-certificados`, consultá con el DNI y email de prueba y descargá el PDF.
+7. Confirmá que una combinación incorrecta, un enlace sin autorización y una autorización vencida no permitan descargarlo.
+8. Revisá estadísticas y el CSV.
+9. Recién entonces habilitá la inscripción pública.
 
 ## Seguridad y rotación de secretos
 
-- SESSION_SECRET cifra la cookie HttpOnly, Secure en producción y SameSite=Lax. Rotarlo cierra todas las sesiones administrativas.
-- INTERNAL_JOBS_SECRET protege el procesador de correo. Rotá primero el valor en Dokploy y luego actualizá el programador.
+- SESSION_SECRET cifra la sesión administrativa y firma la autorización temporal de certificados. Rotarlo invalida ambas.
 - Al cambiar la contraseña administrativa de PocketBase, actualizala en Dokploy y ejecutá nuevamente npm run schema:apply para sincronizar la cuenta técnica y el acceso al panel.
-- Usá TLS tanto para PocketBase como para la aplicación y SMTP.
-- No expongas variables POCKETBASE_*, SMTP_* o secretos con prefijo NEXT_PUBLIC_.
-- Las descargas, vistas previas y exportaciones administrativas vuelven a validar la sesión y deshabilitan caché.
+- Usá TLS tanto para PocketBase como para la aplicación.
+- No expongas variables `POCKETBASE_*`, `SESSION_SECRET` ni otros secretos con prefijo `NEXT_PUBLIC_`.
+- Las descargas públicas y administrativas, las vistas previas y las exportaciones deshabilitan caché y vuelven a validar su autorización.
 
 ## Respaldo y recuperación
 
@@ -121,8 +117,8 @@ Para recuperar el servicio:
 1. Restaurá PocketBase y verificá sus colecciones.
 2. Configurá POCKETBASE_URL, POCKETBASE_ADMIN_EMAIL y POCKETBASE_ADMIN_PASSWORD en Next.js.
 3. Ejecutá npm run schema:apply para reconciliar el esquema sin borrar registros.
-4. Rotá SESSION_SECRET e INTERNAL_JOBS_SECRET si el incidente pudo exponerlos.
-5. Reanudá el procesador y reenviá solamente los trabajos fallidos desde el panel.
+4. Rotá SESSION_SECRET si el incidente pudo exponerlo.
+5. Verificá una consulta y descarga desde `/mis-certificados`.
 
 ## OpenSpec
 

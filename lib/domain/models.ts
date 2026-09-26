@@ -2,12 +2,12 @@ import { z } from "zod";
 
 export const EVENT_STATUS = ["borrador", "publicado", "finalizado"] as const;
 export const REGISTRATION_SOURCE = ["publica", "presencial"] as const;
-export const DELIVERY_STATUS = ["pendiente", "enviado", "fallido"] as const;
 
 const reservedPublicSlugs = new Set([
   "admin",
   "api",
   "eventos",
+  "mis-certificados",
   "iniciar-sesion",
   "icon",
   "favicon",
@@ -96,7 +96,6 @@ export type EventTypeRecord = EventTypeInput & { id: string; created: string; up
 export type RegistrationInput = z.infer<typeof registrationInputSchema>;
 export type EventStatus = (typeof EVENT_STATUS)[number];
 export type RegistrationSource = (typeof REGISTRATION_SOURCE)[number];
-export type DeliveryStatus = (typeof DELIVERY_STATUS)[number];
 
 export type EventRecord = {
   id: string;
@@ -140,17 +139,4 @@ export type CertificateRecord = {
   inscripcion: string;
   archivo: string;
   generado_en: string;
-};
-
-export type DeliveryRecord = {
-  id: string;
-  evento: string;
-  inscripcion: string;
-  certificado: string;
-  estado: DeliveryStatus;
-  intentos: number;
-  ultimo_intento?: string;
-  enviado_en?: string;
-  error?: string;
-  historial?: Array<{ date: string; status: "enviado" | "fallido"; error?: string }>;
 };

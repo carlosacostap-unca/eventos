@@ -1,32 +1,34 @@
 {
   "schema_version": 1,
   "diagram_type": "architecture",
-  "meta": { "title": "Eventos UNCA · Arquitectura", "quality_profile": "showcase", "viewBox": [1320, 700] },
+  "meta": { "title": "Eventos UNCA · Arquitectura", "quality_profile": "showcase", "viewBox": [1360, 760] },
   "components": [
     { "id": "navegador", "type": "frontend", "label": "Navegador", "sublabel": "Público y administradores", "pos": [40, 290], "size": [180, 76] },
     { "id": "entrada", "type": "backend", "label": "Next.js 16", "sublabel": "Páginas · Actions · API", "tag": "Sesión admin + Zod", "pos": [360, 290], "size": [210, 76] },
     { "id": "servicios", "type": "backend", "label": "Servicios de negocio", "sublabel": "Eventos y participantes", "tag": "Certificados · Auditoría", "pos": [710, 290], "size": [220, 76] },
     { "id": "pocketbase", "type": "database", "label": "PocketBase", "sublabel": "Registros · Auth · Archivos", "tag": "Cuenta técnica limitada", "pos": [1080, 290], "size": [210, 76] },
     { "id": "pdf", "type": "backend", "label": "Generador PDF", "sublabel": "pdf-lib · plantilla opcional", "pos": [710, 90], "size": [220, 76] },
-    { "id": "programador", "type": "external", "label": "Programador externo", "sublabel": "Requerido para los envíos", "pos": [40, 540], "size": [220, 76] },
-    { "id": "procesador", "type": "backend", "label": "Procesador de correo", "sublabel": "Hasta 20 pendientes", "tag": "Dentro de Next.js", "pos": [710, 540], "size": [220, 76] },
-    { "id": "smtp", "type": "external", "label": "Servidor SMTP", "sublabel": "Correo con PDF adjunto", "pos": [1080, 540], "size": [210, 76] }
+    { "id": "consulta", "type": "backend", "label": "Consulta pública", "sublabel": "DNI + email exactos", "tag": "5 intentos / 15 min", "pos": [360, 540], "size": [210, 76] },
+    { "id": "autorizacion", "type": "security", "label": "Autorización temporal", "sublabel": "Cookie firmada · 10 min", "tag": "IDs permitidos", "pos": [710, 540], "size": [220, 76] },
+    { "id": "descarga", "type": "backend", "label": "Descarga protegida", "sublabel": "PDF · private, no-store", "pos": [1080, 540], "size": [210, 76] }
   ],
   "boundaries": [
-    { "kind": "region", "label": "Servidor Next.js · lógica y acceso a datos", "wraps": ["entrada", "servicios", "pdf", "procesador"], "pad": 35 }
+    { "kind": "region", "label": "Servidor Next.js · lógica y acceso a datos", "wraps": ["entrada", "servicios", "pdf", "consulta", "autorizacion", "descarga"], "pad": 35 }
   ],
   "connections": [
     { "id": "web-request", "from": "navegador", "to": "entrada", "label": "HTTP(S)", "variant": "emphasis" },
     { "id": "business-call", "from": "entrada", "to": "servicios", "label": "Invoca", "variant": "emphasis" },
     { "id": "persistence", "from": "servicios", "to": "pocketbase", "label": "SDK / API", "variant": "emphasis" },
     { "id": "pdf-generation", "from": "servicios", "to": "pdf", "label": "Genera PDF", "fromSide": "top", "toSide": "bottom" },
-    { "id": "scheduled-call", "from": "programador", "to": "procesador", "label": "POST + secreto Bearer", "variant": "security" },
-    { "id": "persistent-queue", "from": "procesador", "to": "pocketbase", "label": "Lee cola y actualiza", "fromSide": "top", "toSide": "bottom" },
-    { "id": "send-email", "from": "procesador", "to": "smtp", "label": "Nodemailer" }
+    { "id": "lookup-request", "from": "entrada", "to": "consulta", "label": "Server Action", "fromSide": "bottom", "toSide": "top", "labelDy": 24 },
+    { "id": "lookup-storage", "from": "consulta", "to": "pocketbase", "label": "HMAC + búsqueda exacta", "variant": "security", "fromSide": "right", "toSide": "left", "via": [[620, 578], [620, 430], [1030, 430], [1030, 328]] },
+    { "id": "signed-scope", "from": "consulta", "to": "autorizacion", "label": "Firma IDs encontrados", "variant": "security", "labelDy": 62 },
+    { "id": "authorized-download", "from": "autorizacion", "to": "descarga", "label": "Valida alcance", "variant": "security" },
+    { "id": "protected-file", "from": "descarga", "to": "pocketbase", "label": "Obtiene PDF", "fromSide": "top", "toSide": "bottom" }
   ],
   "cards": [
     { "dot": "cyan", "title": "Acceso y operación", "items": ["Catálogo e inscripción pública; panel con acreditación, reportes y CSV.", "Login y authRefresh contra PocketBase; cookie JWE HttpOnly de 8 h."] },
-    { "dot": "emerald", "title": "Persistencia y certificados", "items": ["PocketBase guarda eventos, inscripciones, auditoría, PDFs y cola de envíos.", "Se genera un certificado por acreditado y se encola su correo."] },
-    { "dot": "amber", "title": "Ejecución del correo", "items": ["POST /api/internal/certificados/procesar activa el lote dentro de Next.js.", "El programador requiere configuración externa; los fallos se reencolan desde el panel."] }
+    { "dot": "emerald", "title": "Persistencia y certificados", "items": ["PocketBase guarda eventos, inscripciones, auditoría y PDFs protegidos.", "Se genera un certificado por persona acreditada; no se crean nuevos envíos."] },
+    { "dot": "amber", "title": "Descarga pública", "items": ["DNI y email deben coincidir; el límite persiste como una clave HMAC.", "La cookie temporal solo habilita los IDs encontrados y cada respuesta evita caché."] }
   ]
 }

@@ -42,7 +42,7 @@ El sistema SHALL aceptar inscripciones públicas únicamente cuando el administr
 - **THEN** el formulario vuelve a aceptar inscripciones hasta alcanzar el nuevo límite
 
 ### Requirement: Trazabilidad administrativa
-El sistema SHALL registrar el administrador, la fecha y la acción para cambios sensibles de eventos, acreditaciones, altas presenciales y envíos de certificados.
+El sistema SHALL registrar el administrador, la fecha y la acción para cambios sensibles de eventos, acreditaciones, altas presenciales y generación de certificados.
 
 #### Scenario: Registro de una acción sensible
 - **WHEN** un administrador ejecuta una acción sensible

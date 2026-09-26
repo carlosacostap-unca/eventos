@@ -204,6 +204,85 @@ h3 {
   object-fit: contain;
 }
 
+.landing-title {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.certificate-lookup-page {
+  min-height: 100svh;
+  background: var(--paper);
+}
+
+.certificate-lookup-hero {
+  padding: 1.5rem 0 6rem;
+  background: var(--navy);
+  color: white;
+}
+
+.certificate-lookup-copy {
+  max-width: 760px;
+  padding-top: 2.5rem;
+}
+
+.certificate-lookup-copy .eyebrow,
+.certificate-lookup-copy h1 {
+  color: white;
+}
+
+.certificate-lookup-copy h1 {
+  margin: 0.5rem 0 1rem;
+  font-size: clamp(2.5rem, 6vw, 4.5rem);
+}
+
+.certificate-lookup-copy > p:last-child {
+  color: #ccd8e1;
+  font-size: 1.1rem;
+}
+
+.certificate-lookup-content {
+  position: relative;
+  margin-top: -3rem;
+  padding-bottom: 5rem;
+}
+
+.certificate-lookup-layout {
+  display: grid;
+  grid-template-columns: minmax(280px, 0.8fr) minmax(0, 1.2fr);
+  gap: 1.25rem;
+  align-items: start;
+}
+
+.certificate-results {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.certificate-result-list {
+  display: grid;
+}
+
+.certificate-result {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.1rem 0;
+  border-top: 1px solid var(--line);
+}
+
+.certificate-result h3,
+.certificate-result p {
+  margin: 0;
+}
+
+.certificate-result p {
+  margin-top: 0.35rem;
+  color: var(--ink-soft);
+  font-size: 0.88rem;
+}
+
 .section-heading,
 .page-heading {
   display: flex;
@@ -1101,6 +1180,10 @@ td small {
     grid-template-columns: 1fr;
   }
 
+  .certificate-lookup-layout {
+    grid-template-columns: 1fr;
+  }
+
   .auth-art {
     display: none;
   }
@@ -1119,6 +1202,17 @@ td small {
 
   .hero {
     padding: 3.5rem 0;
+  }
+
+  .landing-brand,
+  .certificate-result {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .landing-brand .button,
+  .certificate-result .button {
+    width: 100%;
   }
 
   .hero-grid {

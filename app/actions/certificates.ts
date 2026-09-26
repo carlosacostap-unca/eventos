@@ -7,7 +7,6 @@ import { requireAdmin } from "@/lib/auth/session";
 import { DomainError } from "@/lib/domain/errors";
 import {
   generateCertificates,
-  requeueDelivery,
 } from "@/lib/services/certificates";
 
 export async function generateCertificatesAction(eventId: string) {
@@ -30,18 +29,4 @@ export async function generateCertificatesAction(eventId: string) {
     "&eligible=" +
     result.eligible;
   redirect("/admin/eventos/" + eventId + "/certificados" + query);
-}
-
-export async function requeueDeliveryAction(formData: FormData) {
-  const admin = await requireAdmin();
-  const deliveryId = String(formData.get("deliveryId") || "");
-  const eventId = String(formData.get("eventId") || "");
-  if (!deliveryId || !eventId) return;
-  try {
-    await requeueDelivery(deliveryId, admin.adminId);
-  } catch (error) {
-    if (error instanceof DomainError && error.code === "DISABLED") return;
-    throw error;
-  }
-  revalidatePath("/admin/eventos/" + eventId + "/certificados");
 }

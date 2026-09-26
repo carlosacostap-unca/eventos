@@ -114,7 +114,7 @@ export default async function EventDashboardPage({
               <span>04</span>
               <div>
                 <strong>Emitir certificados</strong>
-                <small>Previsualizar, generar y controlar los envíos.</small>
+                <small>Previsualizar, generar y descargar los PDF.</small>
               </div>
             </Link>
           )}

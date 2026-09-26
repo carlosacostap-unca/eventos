@@ -41,15 +41,20 @@ export default async function Home() {
     <main>
       <header className="landing-header">
         <div className="container landing-brand">
-          <Image
-            className="landing-logo"
-            src="/images/logo-ftyca-blanco.png"
-            alt="Facultad de Tecnología y Ciencias Aplicadas"
-            width={80}
-            height={94}
-            priority
-          />
-          <h1>Eventos</h1>
+          <div className="landing-title">
+            <Image
+              className="landing-logo"
+              src="/images/logo-ftyca-blanco.png"
+              alt="Facultad de Tecnología y Ciencias Aplicadas"
+              width={80}
+              height={94}
+              priority
+            />
+            <h1>Eventos</h1>
+          </div>
+          <Link className="button button-ghost-light" href="/mis-certificados">
+            Mis certificados
+          </Link>
         </div>
       </header>
       <section className="container section">

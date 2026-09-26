@@ -11,6 +11,7 @@ export const COLLECTION_IDS = {
   auditoria: "evaudit0000001",
   certificados: "evcerts0000001",
   envios: "evmails0000001",
+  limitesConsulta: "evlimits0000001",
 } as const;
 
 const protectedRule =
@@ -219,6 +220,7 @@ export const pocketBaseSchema = [
     ],
     indexes: [
       "CREATE UNIQUE INDEX idx_inscripciones_documento ON inscripciones (evento, documento_normalizado)",
+      "CREATE INDEX idx_inscripciones_documento_global ON inscripciones (documento_normalizado)",
       "CREATE UNIQUE INDEX idx_inscripciones_cupo ON inscripciones (evento, numero_cupo_publico) WHERE numero_cupo_publico > 0",
       "CREATE INDEX idx_inscripciones_busqueda ON inscripciones (evento, apellidos, nombres)",
     ],
@@ -325,6 +327,21 @@ export const pocketBaseSchema = [
     indexes: [
       "CREATE INDEX idx_envios_estado ON envios_certificados (estado, created)",
       "CREATE UNIQUE INDEX idx_envios_certificado ON envios_certificados (certificado)",
+    ],
+  },
+  {
+    ...protectedCollection,
+    id: COLLECTION_IDS.limitesConsulta,
+    name: "limites_consulta_certificados",
+    type: "base",
+    fields: [
+      { name: "clave", type: "text", required: true, max: 64 },
+      { name: "ventana_inicio", type: "date", required: true },
+      { name: "intentos", type: "number", required: true, min: 0, max: 100, onlyInt: true },
+      { name: "bloqueado_hasta", type: "date" },
+    ],
+    indexes: [
+      "CREATE UNIQUE INDEX idx_limites_consulta_clave ON limites_consulta_certificados (clave)",
     ],
   },
 ].map((collection) => ({

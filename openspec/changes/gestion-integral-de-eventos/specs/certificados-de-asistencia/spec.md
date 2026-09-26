@@ -1,6 +1,6 @@
 ## Purpose
 
-Generar y distribuir certificados verificables a las personas efectivamente acreditadas, con control administrativo y seguimiento confiable de cada envío.
+Generar certificados verificables para las personas efectivamente acreditadas y permitir que cada titular los consulte y descargue de forma segura sin depender del correo electrónico.
 
 ## ADDED Requirements
 
@@ -9,7 +9,7 @@ El sistema SHALL permitir configurar por evento una plantilla de certificado y p
 
 #### Scenario: Vista previa
 - **WHEN** un administrador solicita la vista previa de la plantilla de un evento
-- **THEN** el sistema muestra un PDF representativo sin crear envíos ni certificados definitivos
+- **THEN** el sistema muestra un PDF representativo sin crear certificados definitivos
 
 ### Requirement: Elegibilidad por asistencia
 El sistema SHALL generar certificados únicamente para inscripciones con asistencia acreditada en el evento.
@@ -29,20 +29,38 @@ El sistema MUST evitar certificados duplicados para la misma inscripción y even
 - **WHEN** se vuelve a iniciar la generación para un evento ya procesado
 - **THEN** el sistema reutiliza los certificados existentes y crea únicamente los que falten
 
-### Requirement: Envío de certificados con seguimiento
-El sistema SHALL enviar por email los certificados generados y conservar para cada destinatario los estados pendiente, enviado o fallido, junto con la fecha y el detalle útil del último intento.
+### Requirement: Consulta pública de certificados
+El sistema SHALL permitir que una persona consulte sus certificados generados mediante la coincidencia exacta de su documento normalizado y el email normalizado informado durante la inscripción, sin exigir una cuenta.
 
-#### Scenario: Envío exitoso
-- **WHEN** el proveedor de correo acepta el mensaje con el certificado
-- **THEN** el sistema marca el envío como enviado y registra la fecha
+#### Scenario: Datos coincidentes con varios certificados
+- **WHEN** una persona proporciona un documento y un email que coinciden con inscripciones que poseen certificados generados
+- **THEN** el sistema muestra únicamente los certificados de esas inscripciones, identificados por evento y fecha
 
-#### Scenario: Envío fallido
-- **WHEN** el proveedor de correo rechaza el mensaje o no responde correctamente
-- **THEN** el sistema marca el envío como fallido, conserva el error y permite reintentarlo sin duplicar certificados
+#### Scenario: Datos incorrectos o sin certificados
+- **WHEN** el documento y el email no coinciden o todavía no existen certificados disponibles
+- **THEN** el sistema muestra una respuesta genérica que no revela cuál dato existe ni información de otras personas
+
+### Requirement: Protección contra consultas abusivas
+El sistema MUST limitar los intentos de consulta y evitar que las respuestas permitan enumerar documentos, emails, inscripciones o certificados.
+
+#### Scenario: Límite de intentos excedido
+- **WHEN** un origen supera el número permitido de consultas dentro de la ventana configurada
+- **THEN** el sistema rechaza temporalmente nuevas consultas con un mensaje genérico y sin revelar datos personales
+
+### Requirement: Descarga temporal y privada
+El sistema MUST autorizar cada descarga pública mediante una credencial temporal vinculada a los certificados encontrados y SHALL impedir su almacenamiento en cachés compartidas.
+
+#### Scenario: Descarga autorizada
+- **WHEN** una persona solicita un certificado incluido en una consulta válida cuya autorización no venció
+- **THEN** el sistema entrega el PDF como archivo descargable sin exponer credenciales de PocketBase
+
+#### Scenario: Enlace directo o autorización vencida
+- **WHEN** se intenta descargar un certificado sin autorización, con una autorización vencida o con una autorización que pertenece a otro certificado
+- **THEN** el sistema rechaza la solicitud sin confirmar si el certificado existe
 
 ### Requirement: Gestión individual de certificados
-El sistema SHALL permitir a un administrador descargar y reenviar el certificado de una persona acreditada.
+El sistema SHALL permitir a un administrador descargar el certificado de una persona acreditada y consultar si el archivo ya fue generado.
 
-#### Scenario: Reenvío individual
-- **WHEN** un administrador solicita reenviar un certificado existente
-- **THEN** el sistema crea un nuevo intento de envío y conserva el historial del resultado
+#### Scenario: Descarga administrativa
+- **WHEN** un administrador solicita descargar un certificado existente
+- **THEN** el sistema entrega el PDF mediante una operación protegida por la sesión administrativa

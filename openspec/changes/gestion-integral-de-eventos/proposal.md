@@ -10,7 +10,7 @@ La organización necesita centralizar la publicación de eventos, la inscripció
 - Cerrar automáticamente la inscripción pública al completar el cupo y permitir que un administrador la cierre o reabra mediante el ajuste del cupo.
 - Impedir inscripciones públicas duplicadas por documento dentro de un mismo evento.
 - Permitir acreditar asistentes inscriptos y registrar asistentes presenciales, incluso por encima del cupo, dejando trazabilidad del alta administrativa.
-- Generar certificados PDF configurables por evento únicamente para asistentes acreditados, previsualizarlos y enviarlos por email con seguimiento y reintentos.
+- Generar certificados PDF configurables por evento únicamente para asistentes acreditados y permitir que cada persona los consulte y descargue mediante DNI y email, sin crear una cuenta.
 - Mostrar estadísticas y permitir la consulta y exportación CSV de inscriptos, acreditados, ausentes y altas presenciales.
 - Mantener las reglas de negocio, validaciones y autorizaciones en Next.js; PocketBase actuará como servicio de autenticación, persistencia y archivos, sin acceso directo desde el navegador.
 
@@ -21,7 +21,7 @@ La organización necesita centralizar la publicación de eventos, la inscripció
 - `administracion-de-eventos`: autenticación administrativa y gestión del ciclo de vida, cupo y publicación de eventos.
 - `inscripcion-publica`: formulario público, validaciones, control de cupo, prevención de duplicados y confirmación de inscripción.
 - `acreditacion-de-asistentes`: consulta, acreditación y alta presencial con trazabilidad y excepción administrativa al cupo.
-- `certificados-de-asistencia`: configuración, vista previa, generación PDF, envío y reenvío de certificados a personas acreditadas.
+- `certificados-de-asistencia`: configuración, vista previa, generación PDF, consulta pública protegida y descarga de certificados de personas acreditadas.
 - `reportes-de-eventos`: métricas operativas, segmentación de participantes y exportación de listados.
 
 ### Modified Capabilities
@@ -33,6 +33,6 @@ No hay capacidades existentes que modificar.
 - Se reemplazará la página inicial de Next.js por la experiencia pública y el panel administrativo.
 - Se incorporarán rutas, Server Actions o Route Handlers, servicios de dominio y controles de acceso ejecutados exclusivamente en Next.js.
 - Se integrará el SDK de PocketBase mediante clientes aislados por solicitud y credenciales almacenadas solo en variables de entorno del servidor.
-- Se definirán colecciones de PocketBase para administradores, eventos, inscripciones, acreditaciones y trabajos de certificados/email.
-- Se incorporarán generación de PDF, proveedor de correo y procesamiento idempotente de trabajos en segundo plano.
-- El despliegue deberá configurar la URL de PocketBase, credenciales de servidor, secretos de sesión y credenciales del proveedor de correo.
+- Se definirán colecciones de PocketBase para administradores, eventos, inscripciones, acreditaciones, certificados y límites de consulta pública.
+- Se incorporarán generación de PDF, búsqueda exacta por DNI y email, limitación de intentos y autorizaciones temporales de descarga.
+- El despliegue deberá configurar la URL de PocketBase, credenciales de servidor y secretos de sesión. No dependerá de un proveedor de correo.

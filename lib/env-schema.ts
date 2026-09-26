@@ -1,7 +1,5 @@
 import { z } from "zod";
 
-const optionalText = z.string().trim().optional().default("");
-
 export const serverEnvSchema = z.object({
   POCKETBASE_URL: z.url("POCKETBASE_URL debe ser una URL válida"),
   POCKETBASE_ADMIN_EMAIL: z
@@ -12,18 +10,6 @@ export const serverEnvSchema = z.object({
   SESSION_SECRET: z
     .string()
     .min(32, "SESSION_SECRET debe tener al menos 32 caracteres"),
-  INTERNAL_JOBS_SECRET: z
-    .string()
-    .min(32, "INTERNAL_JOBS_SECRET debe tener al menos 32 caracteres"),
-  SMTP_HOST: optionalText,
-  SMTP_PORT: z.coerce.number().int().positive().default(587),
-  SMTP_SECURE: z
-    .enum(["true", "false"])
-    .default("false")
-    .transform((value) => value === "true"),
-  SMTP_USER: optionalText,
-  SMTP_PASSWORD: optionalText,
-  SMTP_FROM: optionalText,
   APP_URL: z.url().default("http://localhost:3000"),
 });
 

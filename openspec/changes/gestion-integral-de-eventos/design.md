@@ -11,12 +11,14 @@ PocketBase recomienda precaución con SSR porque compartir una instancia autenti
 - Mantener una frontera clara: navegador -> Next.js -> PocketBase.
 - Aislar la autenticación por solicitud y mantener secretos fuera del cliente.
 - Garantizar el cupo y la unicidad frente a solicitudes simultáneas.
-- Hacer idempotentes la acreditación, la generación de certificados y los envíos.
+- Hacer idempotentes la acreditación y la generación de certificados.
+- Permitir que cada titular consulte y descargue sus certificados sin exponer datos de otras personas ni credenciales de PocketBase.
 - Permitir despliegue y operación en la infraestructura existente de Dokploy y PocketBase.
 
 **Non-Goals:**
 
 - Crear cuentas para asistentes.
+- Enviar certificados por email o depender de un proveedor de correo.
 - Exponer el SDK o la URL privada de PocketBase al código del navegador.
 - Implementar lógica mediante hooks personalizados dentro de PocketBase.
 - Incorporar lista de espera, pagos, venta de entradas, códigos QR o múltiples roles administrativos en esta primera versión.
@@ -48,9 +50,9 @@ PocketBase contendrá, como mínimo:
 - `inscripciones`: relación con evento, datos personales normalizados, origen `publica` o `presencial`, número de cupo público y estado de acreditación.
 - `auditoria`: actor, acción, entidad, fecha y metadatos mínimos de cambios sensibles.
 - `certificados`: relación única con inscripción, archivo PDF y datos de generación.
-- `envios_certificados`: cola e historial de intentos con estado, contador, fecha y error sanitizado.
+- `limites_consulta_certificados`: contador temporal asociado a una clave derivada para limitar intentos sin guardar el DNI ni la IP en claro.
 
-Se crearán índices únicos para el slug del evento, para `(evento, documento_normalizado)`, para `(evento, numero_cupo_publico)` y para el certificado de cada inscripción.
+Se crearán índices únicos para el slug del evento, para `(evento, documento_normalizado)`, para `(evento, numero_cupo_publico)` y para el certificado de cada inscripción. Un índice adicional por `documento_normalizado` permitirá resolver consultas de certificados entre eventos.
 
 ### Reserva de cupo resistente a concurrencia
 
@@ -62,13 +64,19 @@ Alternativa considerada: contar inscripciones y luego insertar sin restricción 
 
 El inicio de sesión validará credenciales contra `administradores` y conservará el token únicamente en una cookie segura. Una capa de acceso a datos validará la sesión dentro de cada operación protegida; el control temprano de navegación será solo una optimización y no la barrera de seguridad principal. La primera versión tendrá un único rol administrativo.
 
-### Certificados y correo mediante cola persistente
+### Certificados y consulta pública protegida
 
 La aplicación generará PDF a partir de una plantilla por evento y almacenará el archivo en PocketBase. La combinación evento-inscripción será idempotente. Al cerrar un evento, el administrador podrá previsualizar e iniciar el lote para acreditados.
 
-Los envíos se representarán como trabajos persistentes en `envios_certificados`. Un endpoint interno protegido por secreto procesará lotes pequeños y podrá ser invocado periódicamente por el programador de tareas del VPS o Dokploy. Cada intento actualizará su estado, lo que permite reintentar fallos sin perder trabajos por reinicios del proceso Next.js. El proveedor de correo quedará detrás de un adaptador configurable por variables de entorno.
+La ruta pública `/mis-certificados` solicitará documento y email. Next.js normalizará ambos valores y buscará inscripciones que coincidan exactamente y posean un certificado generado. La respuesta solo mostrará título y fecha del evento y no distinguirá entre datos incorrectos, inscripciones sin acreditar o certificados todavía no generados.
 
-Alternativa considerada: enviar todos los emails dentro de la petición del administrador. Se descarta por tiempos de espera, reinicios y dificultad para reintentar parcialmente.
+Una consulta válida emitirá una autorización firmada, de corta duración y limitada a los identificadores de los certificados encontrados. El Route Handler de descarga validará esa autorización en el servidor antes de recuperar el archivo con la cuenta de servicio. Tanto la consulta como la descarga usarán `Cache-Control: no-store`; la página se excluirá de indexación.
+
+Los intentos se limitarán en PocketBase por una clave HMAC derivada de origen y documento, sin persistir esos valores en claro. La ventana inicial será de 15 minutos con un máximo de 5 intentos. La protección será independiente de cada proceso Next.js y seguirá funcionando con reinicios o múltiples réplicas.
+
+Alternativa considerada: permitir búsquedas solo por DNI. Se descarta porque los documentos son predecibles y permitirían consultas dirigidas o enumeración. También se descarta usar enlaces públicos permanentes porque podrían compartirse y conservar acceso indefinido.
+
+La generación dejará de crear trabajos en `envios_certificados`. El código del proveedor, el procesador programado y su configuración se retirarán. Las colecciones y registros históricos de envío existentes no se eliminarán automáticamente durante la migración.
 
 ### Aprovisionamiento reproducible
 
@@ -79,7 +87,9 @@ El repositorio incluirá un comando de configuración que cree o actualice las c
 - [La cuenta de servicio concentra acceso a datos] -> aplicar reglas de API de mínimo privilegio, secretos solo del servidor, rotación y bloqueo de acceso directo a PocketBase cuando la red lo permita.
 - [El flujo de cupos depende de índices correctos] -> aprovisionar y verificar índices antes de habilitar inscripciones y probar concurrencia sobre el último lugar.
 - [Datos personales sensibles en listados y exportaciones] -> exigir sesión en cada operación, evitar caché pública y registrar exportaciones en auditoría.
-- [El proveedor de correo puede limitar o rechazar envíos] -> procesar por lotes, conservar errores sanitizados y permitir reintentos individuales o masivos.
+- [El DNI y el email pueden ser conocidos por terceros] -> exigir coincidencia exacta de ambos, limitar intentos, responder de forma genérica y usar autorizaciones breves.
+- [Un atacante puede distribuir consultas entre varias direcciones IP] -> combinar origen y documento en la clave de límite, registrar señales mínimas y permitir incorporar un desafío adicional si el abuso real lo justifica.
+- [Los enlaces de descarga pueden compartirse] -> limitar cada autorización a certificados concretos, darle vencimiento corto y evitar caché.
 - [Una plantilla inválida puede producir certificados defectuosos] -> exigir vista previa y validación antes de iniciar el lote.
 - [PocketBase o el VPS pueden no estar disponibles] -> mostrar errores recuperables, no confirmar operaciones no persistidas y mantener los trabajos pendientes para el siguiente intento.
 
@@ -89,12 +99,11 @@ El repositorio incluirá un comando de configuración que cree o actualice las c
 2. Ejecutar el comando de esquema y verificar colecciones, reglas e índices.
 3. Derivar y crear la cuenta de servicio, sincronizar el administrador con las credenciales suministradas y guardar los secretos en Dokploy.
 4. Desplegar Next.js con las funciones públicas deshabilitadas por defecto.
-5. Ejecutar pruebas de autenticación, concurrencia de cupo, acreditación y certificados.
-6. Habilitar un evento de prueba, validar envío de correo y después habilitar eventos reales.
+5. Ejecutar pruebas de autenticación, concurrencia de cupo, acreditación, consulta pública y descarga protegida.
+6. Habilitar un evento de prueba, generar un certificado, validar su consulta con DNI y email y después habilitar eventos reales.
 
-Para revertir, se desplegará la versión anterior de Next.js y se deshabilitarán las inscripciones de los eventos. Las colecciones no se eliminarán automáticamente para preservar registros y permitir recuperación.
+Para revertir, se desplegará la versión anterior de Next.js y se deshabilitarán las inscripciones de los eventos. Las colecciones de límites y los registros históricos de envío no se eliminarán automáticamente para preservar información y permitir recuperación.
 
 ## Open Questions
 
-- Proveedor y credenciales de correo que estarán disponibles en producción.
 - Identidad visual y dimensiones de la primera plantilla institucional de certificados.
