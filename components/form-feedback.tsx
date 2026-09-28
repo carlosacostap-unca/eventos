@@ -16,7 +16,7 @@ export function FormMessage({
 }) {
   if (!message) return null;
   return (
-    <div className={success ? "notice notice-success" : "notice notice-error"} role="status">
+    <div className={success ? "notice notice-success" : "notice notice-error"} role={success ? "status" : "alert"}>
       {message}
     </div>
   );

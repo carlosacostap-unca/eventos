@@ -20,6 +20,7 @@ export function EventForm({ event, types }: { event?: EventRecord; types: EventT
 
   return (
     <form action={formAction} className="panel form-stack">
+      <div><h2>Información del evento</h2><p className="muted">Definí qué se verá en la agenda y cómo podrán inscribirse los participantes.</p></div>
       <FormMessage message={state.message} />
       <div className="form-grid">
         <label className="field field-wide">
@@ -52,6 +53,7 @@ export function EventForm({ event, types }: { event?: EventRecord; types: EventT
             required
           />
           <FieldError errors={state.fields?.slug} />
+          <small>Forma parte del enlace del evento. Usá minúsculas, números y guiones.</small>
         </label>
         <label className="field">
           <span>Lugar</span>
@@ -67,6 +69,7 @@ export function EventForm({ event, types }: { event?: EventRecord; types: EventT
             required
           />
           <FieldError errors={state.fields?.inicio} />
+          <small>Fecha y hora de Argentina.</small>
         </label>
         <label className="field">
           <span>Finalización</span>
@@ -114,6 +117,7 @@ export function EventForm({ event, types }: { event?: EventRecord; types: EventT
             <option value="finalizado">Finalizado</option>
           </select>
           <FieldError errors={state.fields?.estado} />
+          <small>Guardá como borrador para preparar el evento antes de publicarlo.</small>
         </label>
         <label className="field field-wide">
           <span>Descripción</span>
@@ -144,6 +148,7 @@ export function EventForm({ event, types }: { event?: EventRecord; types: EventT
       )}
       <div className="actions-row">
         <SubmitButton>{event ? "Guardar cambios" : "Crear evento"}</SubmitButton>
+        <Link className="button button-secondary" href={event ? "/admin/eventos/" + event.id : "/admin"}>Cancelar</Link>
       </div>
     </form>
   );

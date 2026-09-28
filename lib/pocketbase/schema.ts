@@ -122,6 +122,7 @@ export const pocketBaseSchema = [
         maxSize: 10485760,
         mimeTypes: ["application/pdf", "image/png", "image/jpeg"],
       },
+      { name: "textos_certificado", type: "json", maxSize: 10000 },
     ],
     indexes: ["CREATE UNIQUE INDEX idx_eventos_slug ON eventos (slug)"],
   },

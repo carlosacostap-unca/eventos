@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import { generateCertificatesAction } from "@/app/actions/certificates";
 import { uploadTemplateAction } from "@/app/actions/events";
+import { CertificateTextForm } from "@/components/certificate-text-form";
 import { EventAdminNav } from "@/components/event-admin-nav";
 import { offersAttendanceCertificate } from "@/lib/domain/event-details";
 import { getEventById } from "@/lib/services/events";
@@ -84,55 +85,58 @@ export default async function CertificatesPage({
       ) : null}
 
       {enabled && (
-        <section className="certificate-setup">
-        <article className="panel">
-          <div className="section-heading compact">
-            <div>
-              <p className="eyebrow">Diseño</p>
-              <h2>Plantilla del certificado</h2>
-            </div>
-            <span className="badge">
-              {event.plantilla_certificado ? "Personalizada" : "Predeterminada"}
-            </span>
-          </div>
-          <p className="muted">
-            Podés usar la plantilla institucional incluida o cargar un fondo PDF,
-            PNG o JPG. La vista previa nunca crea certificados.
-          </p>
-          <form
-            className="upload-form"
-            action={uploadTemplateAction.bind(null, id)}
-          >
-            <label className="file-field">
-              <span>Archivo de plantilla</span>
-              <input
-                type="file"
-                name="plantilla"
-                accept="application/pdf,image/png,image/jpeg"
-                required
-              />
-            </label>
-            <button className="button button-secondary" type="submit">
-              Guardar plantilla
-            </button>
-          </form>
-        </article>
+        <>
+          <section className="certificate-setup">
+            <article className="panel">
+              <div className="section-heading compact">
+                <div>
+                  <p className="eyebrow">Diseño</p>
+                  <h2>Plantilla del certificado</h2>
+                </div>
+                <span className="badge">
+                  {event.plantilla_certificado ? "Personalizada" : "Predeterminada"}
+                </span>
+              </div>
+              <p className="muted">
+                Podés usar la plantilla institucional incluida o cargar un fondo PDF,
+                PNG o JPG. La vista previa nunca crea certificados.
+              </p>
+              <form
+                className="upload-form"
+                action={uploadTemplateAction.bind(null, id)}
+              >
+                <label className="file-field">
+                  <span>Archivo de plantilla</span>
+                  <input
+                    type="file"
+                    name="plantilla"
+                    accept="application/pdf,image/png,image/jpeg"
+                    required
+                  />
+                </label>
+                <button className="button button-secondary" type="submit">
+                  Guardar plantilla
+                </button>
+              </form>
+            </article>
 
-        <article className="panel action-panel">
-          <p className="eyebrow">Emisión</p>
-          <h2>Generar lote</h2>
-          <p>
-            Hay <strong>{accredited}</strong> personas acreditadas. Solo ellas
-            tendrán certificado disponible en el portal público.
-          </p>
-          <form action={generateCertificatesAction.bind(null, id)}>
-            <button className="button button-primary" type="submit">
-              Generar certificados
-            </button>
-          </form>
-          <small>Repetir el lote reutiliza certificados existentes.</small>
-        </article>
-        </section>
+            <article className="panel action-panel">
+              <p className="eyebrow">Emisión</p>
+              <h2>Generar lote</h2>
+              <p>
+                Hay <strong>{accredited}</strong> personas acreditadas. Solo ellas
+                tendrán certificado disponible en el portal público.
+              </p>
+              <form action={generateCertificatesAction.bind(null, id)}>
+                <button className="button button-primary" type="submit">
+                  Generar certificados
+                </button>
+              </form>
+              <small>Repetir el lote reutiliza certificados existentes.</small>
+            </article>
+          </section>
+          <CertificateTextForm event={event} />
+        </>
       )}
 
       <section className="panel">

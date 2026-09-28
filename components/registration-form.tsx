@@ -27,6 +27,7 @@ export function RegistrationForm({
     <form ref={formRef} action={action} className="panel form-stack">
       <div>
         <h2>Reservá tu lugar</h2>
+        <p className="muted">Completá tus datos para confirmar la inscripción. Todos los campos son obligatorios.</p>
       </div>
       <FormMessage message={state.message} success={state.ok} />
       {!state.ok && (

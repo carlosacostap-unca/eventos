@@ -1,5 +1,5 @@
-import { PDFDocument } from "pdf-lib";
-import { describe, expect, it } from "vitest";
+import { PDFDocument, PDFPage } from "pdf-lib";
+import { describe, expect, it, vi } from "vitest";
 
 import {
   createCertificatePdf,
@@ -8,8 +8,19 @@ import {
 
 describe("certificados PDF", () => {
   it("genera un PDF válido con datos del asistente", async () => {
+    const drawn = vi.spyOn(PDFPage.prototype, "drawText");
+    try {
     const bytes = await createCertificatePdf({
+      eventTypeName: "Taller Teórico-Práctico",
       event: {
+        textos_certificado: {
+          signatureLeftName: "Autoridad de prueba",
+          signatureLeftRole: "Coordinación de {evento}",
+          signatureLeftInstitution: "",
+          signatureRightName: "Otra autoridad",
+          signatureRightRole: "Dirección",
+          signatureRightInstitution: "Institución de prueba",
+        },
         id: "evento1",
         titulo: "Jornada de extensión",
         descripcion: "Evento",
@@ -34,6 +45,17 @@ describe("certificados PDF", () => {
     expect(document.getPageCount()).toBe(1);
     expect(document.getPage(0).getSize()).toEqual({ width: 842, height: 595 });
     expect(bytes.byteLength).toBeGreaterThan(100_000);
+    const texts = drawn.mock.calls.map(([text]) => text);
+    expect(texts).toEqual(expect.arrayContaining([
+      "ha participado en la actividad de tipo Taller Teórico-Práctico:",
+      "Autoridad de prueba", "Coordinación de Jornada de extensión",
+      "Otra autoridad", "Dirección", "Institución de prueba",
+    ]));
+    expect(texts).not.toContain("Ms. Ing. Marcos Darío ARANDA");
+    expect(texts).not.toContain("");
+    } finally {
+      drawn.mockRestore();
+    }
   });
 
   it("ajusta nombres y títulos extensos sin impedir la generación", async () => {

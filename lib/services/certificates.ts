@@ -13,6 +13,7 @@ import type {
 import { createServicePocketBase } from "@/lib/pocketbase/client";
 import { audit } from "@/lib/services/audit";
 import { getEventById } from "@/lib/services/events";
+import { getEventTypeById } from "@/lib/services/event-types";
 import { listRegistrations } from "@/lib/services/registrations";
 
 function toCertificate(record: RecordModel): CertificateRecord {
@@ -58,6 +59,11 @@ async function loadTemplate(event: EventRecord) {
   );
 }
 
+async function loadEventTypeName(event: EventRecord) {
+  const type = event.tipo_evento ? await getEventTypeById(event.tipo_evento) : null;
+  return type?.nombre || "Evento";
+}
+
 export async function previewCertificate(eventId: string) {
   const event = await getEventById(eventId);
   if (!event) throw new DomainError("NOT_FOUND", "El evento no existe.");
@@ -66,6 +72,7 @@ export async function previewCertificate(eventId: string) {
   }
   return createCertificatePdf({
     event,
+    eventTypeName: await loadEventTypeName(event),
     registration: {
       id: "vista-previa",
       nombres: "Nombre",
@@ -86,13 +93,14 @@ export async function generateCertificates(eventId: string, adminId: string) {
     (registration) => registration.acreditado,
   );
   const template = await loadTemplate(event);
+  const eventTypeName = await loadEventTypeName(event);
   let created = 0;
   let reused = 0;
 
   for (const registration of registrations) {
     let certificate = await findCertificate(registration.id);
     if (!certificate) {
-      const pdf = await createCertificatePdf({ event, registration, template });
+      const pdf = await createCertificatePdf({ event, registration, template, eventTypeName });
       const form = new FormData();
       form.set("evento", event.id);
       form.set("inscripcion", registration.id);

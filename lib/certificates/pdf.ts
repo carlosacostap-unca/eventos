@@ -10,6 +10,12 @@ import {
   type RGB,
 } from "pdf-lib";
 
+import {
+  renderCertificateText,
+  resolveCertificateTexts,
+  type CertificateTextVariables,
+  type CertificateTextSections,
+} from "@/lib/domain/certificate-texts";
 import type { EventRecord, RegistrationRecord } from "@/lib/domain/models";
 
 const PAGE_WIDTH = 842;
@@ -181,6 +187,8 @@ async function drawDefaultBackground(input: {
   page: PDFPage;
   sans: PDFFont;
   sansBold: PDFFont;
+  institutionPrimary: string;
+  institutionSecondary: string;
 }) {
   const assets = await loadDefaultCertificateAssets();
   const [frame, crest, uncaWordmark] = await Promise.all([
@@ -208,10 +216,10 @@ async function drawDefaultBackground(input: {
     height: frameHeight,
   });
 
-  const wordmarkWidth = 150;
+  const wordmarkWidth = 220;
   input.page.drawImage(uncaWordmark, {
     x: 115,
-    y: 466,
+    y: 486 - ((uncaWordmark.height / uncaWordmark.width) * wordmarkWidth) / 2,
     width: wordmarkWidth,
     height: (uncaWordmark.height / uncaWordmark.width) * wordmarkWidth,
   });
@@ -225,26 +233,73 @@ async function drawDefaultBackground(input: {
   });
 
   const headerCenter = 675;
-  const faculty = "Facultad de Tecnología y Ciencias Aplicadas";
-  const university = "Universidad Nacional de Catamarca";
-  input.page.drawText(faculty, {
-    x: headerCenter - input.sansBold.widthOfTextAtSize(faculty, 9.5) / 2,
-    y: 490,
-    size: 9.5,
-    font: input.sansBold,
-    color: rgb(0.04, 0.04, 0.04),
-  });
-  input.page.drawText(university, {
-    x: headerCenter - input.sans.widthOfTextAtSize(university, 9.5) / 2,
-    y: 475,
-    size: 9.5,
-    font: input.sans,
-    color: rgb(0.04, 0.04, 0.04),
-  });
+  const headerSections = [
+    {
+      text: input.institutionPrimary,
+      font: input.sansBold,
+      y: 490,
+    },
+    {
+      text: input.institutionSecondary,
+      font: input.sans,
+      y: 475,
+    },
+  ];
+  for (const section of headerSections) {
+    if (!section.text) continue;
+    const size = Math.max(
+      6.5,
+      Math.min(9.5, (9.5 * 315) / section.font.widthOfTextAtSize(section.text, 9.5)),
+    );
+    input.page.drawText(section.text, {
+      x: headerCenter - section.font.widthOfTextAtSize(section.text, size) / 2,
+      y: section.y,
+      size,
+      font: section.font,
+      color: rgb(0.04, 0.04, 0.04),
+    });
+  }
+}
+
+async function drawSignatures(
+  document: PDFDocument,
+  page: PDFPage,
+  font: PDFFont,
+  texts: CertificateTextSections,
+  variables: CertificateTextVariables,
+) {
+  const directory = join(process.cwd(), "assets", "certificates");
+  const authorities = [
+    { file: "firma_marcos.png", center: 240, name: texts.signatureLeftName, role: texts.signatureLeftRole, institution: texts.signatureLeftInstitution },
+    { file: "firma_natalia.png", center: 602, name: texts.signatureRightName, role: texts.signatureRightRole, institution: texts.signatureRightInstitution },
+  ];
+  for (const authority of authorities) {
+    const signature = await document.embedPng(await readFile(join(directory, authority.file)));
+    const size = signature.scaleToFit(130, 110);
+    page.drawImage(signature, {
+      x: authority.center - size.width / 2,
+      y: 101,
+      width: size.width,
+      height: size.height,
+    });
+    [authority.name, authority.role, authority.institution].forEach((template, index) => {
+      const text = renderCertificateText(template, variables);
+      if (!text) return;
+      const size = Math.min(10, 10 * 300 / font.widthOfTextAtSize(text, 10));
+      page.drawText(text, {
+        x: authority.center - font.widthOfTextAtSize(text, size) / 2,
+        y: 97 - index * 12,
+        font,
+        size,
+        color: rgb(0.06, 0.06, 0.06),
+      });
+    });
+  }
 }
 
 export async function createCertificatePdf(input: {
   event: EventRecord;
+  eventTypeName?: string;
   registration: Pick<
     RegistrationRecord,
     "id" | "nombres" | "apellidos"
@@ -270,6 +325,26 @@ export async function createCertificatePdf(input: {
   const serif = await document.embedFont(StandardFonts.TimesRoman);
   const serifBoldItalic = await document.embedFont(StandardFonts.TimesRomanBoldItalic);
 
+  const texts = resolveCertificateTexts(input.event.textos_certificado);
+  const participant = [input.registration.apellidos, input.registration.nombres]
+    .map((value) => value.trim())
+    .filter(Boolean)
+    .join(", ");
+  const date = new Intl.DateTimeFormat("es-AR", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    timeZone: ARGENTINA_TIME_ZONE,
+  }).format(new Date(input.event.inicio));
+  const variables: CertificateTextVariables = {
+    participante: participant,
+    documento: input.registration.documento?.trim() ?? "",
+    evento: input.event.titulo.trim(),
+    tipoEvento: input.eventTypeName?.trim() || "Evento",
+    lugar: input.event.lugar.trim(),
+    fecha: date,
+  };
+
   if (input.template && !input.template.mimeType.includes("pdf")) {
     const image = input.template.mimeType.includes("png")
       ? await document.embedPng(input.template.bytes)
@@ -281,7 +356,14 @@ export async function createCertificatePdf(input: {
       height: page.getHeight(),
     });
   } else if (!input.template) {
-    await drawDefaultBackground({ document, page, sans, sansBold });
+    await drawDefaultBackground({
+      document,
+      page,
+      sans,
+      sansBold,
+      institutionPrimary: renderCertificateText(texts.institutionPrimary, variables),
+      institutionSecondary: renderCertificateText(texts.institutionSecondary, variables),
+    });
   }
 
   const width = page.getWidth();
@@ -289,80 +371,105 @@ export async function createCertificatePdf(input: {
   const scaleX = width / PAGE_WIDTH;
   const scaleY = height / PAGE_HEIGHT;
   const textScale = Math.min(scaleX, scaleY);
-  const participant = [input.registration.apellidos, input.registration.nombres]
-    .map((value) => value.trim())
-    .filter(Boolean)
-    .join(", ");
+  const introductionBlock = fitTextBlock({
+    text: renderCertificateText(texts.introduction, variables),
+    font: serif,
+    maxWidth: width * 0.76,
+    maxLines: input.template ? 3 : 1,
+    preferredSize: 12.5 * textScale,
+    minimumSize: 8 * textScale,
+  });
   const participantBlock = fitTextBlock({
-    text: participant,
+    text: renderCertificateText(texts.participant, variables),
     font: serifBoldItalic,
     maxWidth: width * 0.72,
     maxLines: 2,
     preferredSize: 30 * textScale,
     minimumSize: 12 * textScale,
   });
+  const documentBlock = fitTextBlock({
+    text: variables.documento
+      ? renderCertificateText(texts.document, variables)
+      : "",
+    font: serif,
+    maxWidth: width * 0.7,
+    maxLines: 2,
+    preferredSize: 14 * textScale,
+    minimumSize: 9 * textScale,
+  });
+  const participationBlock = fitTextBlock({
+    text: renderCertificateText(texts.participation, variables),
+    font: serif,
+    maxWidth: width * 0.72,
+    maxLines: 2,
+    preferredSize: 14 * textScale,
+    minimumSize: 9 * textScale,
+  });
   const eventBlock = fitTextBlock({
-    text: input.event.titulo,
+    text: renderCertificateText(texts.event, variables),
     font: serifBoldItalic,
     maxWidth: width * 0.7,
-    maxLines: 3,
+    maxLines: 2,
     preferredSize: 24 * textScale,
-    minimumSize: 14 * textScale,
+    minimumSize: 12 * textScale,
   });
-  const date = new Intl.DateTimeFormat("es-AR", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-    timeZone: ARGENTINA_TIME_ZONE,
-  }).format(new Date(input.event.inicio));
-  const locationAndDate = [input.event.lugar.trim(), date].filter(Boolean).join(", ");
   const locationBlock = fitTextBlock({
-    text: locationAndDate,
+    text: renderCertificateText(texts.locationAndDate, variables),
     font: serif,
     maxWidth: width * 0.68,
     maxLines: 2,
     preferredSize: 11.5 * textScale,
     minimumSize: 8.5 * textScale,
   });
+  const footerBlock = fitTextBlock({
+    text: renderCertificateText(texts.footer, variables),
+    font: sansBold,
+    maxWidth: width * 0.72,
+    maxLines: 2,
+    preferredSize: 8.5 * textScale,
+    minimumSize: 6.5 * textScale,
+  });
 
-  drawCenteredLine({
+  drawCenteredBlock({
     page,
-    text:
-      "La Facultad de Tecnología y Ciencias Aplicadas de la Universidad Nacional de Catamarca certifica que",
-    y: height * 0.66,
+    lines: introductionBlock.lines,
+    centerY: height * (input.template ? 0.66 : 0.71),
     font: serif,
-    size: 12.5 * textScale,
+    size: introductionBlock.size,
+    lineHeight: introductionBlock.size * 1.15,
   });
   drawCenteredBlock({
     page,
     lines: participantBlock.lines,
-    centerY: height * 0.56,
+    centerY: height * (input.template ? 0.56 : 0.64),
     font: serifBoldItalic,
     size: participantBlock.size,
     lineHeight: participantBlock.size * 1.08,
   });
 
-  if (input.registration.documento?.trim()) {
-    drawCenteredLine({
+  if (documentBlock.lines.length) {
+    drawCenteredBlock({
       page,
-      text: "DNI N° " + input.registration.documento.trim(),
-      y: height * 0.49,
+      lines: documentBlock.lines,
+      centerY: height * (input.template ? 0.49 : 0.59),
       font: serif,
-      size: 14 * textScale,
+      size: documentBlock.size,
+      lineHeight: documentBlock.size * 1.12,
     });
   }
 
-  drawCenteredLine({
+  drawCenteredBlock({
     page,
-    text: "por su participación en la actividad",
-    y: height * 0.43,
+    lines: participationBlock.lines,
+    centerY: height * (input.template ? 0.43 : 0.54),
     font: serif,
-    size: 14 * textScale,
+    size: participationBlock.size,
+    lineHeight: participationBlock.size * 1.12,
   });
   drawCenteredBlock({
     page,
     lines: eventBlock.lines,
-    centerY: height * 0.35,
+    centerY: height * (input.template ? 0.35 : 0.46),
     font: serifBoldItalic,
     size: eventBlock.size,
     lineHeight: eventBlock.size * 1.18,
@@ -370,19 +477,21 @@ export async function createCertificatePdf(input: {
   drawCenteredBlock({
     page,
     lines: locationBlock.lines,
-    centerY: height * 0.18,
+    centerY: height * (input.template ? 0.18 : 0.34),
     font: serif,
     size: locationBlock.size,
     lineHeight: locationBlock.size * 1.18,
   });
-  drawCenteredLine({
+  drawCenteredBlock({
     page,
-    text: "Facultad de Tecnología y Ciencias Aplicadas",
-    y: height * 0.125,
+    lines: footerBlock.lines,
+    centerY: height * (input.template ? 0.125 : 0.385),
     font: sansBold,
-    size: 8.5 * textScale,
+    size: footerBlock.size,
+    lineHeight: footerBlock.size * 1.12,
     color: rgb(0.2, 0.2, 0.2),
   });
+  if (!input.template) await drawSignatures(document, page, serif, texts, variables);
   page.drawText("ID " + input.event.id + "-" + input.registration.id, {
     x: width * 0.085,
     y: height * 0.105,

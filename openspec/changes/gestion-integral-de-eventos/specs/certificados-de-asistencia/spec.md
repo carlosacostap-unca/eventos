@@ -11,6 +11,17 @@ El sistema SHALL permitir configurar por evento una plantilla de certificado y p
 - **WHEN** un administrador solicita la vista previa de la plantilla de un evento
 - **THEN** el sistema muestra un PDF representativo sin crear certificados definitivos
 
+### Requirement: Textos configurables por evento
+El sistema SHALL permitir configurar de forma independiente las secciones de texto de los certificados de cada evento, incluidas las variables del participante, documento, evento, lugar y fecha, manteniendo textos predeterminados para eventos sin configuración propia.
+
+#### Scenario: Personalización de un evento
+- **WHEN** un administrador guarda textos personalizados y solicita la vista previa del certificado
+- **THEN** el sistema compone el PDF con esos textos y reemplaza las variables por los datos representativos del evento y del participante
+
+#### Scenario: Evento existente sin personalización
+- **WHEN** se genera o previsualiza un certificado de un evento que no posee textos configurados
+- **THEN** el sistema utiliza todas las secciones de texto predeterminadas
+
 ### Requirement: Elegibilidad por asistencia
 El sistema SHALL generar certificados únicamente para inscripciones con asistencia acreditada en el evento.
 

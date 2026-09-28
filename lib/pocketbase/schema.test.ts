@@ -21,6 +21,7 @@ describe("esquema PocketBase", () => {
     expect(events?.fields.some((field) => field.name === "tipo_evento")).toBe(true);
     expect(events?.fields.some((field) => field.name === "costo")).toBe(true);
     expect(events?.fields.some((field) => field.name === "certificado_asistencia")).toBe(true);
+    expect(events?.fields.some((field) => field.name === "textos_certificado")).toBe(true);
     const speakers = pocketBaseSchema.find((collection) => collection.name === "disertantes");
     expect(speakers?.fields.some((field) => field.name === "foto")).toBe(true);
     const origin = speakers?.fields.find((field) => field.name === "evento");

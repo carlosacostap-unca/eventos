@@ -1,4 +1,7 @@
 import Link from "next/link";
+import { EventCatalog } from "@/components/event-catalog";
+import { AdminLogin } from "@/components/admin-login";
+import { getAuthenticatedAdmin } from "@/lib/auth/session";
 
 import { listEvents } from "@/lib/services/events";
 import { eventTypeName } from "@/lib/domain/event-types";
@@ -12,6 +15,9 @@ function formatDate(value: string) {
 }
 
 export default async function AdminPage() {
+  const admin = await getAuthenticatedAdmin();
+  if (!admin) return <AdminLogin />;
+
   const [events, types] = await Promise.all([listEvents(), listEventTypes()]);
   return (
     <main className="admin-main">
@@ -36,22 +42,25 @@ export default async function AdminPage() {
           </Link>
         </section>
       ) : (
-        <section className="admin-event-list">
-          {events.map((event) => (
+        <EventCatalog admin items={events.map((event) => ({
+          id: event.id,
+          search: `${event.titulo} ${event.lugar} ${eventTypeName(event.tipo_evento, types)}`,
+          status: event.estado,
+          content: (
             <Link className="admin-event-row" href={"/admin/eventos/" + event.id} key={event.id}>
               <div>
-                <span className={"status-dot status-" + event.estado} />
+                <span className={"badge badge-" + event.estado}>{event.estado}</span>
                 <strong>{event.titulo}</strong>
                 <small>{eventTypeName(event.tipo_evento, types)} · {event.lugar}</small>
               </div>
               <div className="admin-event-meta">
                 <span>{formatDate(event.inicio)}</span>
                 <span>{event.cupo} lugares</span>
-                <span className="row-arrow">→</span>
               </div>
+              <span className="row-arrow" aria-hidden="true">→</span>
             </Link>
-          ))}
-        </section>
+          ),
+        }))} />
       )}
     </main>
   );

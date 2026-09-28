@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { toggleAttendanceAction } from "@/app/actions/registrations";
 import { EventAdminNav } from "@/components/event-admin-nav";
 import { WalkInForm } from "@/components/walk-in-form";
+import { SubmitButton } from "@/components/submit-button";
 import { getEventById } from "@/lib/services/events";
 import {
   countPublicRegistrations,
@@ -63,6 +64,7 @@ export default async function AccreditationPage({
               Buscar
             </button>
           </form>
+          <div className="catalog-summary"><p>{result.totalItems} participantes{q ? " encontrados" : " registrados"}</p>{q && <Link className="text-link" href={"/admin/eventos/" + id + "/acreditacion"}>Limpiar búsqueda</Link>}</div>
           <div className="participant-list">
             {result.items.length === 0 ? (
               <div className="empty-inline">No encontramos participantes.</div>
@@ -94,16 +96,16 @@ export default async function AccreditationPage({
                       name="accredited"
                       value={registration.acreditado ? "false" : "true"}
                     />
-                    <button
+                    <SubmitButton
                       className={
                         registration.acreditado
                           ? "button button-success"
                           : "button button-secondary"
                       }
-                      type="submit"
+                      pendingLabel="Actualizando…"
                     >
                       {registration.acreditado ? "✓ Acreditado" : "Acreditar"}
-                    </button>
+                    </SubmitButton>
                   </form>
                 </article>
               ))

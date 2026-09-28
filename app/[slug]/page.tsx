@@ -68,7 +68,9 @@ export default async function PublicEventPage({
               priority
             />
           </Link>
+          <nav className="public-page-nav" aria-label="Navegación del evento"><Link href="/">← Todos los eventos</Link><Link href="/mis-certificados">Mis certificados</Link></nav>
           <div className="event-hero-copy">
+            {availability === "disponible" && <span className="badge badge-disponible">Inscripción abierta</span>}
             {availability !== "disponible" && (
               <span className={"badge badge-" + availability}>
                 {availability === "completo"
@@ -103,6 +105,7 @@ export default async function PublicEventPage({
                 <dd>{offersAttendanceCertificate(event) ? "Se entregará" : "No se entregará"}</dd>
               </div>
             </dl>
+            {availability === "disponible" && <a className="button button-primary" href="#inscripcion">Reservar mi lugar <span aria-hidden="true">↓</span></a>}
           </div>
           {speakers.length > 0 && (
             <section className="speaker-section" aria-labelledby="speakers-heading">
@@ -116,7 +119,7 @@ export default async function PublicEventPage({
           )}
         </div>
       </section>
-      <section className="container registration-section">
+      <section className="container registration-section" id="inscripcion">
         {availability === "disponible" ? (
           <RegistrationForm slug={slug} offersCertificate={offersAttendanceCertificate(event)} />
         ) : (
@@ -130,6 +133,7 @@ export default async function PublicEventPage({
                   : "La inscripción está cerrada"}
             </h2>
             <p>Consultá con la organización si necesitás más información.</p>
+            <Link className="button button-secondary" href="/">Explorar otros eventos</Link>
           </div>
         )}
       </section>

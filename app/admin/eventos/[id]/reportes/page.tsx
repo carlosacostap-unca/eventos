@@ -118,7 +118,8 @@ export default async function ReportsPage({
           </button>
         </form>
 
-        <div className="table-wrap">
+        <div className="catalog-summary"><p>{registrations.length} participantes en el reporte</p>{(filters.query || filters.source || filters.attendance) && <Link className="text-link" href={"/admin/eventos/" + id + "/reportes"}>Limpiar filtros</Link>}</div>
+        <div className="table-wrap" role="region" aria-label="Listado de participantes" tabIndex={0}>
           <table>
             <thead>
               <tr>

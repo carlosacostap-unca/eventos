@@ -62,6 +62,6 @@ export async function getAuthenticatedAdmin(): Promise<AdminSession | null> {
 
 export async function requireAdmin(): Promise<AdminSession> {
   const session = await getAuthenticatedAdmin();
-  if (!session) redirect("/iniciar-sesion");
+  if (!session) redirect("/admin");
   return session;
 }

@@ -44,6 +44,7 @@
 - [x] 6.6 Crear `/mis-certificados` y la descarga pública protegida, sin caché ni indexación; verificar resultados vacíos, varios eventos, acceso directo rechazado y diseño móvil.
 - [x] 6.7 Refactorizar la generación y la vista administrativa para trabajar directamente con certificados, sin crear trabajos de correo; verificar generación, listado y descarga administrativa.
 - [x] 6.8 Retirar adaptador, procesador, dependencias, variables y documentación de correo sin eliminar automáticamente registros históricos; verificar que no queden rutas programadas ni secretos obsoletos.
+- [x] 6.9 Permitir configurar por evento cada sección de texto del certificado con variables y valores predeterminados; verificar persistencia, sustitución y compatibilidad con eventos existentes.
 
 ## 7. Estadísticas y exportaciones
 

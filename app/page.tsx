@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { EventCatalog } from "@/components/event-catalog";
 
 import { getRegistrationAvailability } from "@/lib/domain/events";
 import { isEventFree, offersAttendanceCertificate } from "@/lib/domain/event-details";
@@ -50,27 +51,37 @@ export default async function Home() {
               height={94}
               priority
             />
-            <h1>Eventos</h1>
+            <div><strong>Eventos UNCA</strong><small>Facultad de Tecnología y Ciencias Aplicadas</small></div>
           </div>
           <Link className="button button-ghost-light" href="/mis-certificados">
             Mis certificados
           </Link>
         </div>
+        <div className="container agenda-intro">
+          <p className="eyebrow">Aprender · Compartir · Conectar</p>
+          <h1>Tu próximo encuentro<br />empieza acá.</h1>
+          <p>Explorá las actividades de la facultad, reservá tu lugar y seguí sumando experiencias.</p>
+          <a className="button button-primary" href="#agenda">Explorar la agenda <span aria-hidden="true">↓</span></a>
+        </div>
       </header>
-      <section className="container section">
+      <section className="container section" id="agenda">
+        <div className="section-heading"><div><p className="eyebrow">Agenda de actividades</p><h2>Encontrá tu próximo evento</h2></div><p className="muted">Conocé los detalles e inscribite en línea.</p></div>
         {cards.length === 0 ? (
           <div className="empty-state">
             <h2>No hay eventos publicados todavía</h2>
             <p>Volvé pronto para conocer las próximas actividades.</p>
           </div>
         ) : (
-          <div className="event-grid">
-            {cards.map(({ event, availability }) => (
+          <EventCatalog items={cards.map(({ event, availability }) => ({
+            id: event.id,
+            search: `${event.titulo} ${event.lugar} ${eventTypeName(event.tipo_evento, types)}`,
+            status: availability,
+            content: (
               <article className="event-card" key={event.id}>
                 <div className="event-date">
-                  <span>{new Date(event.inicio).getDate()}</span>
+                  <span>{new Intl.DateTimeFormat("es-AR", { day: "2-digit", timeZone: "America/Argentina/Buenos_Aires" }).format(new Date(event.inicio))}</span>
                   <small>
-                    {new Intl.DateTimeFormat("es-AR", { month: "short" })
+                    {new Intl.DateTimeFormat("es-AR", { month: "short", timeZone: "America/Argentina/Buenos_Aires" })
                       .format(new Date(event.inicio))
                       .replace(".", "")}
                   </small>
@@ -85,7 +96,7 @@ export default async function Home() {
                     {isEventFree(event) ? "Gratuito" : "Arancelado"} ·{" "}
                     {offersAttendanceCertificate(event) ? "Con certificado" : "Sin certificado"}
                   </p>
-                  <p>{event.descripcion}</p>
+                  <p className="event-excerpt">{event.descripcion}</p>
                   <dl className="event-meta">
                     <div>
                       <dt>Cuándo</dt>
@@ -100,14 +111,15 @@ export default async function Home() {
                     className="button button-primary"
                     href={"/" + event.slug}
                   >
-                    Ver evento
+                    {availability === "disponible" ? "Ver evento e inscribirme" : "Ver detalles del evento"} <span aria-hidden="true">→</span>
                   </Link>
                 </div>
               </article>
-            ))}
-          </div>
+            ),
+          }))} />
         )}
       </section>
+      <footer className="site-footer container"><div><strong>Eventos UNCA</strong><p>Facultad de Tecnología y Ciencias Aplicadas</p></div><Link href="/mis-certificados">Mis certificados</Link><Link href="/iniciar-sesion">Acceso administrativo</Link></footer>
     </main>
   );
 }

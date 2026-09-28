@@ -5,7 +5,7 @@ import Link from "next/link";
 import { CertificateLookupForm } from "@/components/certificate-lookup-form";
 
 export const metadata: Metadata = {
-  title: "Mis certificados | Eventos UNCA",
+  title: "Mis certificados",
   description: "Consulta y descarga tus certificados de asistencia.",
   robots: { index: false, follow: false },
 };
@@ -25,6 +25,7 @@ export default function MyCertificatesPage() {
               priority
             />
           </Link>
+          <nav className="public-page-nav" aria-label="Navegación"><Link href="/">← Volver a la agenda</Link></nav>
           <div className="certificate-lookup-copy">
             <p className="eyebrow">Facultad de Tecnología y Ciencias Aplicadas</p>
             <h1>Mis certificados</h1>

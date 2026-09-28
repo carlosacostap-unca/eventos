@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import type { CertificateTextSections } from "@/lib/domain/certificate-texts";
+
 export const EVENT_STATUS = ["borrador", "publicado", "finalizado"] as const;
 export const REGISTRATION_SOURCE = ["publica", "presencial"] as const;
 
@@ -112,6 +114,7 @@ export type EventRecord = {
   inscripcion_habilitada: boolean;
   estado: EventStatus;
   plantilla_certificado?: string;
+  textos_certificado?: Partial<CertificateTextSections>;
   created: string;
   updated: string;
 };

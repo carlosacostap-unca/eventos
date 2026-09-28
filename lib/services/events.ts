@@ -2,6 +2,7 @@ import "server-only";
 
 import type { RecordModel } from "pocketbase";
 
+import type { CertificateTextSections } from "@/lib/domain/certificate-texts";
 import type { EventInput, EventRecord } from "@/lib/domain/models";
 import { createServicePocketBase } from "@/lib/pocketbase/client";
 
@@ -77,4 +78,14 @@ export async function updateEvent(
 export async function updateCertificateTemplate(id: string, file: File) {
   const pb = await createServicePocketBase();
   return toEvent(await pb.collection("eventos").update(id, { plantilla_certificado: file }));
+}
+
+export async function updateCertificateTexts(
+  id: string,
+  texts: CertificateTextSections,
+) {
+  const pb = await createServicePocketBase();
+  return toEvent(
+    await pb.collection("eventos").update(id, { textos_certificado: texts }),
+  );
 }

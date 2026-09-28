@@ -75,7 +75,7 @@ export function CertificateLookupForm() {
             ))}
           </div>
         </section>
-      ) : null}
+      ) : <aside className="panel certificate-guide"><p className="eyebrow">Después de tu encuentro</p><h2>Tu participación, reconocida.</h2><p className="muted">Si tu evento ofrece certificado, podrás descargarlo aquí cuando la organización lo haya emitido.</p><ol><li>Ingresá el documento y email de tu inscripción.</li><li>Consultá los certificados disponibles.</li><li>Descargá el PDF de cada actividad.</li></ol><p className="privacy-note">Si aún no aparece, consultá con la organización del evento.</p></aside>}
     </div>
   );
 }
