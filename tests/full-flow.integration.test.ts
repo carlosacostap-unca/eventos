@@ -101,6 +101,7 @@ describe.skipIf(!enabled)("flujo integral de eventos", () => {
         await expect(certificates.generateCertificates(event.id, adminId)).resolves.toEqual({
           created: 2,
           reused: 0,
+          regenerated: 0,
           eligible: 2,
         });
 
@@ -121,6 +122,20 @@ describe.skipIf(!enabled)("flujo integral de eventos", () => {
 
         const download = await certificates.getCertificateDownload(found[0].id);
         expect(new TextDecoder().decode(download.bytes.slice(0, 4))).toBe("%PDF");
+
+        const previousCertificate = await pb.collection("certificados").getOne(found[0].id);
+        await pb.collection("eventos").update(event.id, {
+          textos_certificado: { footer: "Texto actualizado para verificar regeneración" },
+        });
+        await expect(certificates.generateCertificates(event.id, adminId, { regenerate: true })).resolves.toEqual({
+          created: 0, reused: 0, regenerated: 2, eligible: 2,
+        });
+        const updatedCertificate = await pb.collection("certificados").getOne(found[0].id);
+        expect(updatedCertificate.archivo).not.toBe(previousCertificate.archivo);
+        const updatedDownload = await certificates.getCertificateDownload(found[0].id);
+        expect(new TextDecoder().decode(updatedDownload.bytes.slice(0, 4))).toBe("%PDF");
+        expect(updatedDownload.bytes).not.toEqual(download.bytes);
+        expect(await certificates.listCertificateRows(event.id)).toHaveLength(2);
 
         const rows = await registrations.listRegistrations(event.id);
         expect(metrics.calculateEventMetrics(rows)).toMatchObject({

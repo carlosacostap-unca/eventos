@@ -1,6 +1,6 @@
 import "server-only";
 
-import type { RecordModel } from "pocketbase";
+import { ClientResponseError, type RecordModel } from "pocketbase";
 
 import { createCertificatePdf } from "@/lib/certificates/pdf";
 import { DomainError } from "@/lib/domain/errors";
@@ -46,7 +46,8 @@ async function findCertificate(registrationId: string) {
           pb.filter("inscripcion = {:registrationId}", { registrationId }),
         ),
     );
-  } catch {
+  } catch (error) {
+    if (!(error instanceof ClientResponseError) || error.status !== 404) throw error;
     return null;
   }
 }
@@ -83,7 +84,11 @@ export async function previewCertificate(eventId: string) {
   });
 }
 
-export async function generateCertificates(eventId: string, adminId: string) {
+export async function generateCertificates(
+  eventId: string,
+  adminId: string,
+  options: { regenerate?: boolean } = {},
+) {
   const event = await getEventById(eventId);
   if (!event) throw new DomainError("NOT_FOUND", "El evento no existe.");
   if (!offersAttendanceCertificate(event)) {
@@ -96,10 +101,11 @@ export async function generateCertificates(eventId: string, adminId: string) {
   const eventTypeName = await loadEventTypeName(event);
   let created = 0;
   let reused = 0;
+  let regenerated = 0;
 
   for (const registration of registrations) {
-    let certificate = await findCertificate(registration.id);
-    if (!certificate) {
+    const certificate = await findCertificate(registration.id);
+    if (!certificate || options.regenerate) {
       const pdf = await createCertificatePdf({ event, registration, template, eventTypeName });
       const form = new FormData();
       form.set("evento", event.id);
@@ -114,10 +120,13 @@ export async function generateCertificates(eventId: string, adminId: string) {
         ),
       );
       const pb = await createServicePocketBase();
-      certificate = toCertificate(
-        await pb.collection("certificados").create(form),
-      );
-      created += 1;
+      if (certificate) {
+        await pb.collection("certificados").update(certificate.id, form);
+        regenerated += 1;
+      } else {
+        await pb.collection("certificados").create(form);
+        created += 1;
+      }
     } else {
       reused += 1;
     }
@@ -126,13 +135,13 @@ export async function generateCertificates(eventId: string, adminId: string) {
 
   await audit({
     adminId,
-    action: "certificados.generados",
+    action: options.regenerate ? "certificados.regenerados" : "certificados.generados",
     entity: "evento",
     entityId: eventId,
-    data: { created, reused, eligible: registrations.length },
+    data: { created, reused, regenerated, eligible: registrations.length },
   });
 
-  return { created, reused, eligible: registrations.length };
+  return { created, reused, regenerated, eligible: registrations.length };
 }
 
 export type CertificateRow = {

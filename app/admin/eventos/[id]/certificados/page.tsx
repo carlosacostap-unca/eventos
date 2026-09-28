@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { generateCertificatesAction } from "@/app/actions/certificates";
+import { generateCertificatesAction, regenerateCertificatesAction } from "@/app/actions/certificates";
 import { uploadTemplateAction } from "@/app/actions/events";
 import { CertificateTextForm } from "@/components/certificate-text-form";
 import { EventAdminNav } from "@/components/event-admin-nav";
+import { SubmitButton } from "@/components/submit-button";
 import { offersAttendanceCertificate } from "@/lib/domain/event-details";
 import { getEventById } from "@/lib/services/events";
 import { listCertificateRows } from "@/lib/services/certificates";
@@ -18,6 +19,7 @@ export default async function CertificatesPage({
   searchParams: Promise<{
     created?: string;
     reused?: string;
+    regenerated?: string;
     eligible?: string;
     ok?: string;
     error?: string;
@@ -67,8 +69,9 @@ export default async function CertificatesPage({
       )}
       {notice.eligible ? (
         <div className="notice notice-success" role="status">
-          Lote procesado: {notice.created || 0} certificados nuevos y{" "}
-          {notice.reused || 0} reutilizados para {notice.eligible} asistentes.
+          Lote procesado: {notice.created || 0} certificados nuevos,{" "}
+          {notice.regenerated || 0} reemplazados y {notice.reused || 0} reutilizados
+          para {notice.eligible} asistentes.
         </div>
       ) : null}
       {notice.ok === "plantilla" ? (
@@ -128,11 +131,21 @@ export default async function CertificatesPage({
                 tendrán certificado disponible en el portal público.
               </p>
               <form action={generateCertificatesAction.bind(null, id)}>
-                <button className="button button-primary" type="submit">
+                <SubmitButton pendingLabel="Generando certificados…">
                   Generar certificados
-                </button>
+                </SubmitButton>
               </form>
               <small>Repetir el lote reutiliza certificados existentes.</small>
+              <form action={regenerateCertificatesAction.bind(null, id)}>
+                <SubmitButton className="button button-secondary" pendingLabel="Regenerando certificados…">
+                  Regenerar certificados
+                </SubmitButton>
+              </form>
+              <small>
+                Reemplaza los PDFs de las personas acreditadas y genera los que
+                falten. Primero guardá los cambios en los textos o la plantilla:
+                se usará la última versión guardada.
+              </small>
             </article>
           </section>
           <CertificateTextForm event={event} />

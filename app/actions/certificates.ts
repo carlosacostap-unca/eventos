@@ -58,10 +58,18 @@ export async function saveCertificateTextsAction(
 }
 
 export async function generateCertificatesAction(eventId: string) {
+  return processCertificates(eventId, false);
+}
+
+export async function regenerateCertificatesAction(eventId: string) {
+  return processCertificates(eventId, true);
+}
+
+async function processCertificates(eventId: string, regenerate: boolean) {
   const admin = await requireAdmin();
   let result;
   try {
-    result = await generateCertificates(eventId, admin.adminId);
+    result = await generateCertificates(eventId, admin.adminId, { regenerate });
   } catch (error) {
     if (error instanceof DomainError && error.code === "DISABLED") {
       redirect("/admin/eventos/" + eventId + "/certificados?error=deshabilitado");
@@ -74,6 +82,8 @@ export async function generateCertificatesAction(eventId: string) {
     result.created +
     "&reused=" +
     result.reused +
+    "&regenerated=" +
+    result.regenerated +
     "&eligible=" +
     result.eligible;
   redirect("/admin/eventos/" + eventId + "/certificados" + query);
