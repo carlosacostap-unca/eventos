@@ -102,13 +102,12 @@ export async function consumePersistentLookupAttempt(input: {
 
 export async function findPublicCertificates(input: {
   normalizedDocument: string;
-  normalizedEmail: string;
 }): Promise<PublicCertificate[]> {
   const pb = await createServicePocketBase();
   const registrations = (await pb.collection("inscripciones").getFullList({
     filter: pb.filter(
-      "documento_normalizado = {:document} && email = {:email} && acreditado = true",
-      { document: input.normalizedDocument, email: input.normalizedEmail },
+      "documento_normalizado = {:document} && acreditado = true",
+      { document: input.normalizedDocument },
     ),
     fields: "id",
   })) as RegistrationRecord[];
@@ -135,9 +134,8 @@ export async function findPublicCertificates(input: {
   });
 }
 
-export function normalizeCertificateLookup(input: { document: string; email: string }) {
+export function normalizeCertificateLookup(input: { document: string }) {
   return {
     normalizedDocument: normalizeDocument(input.document),
-    normalizedEmail: input.email.trim().toLowerCase(),
   };
 }

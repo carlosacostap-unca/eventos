@@ -26,9 +26,9 @@ export function CertificateLookupForm() {
       <form action={action} className="panel form-stack certificate-lookup-form">
         <div>
           <p className="eyebrow">Consulta personal</p>
-          <h2>Ingresá tus datos</h2>
+          <h2>Ingresá tu documento</h2>
           <p className="muted">
-            Usá el mismo número de documento y email que informaste al inscribirte.
+            Usá el mismo número de documento que informaste al inscribirte.
           </p>
         </div>
         <FormMessage message={state.message} success={state.ok} />
@@ -37,16 +37,11 @@ export function CertificateLookupForm() {
           <input name="documento" inputMode="numeric" autoComplete="off" required />
           <FieldError errors={state.fields?.documento} />
         </label>
-        <label className="field">
-          <span>Email</span>
-          <input name="email" type="email" autoComplete="email" required />
-          <FieldError errors={state.fields?.email} />
-        </label>
         <SubmitButton pendingLabel="Buscando certificados…">
           Buscar certificados
         </SubmitButton>
         <p className="privacy-note">
-          La consulta es temporal y solo habilita los certificados asociados a estos datos.
+          La consulta es temporal y solo habilita los certificados asociados a ese documento.
         </p>
       </form>
 
@@ -75,7 +70,7 @@ export function CertificateLookupForm() {
             ))}
           </div>
         </section>
-      ) : <aside className="panel certificate-guide"><p className="eyebrow">Después de tu encuentro</p><h2>Tu participación, reconocida.</h2><p className="muted">Si tu evento ofrece certificado, podrás descargarlo aquí cuando la organización lo haya emitido.</p><ol><li>Ingresá el documento y email de tu inscripción.</li><li>Consultá los certificados disponibles.</li><li>Descargá el PDF de cada actividad.</li></ol><p className="privacy-note">Si aún no aparece, consultá con la organización del evento.</p></aside>}
+      ) : <aside className="panel certificate-guide"><p className="eyebrow">Después de tu encuentro</p><h2>Tu participación, reconocida.</h2><p className="muted">Si tu evento ofrece certificado, podrás descargarlo aquí cuando la organización lo haya emitido.</p><ol><li>Ingresá el documento de tu inscripción.</li><li>Consultá los certificados disponibles.</li><li>Descargá el PDF de cada actividad.</li></ol><p className="privacy-note">Si aún no aparece, consultá con la organización del evento.</p></aside>}
     </div>
   );
 }

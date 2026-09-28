@@ -67,12 +67,12 @@ El acceso administrativo está en `/iniciar-sesion`. El portal público de certi
 3. Creá un evento, asignale un tipo, indicá si es gratuito y si se entregará certificado, y dejalo como borrador o con la inscripción deshabilitada.
 4. En la pestaña Disertantes agregá personas nuevas o reutilizá perfiles ya cargados en otros eventos, incluidos sus datos y foto. Las fotos nuevas admiten JPG, PNG o WebP de hasta 5 MB. Quitar un disertante de un evento solo elimina su participación; editar su perfil actualiza todos los eventos donde participa. Revisá la página pública en /identificador-publico y, cuando corresponda, publicá el evento y habilitá la inscripción. Los enlaces antiguos /eventos/identificador-publico redirigen a la URL corta.
 5. Durante el evento, usá Acreditación para marcar asistentes o crear altas presenciales. Estas altas se acreditan de inmediato y pueden superar el cupo público.
-6. En Certificados, validá la vista previa y generá el lote. Cada asistente podrá descargar sus PDF desde `/mis-certificados` usando el mismo DNI y email de la inscripción.
+6. En Certificados, validá la vista previa y generá el lote. Cada asistente podrá descargar sus PDF desde `/mis-certificados` usando el mismo DNI de la inscripción.
 7. En Reportes, filtrá participantes y exportá CSV.
 
 ## Portal público de certificados
 
-La consulta exige una coincidencia exacta entre el DNI normalizado y el email normalizado de una inscripción acreditada. Una consulta válida crea una autorización firmada, HttpOnly y válida por diez minutos, limitada a los identificadores concretos encontrados. La descarga vuelve a validar esa autorización y responde con `Cache-Control: private, no-store`.
+La consulta exige una coincidencia exacta con el DNI normalizado de una inscripción acreditada, sin solicitar email. Una consulta válida crea una autorización firmada, HttpOnly y válida por diez minutos, limitada a los identificadores concretos encontrados. La descarga vuelve a validar esa autorización y responde con `Cache-Control: private, no-store`.
 
 El límite inicial es de cinco intentos por combinación de origen y DNI en una ventana de quince minutos. PocketBase guarda solamente una clave HMAC derivada con `SESSION_SECRET`; no guarda el DNI ni la IP en claro. La colección de límites y las inscripciones no tienen reglas públicas: todas las consultas pasan por Next.js con la cuenta técnica.
 
@@ -95,7 +95,7 @@ Después de desplegar:
 3. Iniciá sesión y creá un evento de prueba.
 4. Registrá una persona, acreditala y agregá un alta presencial.
 5. Generá la vista previa y un certificado.
-6. Abrí `/mis-certificados`, consultá con el DNI y email de prueba y descargá el PDF.
+6. Abrí `/mis-certificados`, consultá con el DNI de prueba y descargá el PDF.
 7. Confirmá que una combinación incorrecta, un enlace sin autorización y una autorización vencida no permitan descargarlo.
 8. Revisá estadísticas y el CSV.
 9. Recién entonces habilitá la inscripción pública.

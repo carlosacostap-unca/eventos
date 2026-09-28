@@ -22,18 +22,17 @@ const lookupSchema = z.object({
     .trim()
     .min(5, "Ingresá un documento válido")
     .max(32, "Ingresá un documento válido"),
-  email: z.string().trim().toLowerCase().email("Ingresá un email válido").max(254),
 });
 
 export type CertificateLookupState = {
   ok?: boolean;
   message?: string;
-  fields?: { documento?: string[]; email?: string[] };
+  fields?: { documento?: string[] };
   certificates?: PublicCertificate[];
 };
 
 const genericMessage =
-  "No encontramos certificados con esos datos. Revisalos o consultá con la Facultad.";
+  "No encontramos certificados con ese documento. Revisalo o consultá con la Facultad.";
 const limitedMessage =
   "No pudimos completar la consulta. Esperá unos minutos antes de volver a intentar.";
 
@@ -51,13 +50,11 @@ export async function lookupCertificatesAction(
 ): Promise<CertificateLookupState> {
   const parsed = lookupSchema.safeParse({
     documento: formData.get("documento"),
-    email: formData.get("email"),
   });
   if (!parsed.success) return { fields: parsed.error.flatten().fieldErrors };
 
   const normalized = normalizeCertificateLookup({
     document: parsed.data.documento,
-    email: parsed.data.email,
   });
   const cookieStore = await cookies();
 

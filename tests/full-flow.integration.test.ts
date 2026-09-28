@@ -107,7 +107,6 @@ describe.skipIf(!enabled)("flujo integral de eventos", () => {
 
         const found = await lookup.findPublicCertificates({
           normalizedDocument: models.normalizeDocument(firstDocument),
-          normalizedEmail: email,
         });
         expect(found).toHaveLength(1);
         expect(found[0]).toMatchObject({ eventTitle: event.titulo });
