@@ -124,7 +124,7 @@ describe.skipIf(!enabled)("flujo integral de eventos", () => {
 
         const previousCertificate = await pb.collection("certificados").getOne(found[0].id);
         await pb.collection("eventos").update(event.id, {
-          textos_certificado: { footer: "Texto actualizado para verificar regeneración" },
+          textos_certificado: { participation: "Texto actualizado para verificar regeneración" },
         });
         await expect(certificates.generateCertificates(event.id, adminId, { regenerate: true })).resolves.toEqual({
           created: 0, reused: 0, regenerated: 2, eligible: 2,

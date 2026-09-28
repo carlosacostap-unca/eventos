@@ -139,3 +139,29 @@ export function normalizeCertificateLookup(input: { document: string }) {
     normalizedDocument: normalizeDocument(input.document),
   };
 }
+
+export async function getPublicCertificateResults(certificateIds: string[]) {
+  if (certificateIds.length === 0) return null;
+  const pb = await createServicePocketBase();
+  const records = await pb.collection("certificados").getFullList({
+    filter: certificateIds.map((id) => `(${pb.filter("id = {:id}", { id })})`).join(" || "),
+    expand: "evento,inscripcion",
+    sort: "-generado_en",
+  });
+  const available = records.flatMap((record) => {
+    const expanded = record.expand as {
+      evento?: EventRecord;
+      inscripcion?: RegistrationRecord;
+    } | undefined;
+    if (!certificateIds.includes(record.id) || !expanded?.evento || !expanded.inscripcion?.acreditado) return [];
+    return [{
+      certificate: { id: record.id, eventTitle: expanded.evento.titulo, eventDate: expanded.evento.inicio },
+      participant: { apellidos: expanded.inscripcion.apellidos, nombres: expanded.inscripcion.nombres },
+    }];
+  });
+  if (!available.length) return null;
+  return {
+    participant: available[0].participant,
+    certificates: available.map((item) => item.certificate),
+  };
+}

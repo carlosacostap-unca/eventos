@@ -12,9 +12,33 @@ vi.mock("@/lib/pocketbase/client", () => ({
   }),
 }));
 
-import { findPublicCertificates, normalizeCertificateLookup } from "./certificate-lookup";
+import { findPublicCertificates, getPublicCertificateResults, normalizeCertificateLookup } from "./certificate-lookup";
 
 beforeEach(() => vi.resetAllMocks());
+
+it("obtiene nombre y certificados solo a partir de los IDs autorizados", async () => {
+  const expand = {
+    evento: { titulo: "Jornada", inicio: "2026-10-15" },
+    inscripcion: { apellidos: "Pérez", nombres: "Juan", acreditado: true },
+  };
+  mocks.certificates.mockResolvedValue([
+    { id: "cert1", expand },
+    { id: "other", expand },
+    { id: "absent", expand: { ...expand, inscripcion: { ...expand.inscripcion, acreditado: false } } },
+  ]);
+  expect(await getPublicCertificateResults(["cert1", "absent"])).toEqual({
+    participant: { apellidos: "Pérez", nombres: "Juan" },
+    certificates: [{ id: "cert1", eventTitle: "Jornada", eventDate: "2026-10-15" }],
+  });
+  expect(mocks.certificates).toHaveBeenCalledWith({
+    filter: '(id = "cert1") || (id = "absent")', expand: "evento,inscripcion", sort: "-generado_en",
+  });
+});
+
+it("no busca resultados sin IDs autorizados", async () => {
+  expect(await getPublicCertificateResults([])).toBeNull();
+  expect(mocks.certificates).not.toHaveBeenCalled();
+});
 
 it("busca inscripciones acreditadas por documento sin filtrar por email", async () => {
   mocks.registrations.mockResolvedValue([{ id: "registration1" }, { id: "registration2" }]);

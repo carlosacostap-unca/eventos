@@ -12,6 +12,7 @@ import {
 
 import {
   renderCertificateText,
+  certificateDurationHours,
   resolveCertificateTexts,
   type CertificateTextVariables,
   type CertificateTextSections,
@@ -341,6 +342,7 @@ export async function createCertificatePdf(input: {
     documento: input.registration.documento?.trim() ?? "",
     evento: input.event.titulo.trim(),
     tipoEvento: input.eventTypeName?.trim() || "Evento",
+    horas: certificateDurationHours(input.event.inicio, input.event.fin),
     lugar: input.event.lugar.trim(),
     fecha: date,
   };
@@ -421,14 +423,6 @@ export async function createCertificatePdf(input: {
     preferredSize: 11.5 * textScale,
     minimumSize: 8.5 * textScale,
   });
-  const footerBlock = fitTextBlock({
-    text: renderCertificateText(texts.footer, variables),
-    font: sansBold,
-    maxWidth: width * 0.72,
-    maxLines: 2,
-    preferredSize: 8.5 * textScale,
-    minimumSize: 6.5 * textScale,
-  });
 
   drawCenteredBlock({
     page,
@@ -481,15 +475,6 @@ export async function createCertificatePdf(input: {
     font: serif,
     size: locationBlock.size,
     lineHeight: locationBlock.size * 1.18,
-  });
-  drawCenteredBlock({
-    page,
-    lines: footerBlock.lines,
-    centerY: height * (input.template ? 0.125 : 0.385),
-    font: sansBold,
-    size: footerBlock.size,
-    lineHeight: footerBlock.size * 1.12,
-    color: rgb(0.2, 0.2, 0.2),
   });
   if (!input.template) await drawSignatures(document, page, serif, texts, variables);
   page.drawText("ID " + input.event.id + "-" + input.registration.id, {

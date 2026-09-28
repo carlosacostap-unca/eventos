@@ -114,7 +114,8 @@ export type EventRecord = {
   inscripcion_habilitada: boolean;
   estado: EventStatus;
   plantilla_certificado?: string;
-  textos_certificado?: Partial<CertificateTextSections>;
+  // Las configuraciones antiguas pueden conservar footer; el generador lo ignora.
+  textos_certificado?: Partial<CertificateTextSections> & { footer?: string };
   created: string;
   updated: string;
 };

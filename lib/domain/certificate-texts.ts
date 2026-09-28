@@ -12,7 +12,6 @@ export const certificateTextInputSchema = z.object({
   participation: certificateTextSection("La descripción de la participación", 240),
   event: certificateTextSection("La sección del evento", 240),
   locationAndDate: certificateTextSection("La sección de lugar y fecha", 240),
-  footer: certificateTextSection("El pie", 160),
   signatureLeftName: certificateTextSection("El nombre de la firma izquierda", 120),
   signatureLeftRole: certificateTextSection("El cargo de la firma izquierda", 120),
   signatureLeftInstitution: certificateTextSection("La institución de la firma izquierda", 160),
@@ -30,10 +29,9 @@ export const DEFAULT_CERTIFICATE_TEXTS: CertificateTextSections = {
     "La Facultad de Tecnología y Ciencias Aplicadas de la Universidad Nacional de Catamarca certifica que",
   participant: "{participante}",
   document: "DNI N° {documento}",
-  participation: "ha participado en la actividad de tipo {tipoEvento}:",
+  participation: "ha participado de la actividad de tipo {tipoEvento} de {horas} horas:",
   event: "{evento}",
   locationAndDate: "{lugar}, {fecha}",
-  footer: "Facultad de Tecnología y Ciencias Aplicadas",
   signatureLeftName: "Ms. Ing. Marcos Darío ARANDA",
   signatureLeftRole: "Secretario de Posgrado",
   signatureLeftInstitution: "Facultad de Tecnología y Ciencias Aplicadas",
@@ -67,6 +65,7 @@ export type CertificateTextVariables = {
   documento: string;
   evento: string;
   tipoEvento?: string;
+  horas?: string;
   lugar: string;
   fecha: string;
 };
@@ -77,9 +76,17 @@ export function renderCertificateText(
 ): string {
   return template
     .replace(
-      /\{(participante|documento|evento|tipoEvento|lugar|fecha)\}/g,
-      (_match, key: keyof CertificateTextVariables) => variables[key] ?? "Evento",
+      /\{(participante|documento|evento|tipoEvento|horas|lugar|fecha)\}/g,
+      (_match, key: keyof CertificateTextVariables) => variables[key] ?? (key === "tipoEvento" ? "Evento" : ""),
     )
     .replace(/\s+/g, " ")
     .trim();
+}
+
+export function certificateDurationHours(start: string, end: string): string {
+  const hours = (new Date(end).getTime() - new Date(start).getTime()) / 3_600_000;
+  if (!Number.isFinite(hours) || hours <= 0) {
+    throw new Error("El evento debe tener una duración válida para emitir el certificado.");
+  }
+  return new Intl.NumberFormat("es-AR", { maximumFractionDigits: 2 }).format(hours);
 }

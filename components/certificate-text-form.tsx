@@ -25,7 +25,7 @@ export function CertificateTextForm({ event }: { event: EventRecord }) {
       <p className="muted">
         Personalizá cada sección para este evento. Podés usar las variables{" "}
         <code>{"{participante}"}</code>, <code>{"{documento}"}</code>,{" "}
-        <code>{"{evento}"}</code>, <code>{"{tipoEvento}"}</code>, <code>{"{lugar}"}</code> y{" "}
+        <code>{"{evento}"}</code>, <code>{"{tipoEvento}"}</code>, <code>{"{horas}"}</code>, <code>{"{lugar}"}</code> y{" "}
         <code>{"{fecha}"}</code>. Dejá una sección vacía para ocultarla.
       </p>
       <FormMessage message={state.message} success={state.ok} />
@@ -98,8 +98,9 @@ export function CertificateTextForm({ event }: { event: EventRecord }) {
               />
               <FieldError errors={state.fields?.participation} />
               <small>
-                Usá {"{tipoEvento}"} para tomar el tipo configurado en el evento.
-                Ejemplo: {"ha participado en la actividad de tipo {tipoEvento}:"}
+                Usá {"{tipoEvento}"} para el tipo y {"{horas}"} para la duración
+                entre el inicio y el fin del evento.
+                Ejemplo: {"ha participado de la actividad de tipo {tipoEvento} de {horas} horas:"}
               </small>
             </label>
             <label className="field">
@@ -117,19 +118,6 @@ export function CertificateTextForm({ event }: { event: EventRecord }) {
               <FieldError errors={state.fields?.locationAndDate} />
             </label>
           </div>
-        </fieldset>
-
-        <fieldset className="certificate-text-group">
-          <legend>Texto complementario</legend>
-          <p className="muted">
-            En el diseño institucional aparece debajo del título del evento y antes
-            del lugar y la fecha. Con un fondo personalizado se muestra al pie.
-          </p>
-          <label className="field">
-            <span>Texto complementario del evento</span>
-            <input name="footer" defaultValue={texts.footer} maxLength={160} />
-            <FieldError errors={state.fields?.footer} />
-          </label>
         </fieldset>
 
         <fieldset className="certificate-text-group">

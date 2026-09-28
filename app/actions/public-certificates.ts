@@ -1,6 +1,7 @@
 "use server";
 
 import { cookies, headers } from "next/headers";
+import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import {
@@ -13,7 +14,6 @@ import {
   consumePersistentLookupAttempt,
   findPublicCertificates,
   normalizeCertificateLookup,
-  type PublicCertificate,
 } from "@/lib/services/certificate-lookup";
 
 const lookupSchema = z.object({
@@ -28,7 +28,6 @@ export type CertificateLookupState = {
   ok?: boolean;
   message?: string;
   fields?: { documento?: string[] };
-  certificates?: PublicCertificate[];
 };
 
 const genericMessage =
@@ -83,9 +82,9 @@ export async function lookupCertificatesAction(
       ),
       certificateAccessCookieOptions(process.env.NODE_ENV === "production"),
     );
-    return { ok: true, certificates };
   } catch {
     cookieStore.delete(CERTIFICATE_ACCESS_COOKIE);
     return { message: genericMessage };
   }
+  redirect("/mis-certificados/resultados");
 }

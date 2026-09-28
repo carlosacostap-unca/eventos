@@ -47,7 +47,7 @@ describe("certificados PDF", () => {
     expect(bytes.byteLength).toBeGreaterThan(100_000);
     const texts = drawn.mock.calls.map(([text]) => text);
     expect(texts).toEqual(expect.arrayContaining([
-      "ha participado en la actividad de tipo Taller Teórico-Práctico:",
+      "ha participado de la actividad de tipo Taller Teórico-Práctico de 2 horas:",
       "Autoridad de prueba", "Coordinación de Jornada de extensión",
       "Otra autoridad", "Dirección", "Institución de prueba",
     ]));

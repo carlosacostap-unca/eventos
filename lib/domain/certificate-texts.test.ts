@@ -2,12 +2,23 @@ import { describe, expect, it } from "vitest";
 
 import {
   DEFAULT_CERTIFICATE_TEXTS,
+  certificateDurationHours,
   certificateTextInputSchema,
   renderCertificateText,
   resolveCertificateTexts,
 } from "@/lib/domain/certificate-texts";
 
 describe("textos de certificados", () => {
+  it("incluye las horas del evento en el texto de participación", () => {
+    expect(certificateDurationHours("2026-09-28T19:00:00Z", "2026-09-28T22:00:00Z")).toBe("3");
+    const horas = certificateDurationHours("2026-09-29T21:00:00Z", "2026-09-29T22:30:00Z");
+    expect(horas).toBe("1,5");
+    expect(renderCertificateText(DEFAULT_CERTIFICATE_TEXTS.participation, {
+      participante: "Ana", documento: "12345", evento: "Jornada", tipoEvento: "Charla", horas, lugar: "Aula", fecha: "29 de septiembre",
+    })).toBe("ha participado de la actividad de tipo Charla de 1,5 horas:");
+    expect(() => certificateDurationHours("invalid", "invalid")).toThrow();
+    expect(() => certificateDurationHours("2026-09-29T22:30:00Z", "2026-09-29T21:00:00Z")).toThrow();
+  });
   it("sustituye el tipo configurado sin alterar su nombre", () => {
     const variables = { participante: "Ana", documento: "12345", evento: "Jornada", lugar: "Aula", fecha: "28 de septiembre" };
     for (const tipoEvento of ["Charla", "Taller Teórico-Práctico", "Curso"]) {
@@ -17,7 +28,7 @@ describe("textos de certificados", () => {
   });
   it("completa las firmas de configuraciones antiguas y respeta campos vacíos", () => {
     const resolved = resolveCertificateTexts({ footer: "Texto existente", signatureLeftRole: "" });
-    expect(resolved.footer).toBe("Texto existente");
+    expect(resolved).not.toHaveProperty("footer");
     expect(resolved.signatureLeftName).toBe("Ms. Ing. Marcos Darío ARANDA");
     expect(resolved.signatureRightRole).toBe("Decana");
     expect(resolved.signatureLeftRole).toBe("");
@@ -54,13 +65,13 @@ describe("textos de certificados", () => {
     expect(
       certificateTextInputSchema.safeParse({
         ...DEFAULT_CERTIFICATE_TEXTS,
-        footer: "",
+        participation: "",
       }).success,
     ).toBe(true);
     expect(
       certificateTextInputSchema.safeParse({
         ...DEFAULT_CERTIFICATE_TEXTS,
-        footer: "x".repeat(161),
+        participation: "x".repeat(241),
       }).success,
     ).toBe(false);
   });

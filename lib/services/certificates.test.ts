@@ -20,7 +20,7 @@ vi.mock("@/lib/pocketbase/client", () => ({
 
 import { generateCertificates } from "./certificates";
 
-const event = { id: "event", certificado_asistencia: "si", textos_certificado: { footer: "Texto actualizado" } };
+const event = { id: "event", certificado_asistencia: "si", textos_certificado: { participation: "Texto actualizado" } };
 const registration = { id: "student", acreditado: true, documento_normalizado: "123456" };
 
 describe("emisión y regeneración de certificados", () => {

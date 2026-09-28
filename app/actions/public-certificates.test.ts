@@ -4,6 +4,9 @@ vi.mock("server-only", () => ({}));
 const mocks = vi.hoisted(() => ({
   find: vi.fn(), limit: vi.fn(), set: vi.fn(), delete: vi.fn(),
 }));
+vi.mock("next/navigation", () => ({
+  redirect: (path: string) => { throw new Error("REDIRECT:" + path); },
+}));
 vi.mock("next/headers", () => ({
   cookies: async () => ({ set: mocks.set, delete: mocks.delete }),
   headers: async () => new Headers({ "x-real-ip": "127.0.0.1" }),
@@ -32,13 +35,13 @@ describe("consulta de certificados solo con documento", () => {
   }
 
   it("acepta el DNI sin email y autoriza solo los certificados encontrados", async () => {
-    const result = await lookupCertificatesAction({}, form());
-    expect(result.ok).toBe(true);
+    await expect(lookupCertificatesAction({}, form())).rejects.toThrow("REDIRECT:/mis-certificados/resultados");
     expect(mocks.find).toHaveBeenCalledWith({ normalizedDocument: "12345678" });
     expect(mocks.limit).toHaveBeenCalledWith({ origin: "127.0.0.1", normalizedDocument: "12345678" });
     const [name, token] = mocks.set.mock.calls[0];
     expect(name).toBe(CERTIFICATE_ACCESS_COOKIE);
     expect(await unsealCertificateAccess(token, "s".repeat(32))).toEqual(["cert1"]);
+    expect(mocks.delete).not.toHaveBeenCalled();
   });
 
   it("rechaza un documento demasiado corto", async () => {
