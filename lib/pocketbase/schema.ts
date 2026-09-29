@@ -1,4 +1,5 @@
 import type { CollectionModel } from "pocketbase";
+import { MATERIAL_MAX_BYTES } from "../domain/materials";
 
 export const COLLECTION_IDS = {
   administradores: "evadmin00000001",
@@ -12,6 +13,7 @@ export const COLLECTION_IDS = {
   certificados: "evcerts0000001",
   envios: "evmails0000001",
   limitesConsulta: "evlimits0000001",
+  materiales: "evmaterials0001",
 } as const;
 
 const protectedRule =
@@ -26,6 +28,20 @@ const protectedCollection = {
 };
 
 export const pocketBaseSchema = [
+  {
+    ...protectedCollection,
+    id: COLLECTION_IDS.materiales,
+    name: "materiales_evento",
+    type: "base",
+    fields: [
+      { name: "evento", type: "relation", required: true, maxSelect: 1, collectionId: COLLECTION_IDS.eventos, cascadeDelete: true },
+      { name: "titulo", type: "text", required: true, max: 160 },
+      { name: "nombre_original", type: "text", required: true, max: 255 },
+      { name: "tamano", type: "number", required: true, min: 1, max: MATERIAL_MAX_BYTES, onlyInt: true },
+      { name: "archivo", type: "file", required: true, maxSelect: 1, maxSize: MATERIAL_MAX_BYTES, protected: true },
+    ],
+    indexes: ["CREATE INDEX idx_materiales_evento ON materiales_evento (evento, created)"],
+  },
   {
     id: COLLECTION_IDS.administradores,
     name: "administradores",

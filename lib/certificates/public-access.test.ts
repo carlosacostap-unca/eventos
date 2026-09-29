@@ -5,9 +5,18 @@ import {
   deriveLookupLimitKey,
   sealCertificateAccess,
   unsealCertificateAccess,
+  unsealParticipantAccess,
 } from "@/lib/certificates/public-access";
 
 describe("acceso público a certificados", () => {
+  it("autoriza inscripciones sin certificado, vence y rechaza firmas adulteradas", async () => {
+    const secret = "s".repeat(32);
+    const now = new Date("2026-09-29T12:00:00Z");
+    const token = await sealCertificateAccess([], secret, now, ["reg1", "reg1"]);
+    expect(await unsealParticipantAccess(token, secret, now)).toEqual({ certificateIds: [], registrationIds: ["reg1"] });
+    expect(await unsealParticipantAccess(token, "x".repeat(32), now)).toBeNull();
+    expect(await unsealParticipantAccess(token, secret, new Date(now.getTime() + 11 * 60 * 1000))).toBeNull();
+  });
   it("deriva una clave opaca sin conservar documento ni origen", () => {
     const key = deriveLookupLimitKey({
       secret: "s".repeat(32),

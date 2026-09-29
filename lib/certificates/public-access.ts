@@ -88,9 +88,10 @@ export async function sealCertificateAccess(
   certificateIds: string[],
   secret: string,
   now = new Date(),
+  registrationIds: string[] = [],
 ) {
   const issuedAt = Math.floor(now.getTime() / 1000);
-  return new SignJWT({ certificateIds: [...new Set(certificateIds)] })
+  return new SignJWT({ certificateIds: [...new Set(certificateIds)], registrationIds: [...new Set(registrationIds)] })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuer(issuer)
     .setAudience(audience)
@@ -104,6 +105,17 @@ export async function unsealCertificateAccess(
   secret: string,
   now = new Date(),
 ): Promise<string[] | null> {
+  const access = await unsealParticipantAccess(value, secret, now);
+  return access?.certificateIds ?? null;
+}
+
+export type ParticipantAccess = { certificateIds: string[]; registrationIds: string[] };
+
+export async function unsealParticipantAccess(
+  value: string,
+  secret: string,
+  now = new Date(),
+): Promise<ParticipantAccess | null> {
   try {
     const { payload } = await jwtVerify(value, signingKey(secret), {
       issuer,
@@ -117,7 +129,9 @@ export async function unsealCertificateAccess(
     ) {
       return null;
     }
-    return payload.certificateIds;
+    const registrationIds = payload.registrationIds ?? [];
+    if (!Array.isArray(registrationIds) || registrationIds.some((id) => typeof id !== "string")) return null;
+    return { certificateIds: payload.certificateIds, registrationIds };
   } catch {
     return null;
   }

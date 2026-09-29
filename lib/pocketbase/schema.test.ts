@@ -5,6 +5,7 @@ import { pocketBaseSchema } from "@/lib/pocketbase/schema";
 describe("esquema PocketBase", () => {
   it("declara colecciones e índices únicos críticos", () => {
     expect(pocketBaseSchema.map((collection) => collection.name)).toEqual([
+      "materiales_evento",
       "administradores",
       "cuentas_servicio",
       "tipos_evento",
@@ -55,5 +56,13 @@ describe("esquema PocketBase", () => {
     );
     expect(lookupLimits?.listRule).toContain('@request.auth.role = "service"');
     expect(lookupLimits?.indexes?.join(" ")).toContain("idx_limites_consulta_clave");
+  });
+
+  it("protege los materiales tanto en los registros como en el storage", () => {
+    const materials = pocketBaseSchema.find((collection) => collection.name === "materiales_evento");
+    expect(materials?.viewRule).toContain('@request.auth.role = "service"');
+    expect(materials?.listRule).toBe(materials?.viewRule);
+    expect(materials?.fields.find((field) => field.name === "archivo")).toMatchObject({ protected: true, required: true, maxSize: 25 * 1024 * 1024 });
+    expect(materials?.fields.find((field) => field.name === "evento")).toMatchObject({ required: true, cascadeDelete: true });
   });
 });

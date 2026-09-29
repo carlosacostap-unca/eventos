@@ -11,6 +11,7 @@ export function EventAdminNav({ event }: { event: EventRecord }) {
       <ActiveNavLink href={base + "/disertantes"}>Disertantes</ActiveNavLink>
       <ActiveNavLink href={base + "/acreditacion"}>Acreditación</ActiveNavLink>
       <ActiveNavLink href={base + "/certificados"}>Certificados</ActiveNavLink>
+      <ActiveNavLink href={base + "/materiales"}>Materiales</ActiveNavLink>
       <ActiveNavLink href={base + "/reportes"}>Reportes</ActiveNavLink>
     </nav>
   );

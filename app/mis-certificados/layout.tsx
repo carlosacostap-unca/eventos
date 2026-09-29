@@ -5,8 +5,8 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 export const metadata: Metadata = {
-  title: "Mis certificados",
-  description: "Consulta y descarga tus certificados de asistencia.",
+  title: "Mis certificados y materiales",
+  description: "Consulta y descarga certificados y materiales de tus eventos acreditados.",
   robots: { index: false, follow: false },
 };
 
@@ -28,8 +28,8 @@ export default function MyCertificatesLayout({ children }: { children: ReactNode
           <nav className="public-page-nav" aria-label="Navegación"><Link href="/">← Volver a la agenda</Link></nav>
           <div className="certificate-lookup-copy">
             <p className="eyebrow">Facultad de Tecnología y Ciencias Aplicadas</p>
-            <h1>Mis certificados</h1>
-            <p>Encontrá en un solo lugar los certificados emitidos para tus eventos.</p>
+            <h1>Mis certificados y materiales</h1>
+            <p>Encontrá en un solo lugar los materiales y certificados de tus eventos.</p>
           </div>
         </div>
       </header>

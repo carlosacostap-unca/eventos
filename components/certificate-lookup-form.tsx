@@ -30,15 +30,15 @@ export function CertificateLookupForm() {
           <input name="documento" inputMode="numeric" autoComplete="off" required />
           <FieldError errors={state.fields?.documento} />
         </label>
-        <SubmitButton pendingLabel="Buscando certificados…">
-          Buscar certificados
+        <SubmitButton pendingLabel="Buscando recursos…">
+          Buscar certificados y materiales
         </SubmitButton>
         <p className="privacy-note">
-          La consulta es temporal y solo habilita los certificados asociados a ese documento.
+          La consulta es temporal y solo habilita recursos de los eventos donde acreditaste tu asistencia.
         </p>
       </form>
 
-      <aside className="panel certificate-guide"><p className="eyebrow">Después de tu encuentro</p><h2>Tu participación, reconocida.</h2><p className="muted">Si tu evento ofrece certificado, podrás descargarlo aquí cuando la organización lo haya emitido.</p><ol><li>Ingresá el documento de tu inscripción.</li><li>Consultá los certificados disponibles.</li><li>Descargá el PDF de cada actividad.</li></ol><p className="privacy-note">Si aún no aparece, consultá con la organización del evento.</p></aside>
+      <aside className="panel certificate-guide"><p className="eyebrow">Después de tu encuentro</p><h2>Recursos de tu participación</h2><p className="muted">Desde tu acreditación podés acceder a los materiales que comparta la organización. El certificado aparecerá cuando sea emitido.</p><ol><li>Ingresá el documento de tu inscripción.</li><li>Consultá tus eventos acreditados.</li><li>Descargá los materiales y certificados disponibles.</li></ol><p className="privacy-note">Si tu evento aún no aparece, consultá con la organización.</p></aside>
     </div>
   );
 }

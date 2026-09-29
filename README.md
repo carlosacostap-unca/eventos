@@ -72,7 +72,15 @@ El acceso administrativo está en `/iniciar-sesion`. El portal público de certi
 
 ## Portal público de certificados
 
-La consulta exige una coincidencia exacta con el DNI normalizado de una inscripción acreditada, sin solicitar email. Una consulta válida crea una autorización firmada, HttpOnly y válida por diez minutos, limitada a los identificadores concretos encontrados. La descarga vuelve a validar esa autorización y responde con `Cache-Control: private, no-store`.
+### Materiales de las charlas
+
+Cada evento tiene una pestaña **Materiales** para subir y eliminar imágenes, PDF, PowerPoint y documentos Office/OpenDocument. Se adjuntan uno por vez, con título opcional y hasta 25 MB por archivo. Los archivos se guardan en la colección `materiales_evento`, en el storage configurado en PocketBase (local o S3), con el campo de archivo protegido.
+
+Antes de desplegar esta funcionalidad, ejecutar `npm run schema:materials`. Este comando crea o actualiza únicamente la colección de materiales, sin eliminar otras colecciones ni cambiar cuentas o credenciales. El aprovisionamiento completo también incluye esta colección. El proxy del despliegue debe admitir solicitudes multipart de al menos 27 MB.
+
+Al consultar su DNI en `/mis-certificados`, una persona acreditada ve los materiales de sus eventos aunque aún no se haya emitido un certificado, incluso cuando el evento no entrega certificados. La autorización firmada dura diez minutos y guarda los IDs de sus inscripciones acreditadas. Cada descarga comprueba nuevamente la acreditación y la pertenencia al evento. Revocar la asistencia impide nuevas descargas. Los tokens del storage nunca se entregan al navegador; el servidor transmite el archivo como adjunto, sin caché. Las autorizaciones anteriores basadas en certificados siguen funcionando durante su vigencia.
+
+La consulta exige una coincidencia exacta con el DNI normalizado de una inscripción acreditada, sin solicitar email. Una consulta válida crea una autorización firmada, HttpOnly y válida por diez minutos, limitada a las inscripciones acreditadas encontradas. La descarga vuelve a validar esa autorización y la asistencia, y responde con `Cache-Control: private, no-store`.
 
 El límite inicial es de cinco intentos por combinación de origen y DNI en una ventana de quince minutos. PocketBase guarda solamente una clave HMAC derivada con `SESSION_SECRET`; no guarda el DNI ni la IP en claro. La colección de límites y las inscripciones no tienen reglas públicas: todas las consultas pasan por Next.js con la cuenta técnica.
 

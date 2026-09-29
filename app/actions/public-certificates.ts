@@ -12,9 +12,9 @@ import {
 import { getServerEnv } from "@/lib/env";
 import {
   consumePersistentLookupAttempt,
-  findPublicCertificates,
   normalizeCertificateLookup,
 } from "@/lib/services/certificate-lookup";
+import { findAccreditedRegistrations } from "@/lib/services/participant-resources";
 
 const lookupSchema = z.object({
   documento: z
@@ -31,7 +31,7 @@ export type CertificateLookupState = {
 };
 
 const genericMessage =
-  "No encontramos certificados con ese documento. Revisalo o consultá con la Facultad.";
+  "No encontramos recursos disponibles con ese documento. Revisalo o consultá con la Facultad.";
 const limitedMessage =
   "No pudimos completar la consulta. Esperá unos minutos antes de volver a intentar.";
 
@@ -67,8 +67,8 @@ export async function lookupCertificatesAction(
       return { message: limitedMessage };
     }
 
-    const certificates = await findPublicCertificates(normalized);
-    if (certificates.length === 0) {
+    const registrationIds = await findAccreditedRegistrations(normalized.normalizedDocument);
+    if (registrationIds.length === 0) {
       cookieStore.delete(CERTIFICATE_ACCESS_COOKIE);
       return { message: genericMessage };
     }
@@ -77,8 +77,10 @@ export async function lookupCertificatesAction(
     cookieStore.set(
       CERTIFICATE_ACCESS_COOKIE,
       await sealCertificateAccess(
-        certificates.map((certificate) => certificate.id),
+        [],
         env.SESSION_SECRET,
+        new Date(),
+        registrationIds,
       ),
       certificateAccessCookieOptions(process.env.NODE_ENV === "production"),
     );

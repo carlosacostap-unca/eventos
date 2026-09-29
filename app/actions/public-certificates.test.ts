@@ -14,18 +14,18 @@ vi.mock("next/headers", () => ({
 vi.mock("@/lib/env", () => ({ getServerEnv: () => ({ SESSION_SECRET: "s".repeat(32) }) }));
 vi.mock("@/lib/services/certificate-lookup", async (importOriginal) => ({
   ...await importOriginal<typeof import("@/lib/services/certificate-lookup")>(),
-  findPublicCertificates: mocks.find,
   consumePersistentLookupAttempt: mocks.limit,
 }));
+vi.mock("@/lib/services/participant-resources", () => ({ findAccreditedRegistrations: mocks.find }));
 
 import { lookupCertificatesAction } from "./public-certificates";
-import { CERTIFICATE_ACCESS_COOKIE, unsealCertificateAccess } from "@/lib/certificates/public-access";
+import { CERTIFICATE_ACCESS_COOKIE, unsealParticipantAccess } from "@/lib/certificates/public-access";
 
 describe("consulta de certificados solo con documento", () => {
   beforeEach(() => {
     vi.resetAllMocks();
     mocks.limit.mockResolvedValue(true);
-    mocks.find.mockResolvedValue([{ id: "cert1", eventTitle: "Evento", eventDate: "2026-10-15" }]);
+    mocks.find.mockResolvedValue(["registration1"]);
   });
 
   function form(document = "12.345.678") {
@@ -34,13 +34,13 @@ describe("consulta de certificados solo con documento", () => {
     return data;
   }
 
-  it("acepta el DNI sin email y autoriza solo los certificados encontrados", async () => {
+  it("acepta el DNI y autoriza inscripciones acreditadas aunque no haya certificados", async () => {
     await expect(lookupCertificatesAction({}, form())).rejects.toThrow("REDIRECT:/mis-certificados/resultados");
-    expect(mocks.find).toHaveBeenCalledWith({ normalizedDocument: "12345678" });
+    expect(mocks.find).toHaveBeenCalledWith("12345678");
     expect(mocks.limit).toHaveBeenCalledWith({ origin: "127.0.0.1", normalizedDocument: "12345678" });
     const [name, token] = mocks.set.mock.calls[0];
     expect(name).toBe(CERTIFICATE_ACCESS_COOKIE);
-    expect(await unsealCertificateAccess(token, "s".repeat(32))).toEqual(["cert1"]);
+    expect(await unsealParticipantAccess(token, "s".repeat(32))).toEqual({ certificateIds: [], registrationIds: ["registration1"] });
     expect(mocks.delete).not.toHaveBeenCalled();
   });
 
@@ -56,7 +56,7 @@ describe("consulta de certificados solo con documento", () => {
     expect(mocks.delete).toHaveBeenCalledWith(CERTIFICATE_ACCESS_COOKIE);
   });
 
-  it("no autoriza descargas cuando el documento no tiene certificados", async () => {
+  it("no autoriza descargas cuando el documento no tiene inscripciones acreditadas", async () => {
     mocks.find.mockResolvedValue([]);
     expect((await lookupCertificatesAction({}, form())).message).toContain("ese documento");
     expect(mocks.set).not.toHaveBeenCalled();

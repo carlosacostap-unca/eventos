@@ -4,6 +4,7 @@ import { ClientResponseError, type RecordModel } from "pocketbase";
 
 import { createCertificatePdf } from "@/lib/certificates/pdf";
 import { DomainError } from "@/lib/domain/errors";
+import type { ParticipantAccess } from "@/lib/certificates/public-access";
 import { offersAttendanceCertificate } from "@/lib/domain/event-details";
 import type {
   CertificateRecord,
@@ -169,7 +170,7 @@ export async function listCertificateRows(eventId: string): Promise<CertificateR
   });
 }
 
-export async function getCertificateDownload(certificateId: string) {
+export async function getCertificateDownload(certificateId: string, access?: ParticipantAccess) {
   const pb = await createServicePocketBase();
   const certificate = toCertificate(
     await pb.collection("certificados").getOne(certificateId),
@@ -177,6 +178,10 @@ export async function getCertificateDownload(certificateId: string) {
   const registration = (await pb
     .collection("inscripciones")
     .getOne(certificate.inscripcion)) as unknown as RegistrationRecord;
+  if (access && (!registration.acreditado || registration.evento !== certificate.evento ||
+      (!access.certificateIds.includes(certificateId) && !access.registrationIds.includes(registration.id)))) {
+    throw new DomainError("UNAUTHORIZED", "El certificado no está disponible.");
+  }
   const file = await fetchProtectedFile(
     certificate as unknown as RecordModel,
     certificate.archivo,

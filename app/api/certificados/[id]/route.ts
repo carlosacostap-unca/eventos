@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import {
   CERTIFICATE_ACCESS_COOKIE,
-  unsealCertificateAccess,
+  unsealParticipantAccess,
 } from "@/lib/certificates/public-access";
 import { getServerEnv } from "@/lib/env";
 import { getCertificateDownload } from "@/lib/services/certificates";
@@ -29,14 +29,14 @@ export async function GET(
   const token = request.cookies.get(CERTIFICATE_ACCESS_COOKIE)?.value;
   if (!token) return unavailable();
 
-  const authorizedIds = await unsealCertificateAccess(
+  const access = await unsealParticipantAccess(
     token,
     getServerEnv().SESSION_SECRET,
   );
-  if (!authorizedIds?.includes(id)) return unavailable();
+  if (!access || (!access.certificateIds.includes(id) && !access.registrationIds.length)) return unavailable();
 
   try {
-    const download = await getCertificateDownload(id);
+    const download = await getCertificateDownload(id, access);
     const body = download.bytes.buffer.slice(
       download.bytes.byteOffset,
       download.bytes.byteOffset + download.bytes.byteLength,
