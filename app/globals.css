@@ -1015,6 +1015,21 @@ h3 {
   min-width: 0;
 }
 
+.participant-edit {
+  grid-column: 1 / -1;
+  min-width: 0;
+}
+
+.registration-edit-form {
+  margin-top: 0.5rem;
+}
+
+.registration-edit-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
 .participant-info span,
 .participant-info small {
   overflow: hidden;

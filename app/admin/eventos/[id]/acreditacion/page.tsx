@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { toggleAttendanceAction } from "@/app/actions/registrations";
 import { EventAdminNav } from "@/components/event-admin-nav";
 import { WalkInForm } from "@/components/walk-in-form";
+import { RegistrationEditForm } from "@/components/registration-edit-form";
 import { SubmitButton } from "@/components/submit-button";
 import { getEventById } from "@/lib/services/events";
 import {
@@ -107,6 +108,9 @@ export default async function AccreditationPage({
                       {registration.acreditado ? "✓ Acreditado" : "Acreditar"}
                     </SubmitButton>
                   </form>
+                  <div className="participant-edit">
+                    <RegistrationEditForm registration={registration} />
+                  </div>
                 </article>
               ))
             )}

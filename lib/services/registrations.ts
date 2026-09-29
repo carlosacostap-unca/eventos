@@ -6,6 +6,7 @@ import { DomainError } from "@/lib/domain/errors";
 import { getRegistrationAvailability, nextPublicSlot } from "@/lib/domain/events";
 import {
   normalizeDocument,
+  registrationInputSchema,
   type EventRecord,
   type RegistrationInput,
   type RegistrationRecord,
@@ -202,6 +203,56 @@ export async function setAttendance(
     action: accredited ? "asistencia.acreditada" : "asistencia.revocada",
     entity: "inscripcion",
     entityId: registrationId,
+  });
+  return updated;
+}
+
+export async function updateRegistration(
+  eventId: string,
+  registrationId: string,
+  input: RegistrationInput,
+  adminId: string,
+): Promise<RegistrationRecord> {
+  const parsed = registrationInputSchema.safeParse(input);
+  if (!parsed.success) throw new DomainError("INVALID", "Revisá los datos ingresados.");
+  const pb = await createServicePocketBase();
+  const collection = pb.collection("inscripciones");
+  const current = toRegistration(await collection.getOne(registrationId));
+  if (current.evento !== eventId) {
+    throw new DomainError("NOT_FOUND", "La inscripción no pertenece a este evento.");
+  }
+  const data = {
+    ...parsed.data,
+    documento_normalizado: normalizeDocument(parsed.data.documento),
+  };
+  const duplicates = await collection.getList(1, 1, {
+    filter: pb.filter(
+      "evento = {:eventId} && documento_normalizado = {:documento} && id != {:registrationId}",
+      { eventId, documento: data.documento_normalizado, registrationId },
+    ),
+    fields: "id",
+  });
+  if (duplicates.totalItems > 0) {
+    throw new DomainError("DUPLICATE", "Ya existe otra inscripción con ese documento en este evento.");
+  }
+  let updated: RegistrationRecord;
+  try {
+    updated = toRegistration(await collection.update(registrationId, data));
+  } catch (error) {
+    if (error instanceof ClientResponseError &&
+        error.response?.data?.documento_normalizado?.code === "validation_not_unique") {
+      throw new DomainError("DUPLICATE", "Ya existe otra inscripción con ese documento en este evento.");
+    }
+    throw error;
+  }
+  await audit({
+    adminId,
+    action: "inscripcion.editada",
+    entity: "inscripcion",
+    entityId: registrationId,
+    data: { evento: eventId, campos: Object.keys(parsed.data).filter(
+      (key) => current[key as keyof RegistrationInput] !== parsed.data[key as keyof RegistrationInput],
+    ) },
   });
   return updated;
 }

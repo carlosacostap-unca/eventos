@@ -11,6 +11,7 @@ import {
   createWalkIn,
   registerPublic,
   setAttendance,
+  updateRegistration,
 } from "@/lib/services/registrations";
 
 function registrationFromForm(formData: FormData) {
@@ -20,6 +21,28 @@ function registrationFromForm(formData: FormData) {
     email: formData.get("email"),
     documento: formData.get("documento"),
   };
+}
+
+export async function updateRegistrationAction(
+  eventId: string,
+  registrationId: string,
+  _state: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const admin = await requireAdmin();
+  const parsed = registrationInputSchema.safeParse(registrationFromForm(formData));
+  if (!parsed.success) return { fields: parsed.error.flatten().fieldErrors };
+  try {
+    await updateRegistration(eventId, registrationId, parsed.data, admin.adminId);
+  } catch (error) {
+    if (error instanceof DomainError) return { message: error.message };
+    return { message: "No se pudieron guardar los cambios. Intentá nuevamente." };
+  }
+  revalidatePath("/admin/eventos/" + eventId);
+  revalidatePath("/admin/eventos/" + eventId + "/acreditacion");
+  revalidatePath("/admin/eventos/" + eventId + "/reportes");
+  revalidatePath("/admin/eventos/" + eventId + "/certificados");
+  return { ok: true, message: "Los datos fueron actualizados." };
 }
 
 export async function registerAction(
