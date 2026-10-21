@@ -47,6 +47,16 @@ Una plantilla PDF puede definir campos de texto vacíos `certificado.cuerpo`, `c
 
 El generador conserva las imágenes y textos estáticos de esa plantilla, elimina los campos interactivos del PDF final y ajusta los textos dentro de sus áreas. Si no caben a nueve puntos, continúa en otras páginas del mismo documento. Las plantillas sin esos campos conservan la composición anterior. Los fondos deben estar limpios de nombres, DNI y trabajos de ejemplo: subir un certificado completo como fondo duplica sus datos al generar uno nuevo.
 
+## Recuperación de datos por DNI al inscribirse
+
+La inscripción pública comienza con el DNI o documento. Al salir de ese campo, presionar Enter o pulsar **Buscar datos**, se buscan coincidencias exactas del documento normalizado y se precargan nombres, apellidos y email. No se solicita confirmar el correo ni recibir un código. Si hay varias inscripciones, se usa la actual del mismo evento para mantener coherencia entre exposiciones; si no existe, se toma la más recientemente actualizada de otros eventos. Los datos quedan editables antes de confirmar. Si no existe coincidencia o falla la consulta, se muestran los campos para cargarlos manualmente.
+
+El mismo mecanismo funciona para Asistente, alumno Expositor, director y codirector, y para eventos anteriores sin modalidades. Cambiar el DNI borra la identidad precargada e invalida consultas en curso. Los campos particulares del evento, como título del trabajo, se completan para esa inscripción y no se copian de otra jornada. Las correcciones de una nueva inscripción no modifican inscripciones ni certificados históricos. Siguen vigentes la prevención de duplicados, la incompatibilidad entre Asistente y Expositor y la corrección administrativa de un integrante ya vinculado.
+
+Por decisión de configuración del flujo, conocer un DNI permite recuperar esos datos de contacto sin autenticación. La acción devuelve únicamente los cuatro campos de identidad, sin IDs, eventos previos, asistencia, respuestas ni archivos. La consulta exige un evento publicado, habilitado y vigente, y admite hasta 30 búsquedas por origen en 15 minutos, compartidas entre documentos y réplicas. Se usan claves HMAC y el almacén de límites existente, sin registrar IP o DNI en texto plano. Alcanzar el límite no impide completar el formulario manualmente. No requiere migración de esquema ni modificación de registros históricos.
+
+La integración `tests/registration-prefill.integration.test.ts` comprueba en PocketBase local reutilización, prioridad del evento actual, correcciones, duplicados, conservación exacta de registros y bytes de un PDF histórico y persistencia del límite de consultas. Las pruebas de acciones y servicios cubren validación, campos devueltos, eventos cerrados y carga manual ante fallos. Se verificaron en navegador la inscripción completa de alumno/director/codirector, la corrección del email, una persona nueva en el formulario anterior y el descarte de una respuesta demorada tras cambiar el DNI.
+
 ## Preparación y despliegue de la base
 
 La migración específica utiliza las credenciales existentes para autenticar y **no crea usuarios ni cambia contraseñas**. No se debe sustituir por el aprovisionador general de credenciales. Antes de aplicarla, respaldar datos y archivos de PocketBase y suspender altas durante el backfill.

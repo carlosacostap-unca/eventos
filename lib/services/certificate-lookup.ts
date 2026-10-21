@@ -53,6 +53,7 @@ function limitStateChanged(current: LookupLimitState, next: LookupLimitState) {
 export async function consumePersistentLookupAttempt(input: {
   origin: string;
   normalizedDocument: string;
+  maxAttempts?: number;
 }) {
   const env = getServerEnv();
   const key = deriveLookupLimitKey({
@@ -70,7 +71,7 @@ export async function consumePersistentLookupAttempt(input: {
     // La ausencia del registro es el estado inicial esperado.
   }
 
-  const decision = consumeLookupAttempt(record ? toLimitState(record) : null);
+  const decision = consumeLookupAttempt(record ? toLimitState(record) : null, new Date(), input.maxAttempts);
   if (record) {
     if (limitStateChanged(toLimitState(record), decision.state)) {
       await pb
@@ -90,7 +91,7 @@ export async function consumePersistentLookupAttempt(input: {
     const concurrent = (await pb
       .collection("limites_consulta_certificados")
       .getFirstListItem(pb.filter("clave = {:key}", { key }))) as LookupLimitRecord;
-    const retry = consumeLookupAttempt(toLimitState(concurrent));
+    const retry = consumeLookupAttempt(toLimitState(concurrent), new Date(), input.maxAttempts);
     if (retry.allowed) {
       await pb
         .collection("limites_consulta_certificados")

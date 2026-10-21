@@ -63,3 +63,9 @@
 - [x] 9.3 Ejecutar `npm run test`, `npm run typecheck`, `npm run lint` y `npm run build` y corregir los fallos atribuibles al cambio; verificar éxito y registrar limitaciones de entorno si las hubiera.
 - [x] 9.4 Documentar el editor, reglas de cupo y certificados, ejecución de migración y rollback compatible; verificar el procedimiento sobre una copia y entregar una matriz que vincule los seis archivos de requisitos con sus pruebas y evidencias.
 - [x] 9.5 Reconciliar los antecedentes de `gestion-integral-de-eventos` antes de sincronizar/archivar esta funcionalidad; verificar que el resultado no reinstala certificado individual obligatorio para todo expositor ni acreditación propia para el director que descarga el PDF grupal, y ejecutar validación estricta de OpenSpec.
+
+## 10. Recuperación de datos por DNI
+
+- [x] 10.1 Añadir consulta exacta por documento sin confirmación de email, priorizando la identidad del evento actual o la inscripción previa más recientemente actualizada; limitar la respuesta a los cuatro campos de identidad y las consultas por origen mediante almacenamiento persistente.
+- [x] 10.2 Empezar los formularios públicos por DNI y precargar datos editables para participante, director y codirector; permitir carga manual ante ausencia o fallo, descartar respuestas de documentos anteriores y conservar las preguntas particulares de cada modalidad.
+- [x] 10.3 Verificar con PocketBase local la reutilización, edición, prevención de duplicados y conservación exacta de inscripciones y PDFs anteriores; comprobar en navegador la inscripción grupal, el evento anterior, la persona nueva y la respuesta demorada; ejecutar pruebas, tipos, lint, build y validación estricta.

@@ -40,6 +40,7 @@ export function deriveLookupLimitKey(input: {
 export function consumeLookupAttempt(
   current: LookupLimitState | null,
   now = new Date(),
+  maxAttempts = LOOKUP_MAX_ATTEMPTS,
 ): LookupLimitDecision {
   const nowMs = now.getTime();
   const currentStart = current ? new Date(current.windowStartedAt).getTime() : NaN;
@@ -55,13 +56,13 @@ export function consumeLookupAttempt(
   const blockedUntilMs = current.blockedUntil
     ? new Date(current.blockedUntil).getTime()
     : 0;
-  if (blockedUntilMs > nowMs || current.attempts >= LOOKUP_MAX_ATTEMPTS) {
+  if (blockedUntilMs > nowMs || current.attempts >= maxAttempts) {
     return { allowed: false, state: current };
   }
 
   const attempts = current.attempts + 1;
   const blockedUntil =
-    attempts >= LOOKUP_MAX_ATTEMPTS
+    attempts >= maxAttempts
       ? new Date(currentStart + LOOKUP_WINDOW_MS).toISOString()
       : undefined;
   return {

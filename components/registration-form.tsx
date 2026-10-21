@@ -1,66 +1,47 @@
 "use client";
 
-import { useActionState, useEffect, useRef } from "react";
+import { useActionState, useState } from "react";
 
 import { registerAction } from "@/app/actions/registrations";
 import { initialActionState } from "@/app/actions/state";
-import { FieldError, FormMessage } from "@/components/form-feedback";
+import { FormMessage } from "@/components/form-feedback";
 import { SubmitButton } from "@/components/submit-button";
 import { ModalRegistrationForm } from "./modal-registration-form";
-import type { PublicModality } from "@/lib/domain/modalities";
+import type { PersonSubmission, PublicModality } from "@/lib/domain/modalities";
+import { PersonFields } from "./registration-person-fields";
 
 export function RegistrationForm(props: { slug: string; offersCertificate: boolean; eventId?: string; modes?: PublicModality[]; operation?: string }) {
   if (props.modes && !props.modes.some((m) => m.id === "legacy")) return <ModalRegistrationForm eventId={props.eventId!} modes={props.modes} operation={props.operation!} />;
-  return <LegacyRegistrationForm slug={props.slug} offersCertificate={props.offersCertificate} />;
+  return <LegacyRegistrationForm slug={props.slug} eventId={props.eventId} offersCertificate={props.offersCertificate} />;
 }
 
 function LegacyRegistrationForm({
   slug,
   offersCertificate,
+  eventId,
 }: {
   slug: string;
   offersCertificate: boolean;
+  eventId?: string;
 }) {
   const [state, action] = useActionState(
     registerAction.bind(null, slug),
     initialActionState,
   );
-  const formRef = useRef<HTMLFormElement>(null);
-  useEffect(() => {
-    if (state.ok) formRef.current?.reset();
-  }, [state.ok]);
+  const [person, setPerson] = useState<PersonSubmission>({ nombres: "", apellidos: "", email: "", documento: "", respuestas: {} });
+  const [ready, setReady] = useState(!eventId);
 
   return (
-    <form ref={formRef} action={action} className="panel form-stack">
+    <form action={action} className="panel form-stack">
       <div>
         <h2>Reservá tu lugar</h2>
-        <p className="muted">Completá tus datos para confirmar la inscripción. Todos los campos son obligatorios.</p>
+        <p className="muted">Ingresá tu DNI. Si ya participaste en otro evento, recuperaremos tus datos para que puedas revisarlos.</p>
       </div>
       <FormMessage message={state.message} success={state.ok} />
       {!state.ok && (
         <>
-          <div className="form-grid">
-            <label className="field">
-              <span>Nombres</span>
-              <input name="nombres" autoComplete="given-name" required />
-              <FieldError errors={state.fields?.nombres} />
-            </label>
-            <label className="field">
-              <span>Apellidos</span>
-              <input name="apellidos" autoComplete="family-name" required />
-              <FieldError errors={state.fields?.apellidos} />
-            </label>
-            <label className="field">
-              <span>Número de documento</span>
-              <input name="documento" inputMode="numeric" required />
-              <FieldError errors={state.fields?.documento} />
-            </label>
-            <label className="field">
-              <span>Email</span>
-              <input name="email" type="email" autoComplete="email" required />
-              <FieldError errors={state.fields?.email} />
-            </label>
-          </div>
+          <PersonFields person={person} setPerson={setPerson} errors={state.fields} eventId={eventId} onReadyChange={setReady} />
+          {ready && <>
           <p className="privacy-note">
             Usaremos estos datos exclusivamente para gestionar tu inscripción,
             asistencia{offersCertificate ? " y certificado" : ""}.
@@ -68,6 +49,7 @@ function LegacyRegistrationForm({
           <SubmitButton pendingLabel="Confirmando inscripción…">
             Confirmar inscripción
           </SubmitButton>
+          </>}
         </>
       )}
     </form>

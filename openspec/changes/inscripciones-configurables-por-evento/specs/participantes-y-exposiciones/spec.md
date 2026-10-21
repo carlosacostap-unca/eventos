@@ -49,6 +49,27 @@ El sistema SHALL permitir que un director o codirector integre varias exposicion
 - **WHEN** una nueva solicitud usa el DNI de un integrante existente pero informa otros nombres o email incompatibles
 - **THEN** se rechaza sin modificar al integrante existente y se indica que debe intervenir la administración
 
+### Requirement: Recuperación de identidad por documento en nuevas inscripciones
+El sistema SHALL comenzar las altas públicas por el DNI o documento y permitir precargar nombres, apellidos y email mediante una coincidencia exacta normalizada, sin exigir email ni código. SHALL priorizar la identidad existente del evento y, en su ausencia, la inscripción más recientemente actualizada de otros eventos. La consulta SHALL estar disponible para la persona principal y los integrantes vinculados. Los campos particulares de la modalidad MUST completarse de nuevo. Las identidades recuperadas SHALL ser editables antes de confirmar y las correcciones MUST conservar inscripciones y certificados históricos.
+
+#### Scenario: Persona con inscripción previa
+- **WHEN** se ingresa un documento existente y se consulta en un evento público habilitado y vigente
+- **THEN** se muestran nombres, apellidos y email editables, sin crear una inscripción ni transferir asistencia
+- **AND** confirmar la nueva inscripción mantiene las reglas de duplicados y compatibilidad de modalidad
+
+#### Scenario: Persona nueva o consulta no disponible
+- **WHEN** el documento no tiene coincidencia, falla la consulta o se alcanza el límite
+- **THEN** el formulario permite completar manualmente los datos obligatorios
+
+#### Scenario: Cambio de documento durante la consulta
+- **WHEN** se cambia el documento antes o después de recibir los datos
+- **THEN** se descarta la identidad anterior y una respuesta pendiente no puede asociarse al nuevo documento
+
+#### Scenario: Datos expuestos y límite de consultas
+- **WHEN** se consulta una identidad por DNI
+- **THEN** se devuelven solamente documento, nombres, apellidos y email y no se publican respuestas, IDs, asistencia ni eventos anteriores
+- **AND** el servidor aplica un límite persistente de 30 consultas por origen cada 15 minutos, compartido entre documentos y réplicas y separado del portal de certificados
+
 ### Requirement: Acreditación independiente de la modalidad y de los vínculos
 El sistema SHALL permitir buscar, acreditar y revocar la acreditación de cualquier participante por nombre, apellido, email o DNI, mostrando su modalidad, funciones y exposiciones vinculadas. La operación MUST ser idempotente, registrar actor y fecha y mantener intacta la modalidad y la acreditación de las demás personas.
 

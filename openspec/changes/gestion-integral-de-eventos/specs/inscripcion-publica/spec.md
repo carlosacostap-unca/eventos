@@ -20,6 +20,8 @@ El sistema SHALL permitir registrarse sin crear una cuenta mediante nombres, ape
 
 El sistema SHALL aplicar además los campos y grupos configurados para la modalidad elegida y confirmar las altas grupales de forma transaccional, conservando la versión del formulario.
 
+El flujo SHALL solicitar primero el documento y recuperar nombres, apellidos y email editables por coincidencia exacta normalizada, sin confirmación de correo, con un límite persistente de consultas por origen. SHALL priorizar la identidad del evento actual o, en su ausencia, la inscripción más recientemente actualizada. Las personas nuevas y las consultas fallidas SHALL permitir carga manual. Cambiar el documento MUST descartar la identidad recuperada y sus consultas pendientes. Las correcciones de nuevas inscripciones MUST conservar registros y certificados históricos; los campos particulares de cada evento se completan de nuevo.
+
 #### Scenario: Inscripción válida
 - **WHEN** una persona envía datos válidos a un evento con inscripción disponible
 - **THEN** el sistema registra la inscripción y muestra una confirmación inequívoca
