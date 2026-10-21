@@ -4,6 +4,21 @@ Permitir que la administración adapte las modalidades, los datos solicitados y 
 
 ## ADDED Requirements
 
+### Requirement: Visibilidad de la página pública por evento
+El sistema SHALL permitir configurar por evento la visibilidad del tipo de evento, descripción, fecha y hora, duración, lugar, participación gratuita o arancelada, información de certificados y disertantes en su página pública de inscripción. Las elecciones MUST afectar la presentación y conservar los datos administrativos, la disponibilidad de inscripción y las reglas de certificación.
+
+#### Scenario: Ocultar tipo y duración
+- **WHEN** la organización desmarca tipo de evento y duración y guarda el evento
+- **THEN** esos datos no aparecen en el contenido público y los demás conservan su configuración
+
+#### Scenario: Evento anterior y formulario antiguo
+- **WHEN** un evento no tiene preferencias o se actualiza desde un formulario anterior sin esos controles
+- **THEN** la página conserva la presentación histórica o las preferencias guardadas, respectivamente
+
+#### Scenario: Todos los datos opcionales ocultos
+- **WHEN** se desmarcan todas las opciones de presentación
+- **THEN** el título y el estado de inscripción permanecen visibles, no se muestran bloques vacíos y el formulario sigue condicionado a la disponibilidad real del evento
+
 ### Requirement: Modalidades configurables e independientes por evento
 El sistema SHALL permitir a administradores configurar una o varias modalidades de inscripción por evento, con identificador estable, nombre visible, orden, disponibilidad y política de certificación. La modalidad de participación MUST ser independiente del tipo de evento, del origen público o presencial y del estado de acreditación.
 

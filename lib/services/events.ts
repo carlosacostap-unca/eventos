@@ -62,6 +62,7 @@ function eventPayload(input: EventInput) {
     certificado_asistencia: input.certificadoAsistencia,
     inscripcion_habilitada: input.inscripcionHabilitada,
     estado: input.estado,
+    ...(input.paginaPublica !== undefined ? { pagina_publica: input.paginaPublica } : {}),
   };
 }
 

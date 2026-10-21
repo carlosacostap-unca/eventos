@@ -12,11 +12,13 @@ import { SubmitButton } from "@/components/submit-button";
 import { toArgentinaDateTimeLocal } from "@/lib/domain/dates";
 import type { EventRecord, EventTypeRecord } from "@/lib/domain/models";
 import Link from "next/link";
+import { PUBLIC_EVENT_PAGE_OPTIONS, resolvePublicEventPage } from "@/lib/domain/public-event-page";
 
 
 export function EventForm({ event, types, certificatesConfigured = false }: { event?: EventRecord; types: EventTypeRecord[]; certificatesConfigured?: boolean }) {
   const action = event ? updateEventAction.bind(null, event.id) : createEventAction;
   const [state, formAction] = useActionState(action, initialActionState);
+  const publicPage = resolvePublicEventPage(event?.pagina_publica);
 
   return (
     <form action={formAction} className="panel form-stack">
@@ -130,6 +132,18 @@ export function EventForm({ event, types, certificatesConfigured = false }: { ev
           <FieldError errors={state.fields?.descripcion} />
         </label>
       </div>
+      <fieldset className="form-stack">
+        <legend>Página pública de inscripción</legend>
+        <p className="muted">Elegí qué información mostrar en la página de inscripción de este evento. El título y el estado de inscripción siempre se muestran; el formulario aparece mientras la inscripción esté disponible. La entrega de certificados se configura en las modalidades.</p>
+        <input type="hidden" name="paginaPublicaConfigurada" value="1" />
+        <div className="form-grid">
+          {PUBLIC_EVENT_PAGE_OPTIONS.map(({ key, label }) => <label className="confirmation-check" key={key}>
+            <input type="checkbox" name={"paginaPublica_" + key} defaultChecked={publicPage[key]} />
+            Mostrar {label.toLocaleLowerCase("es-AR")}
+          </label>)}
+        </div>
+        <FieldError errors={state.fields?.paginaPublica} />
+      </fieldset>
       <label className="switch-row">
         <input
           name="inscripcionHabilitada"

@@ -13,6 +13,7 @@ import { eventTypeName } from "@/lib/domain/event-types";
 import { listEventTypes } from "@/lib/services/event-types";
 import { getEventBySlug } from "@/lib/services/events";
 import { countPublicRegistrations } from "@/lib/services/registrations";
+import { resolvePublicEventPage } from "@/lib/domain/public-event-page";
 
 export const dynamic = "force-dynamic";
 
@@ -49,10 +50,11 @@ export default async function PublicEventPage({
   const { slug } = await params;
   const event = await getEventBySlug(slug);
   if (!event || event.estado === "borrador") notFound();
+  const visible = resolvePublicEventPage(event.pagina_publica);
   const [count, types, speakers, modes] = await Promise.all([
     countPublicRegistrations(event.id),
-    listEventTypes(),
-    listSpeakersByEvent(event.id),
+    visible.tipoEvento ? listEventTypes() : Promise.resolve([]),
+    visible.disertantes ? listSpeakersByEvent(event.id) : Promise.resolve([]),
     publicModalities(event),
   ]);
   const availability = getRegistrationAvailability(event, count);
@@ -83,31 +85,31 @@ export default async function PublicEventPage({
                     : "Inscripción cerrada"}
               </span>
             )}
-            {event.tipo_evento && <p className="event-type-label">{eventTypeName(event.tipo_evento, types)}</p>}
+            {visible.tipoEvento && event.tipo_evento && <p className="event-type-label">{eventTypeName(event.tipo_evento, types)}</p>}
             <h1>{event.titulo}</h1>
-            <p>{event.descripcion}</p>
-            <dl className="public-event-meta">
-              <div>
+            {visible.descripcion && <p>{event.descripcion}</p>}
+            {[visible.fechaHora, visible.duracion, visible.lugar, visible.participacion, visible.certificados].some(Boolean) && <dl className="public-event-meta">
+              {visible.fechaHora && <div>
                 <dt>Fecha y hora</dt>
                 <dd>{formatDate(event.inicio)}</dd>
-              </div>
-              <div>
+              </div>}
+              {visible.duracion && <div>
                 <dt>Duración</dt>
                 <dd>{formatDuration(event.inicio, event.fin)}</dd>
-              </div>
-              <div>
+              </div>}
+              {visible.lugar && <div>
                 <dt>Lugar</dt>
                 <dd>{event.lugar}</dd>
-              </div>
-              <div>
+              </div>}
+              {visible.participacion && <div>
                 <dt>Participación</dt>
                 <dd>{isEventFree(event) ? "Gratuita" : "Arancelada"}</dd>
-              </div>
-              <div>
+              </div>}
+              {visible.certificados && <div>
                 <dt>Certificados</dt>
                 <dd>{modes.some((m) => m.id !== "legacy") ? modes.map((m) => `${m.nombre}: ${m.entrega ? "sí" : "no"}`).join(" · ") : offersAttendanceCertificate(event) ? "Se entregará" : "No se entregará"}</dd>
-              </div>
-            </dl>
+              </div>}
+            </dl>}
             {availability === "disponible" && <a className="button button-primary" href="#inscripcion">Reservar mi lugar <span aria-hidden="true">↓</span></a>}
           </div>
           {speakers.length > 0 && (

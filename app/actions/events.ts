@@ -19,6 +19,7 @@ import {
 } from "@/lib/services/events";
 import { validateCertificateTemplate } from "@/lib/certificates/pdf";
 import { getEventTypeById } from "@/lib/services/event-types";
+import { publicEventPageFromForm } from "@/lib/domain/public-event-page";
 
 function inputFromForm(formData: FormData) {
   return {
@@ -34,6 +35,7 @@ function inputFromForm(formData: FormData) {
     certificadoAsistencia: formData.get("certificadoAsistencia"),
     inscripcionHabilitada: formData.get("inscripcionHabilitada") === "on",
     estado: formData.get("estado"),
+    paginaPublica: publicEventPageFromForm(formData),
   };
 }
 
@@ -101,6 +103,7 @@ export async function updateEventAction(
   }
   revalidatePath("/admin");
   revalidatePath("/admin/eventos/" + id);
+  revalidatePath("/" + parsed.data.slug);
   redirect("/admin/eventos/" + id);
 }
 

@@ -54,6 +54,14 @@ Colecciones creadas:
 
 ## Desarrollo y verificación
 
+### Configurar la página pública de inscripción
+
+En **Evento → Configuración → Página pública de inscripción** se puede mostrar u ocultar tipo de evento, descripción, fecha y hora, duración, lugar, participación gratuita/arancelada, información de certificados y disertantes. Cada evento conserva sus propias opciones. Los datos siguen disponibles para la gestión y los certificados; el título, el estado de inscripción y el formulario permanecen visibles cuando corresponde.
+
+Los eventos anteriores mantienen toda la información visible hasta que se guarden otras preferencias. Antes del despliegue en una base existente, ejecutar `npm run schema:public-page -- --apply` con las credenciales existentes, después de respaldar PocketBase. Sin `--apply` solo informa el estado. La migración agrega únicamente el campo JSON opcional `eventos.pagina_publica`, es reejecutable y no actualiza registros, inscripciones ni certificados.
+
+### Comandos locales
+
     npm run dev
     npm run lint
     npm run typecheck

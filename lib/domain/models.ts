@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import type { CertificateTextSections } from "@/lib/domain/certificate-texts";
+import { publicEventPageSchema, type PublicEventPageSettings } from "./public-event-page";
 
 export const EVENT_STATUS = ["borrador", "publicado", "finalizado"] as const;
 export const REGISTRATION_SOURCE = ["publica", "presencial"] as const;
@@ -46,6 +47,7 @@ export const eventInputSchema = z
     certificadoAsistencia: z.enum(["si", "no"]),
     inscripcionHabilitada: z.coerce.boolean(),
     estado: z.enum(EVENT_STATUS),
+    paginaPublica: publicEventPageSchema.optional(),
   })
   .refine((event) => event.fin >= event.inicio, {
     path: ["fin"],
@@ -113,6 +115,7 @@ export type EventRecord = {
   certificado_asistencia?: "si" | "no" | "";
   inscripcion_habilitada: boolean;
   estado: EventStatus;
+  pagina_publica?: Partial<PublicEventPageSettings> | null;
   plantilla_certificado?: string;
   // Las configuraciones antiguas pueden conservar footer; el generador lo ignora.
   textos_certificado?: Partial<CertificateTextSections> & { footer?: string };
