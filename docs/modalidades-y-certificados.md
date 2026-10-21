@@ -16,7 +16,7 @@ Los cuatro datos de identidad siempre son obligatorios. El editor admite hasta 5
 
 Una persona tiene un único registro y una modalidad por DNI normalizado dentro del evento. No puede ser asistente y expositor simultáneamente. Los directores y codirectores aparecen como expositores desde que se confirma la inscripción del alumno; pueden acreditarse sin crearles otra inscripción. Un director que acompaña a varios alumnos conserva una sola identidad y acreditación con varios vínculos de exposición.
 
-El cupo público se aplica a solicitudes principales: un asistente o un alumno expositor reserva un lugar. Los integrantes vinculados no reservan lugares adicionales. Los reportes separan esas reservas del total de personas que podrían concurrir. No hay cupos separados por modalidad en esta entrega.
+El cupo público se aplica a solicitudes principales: un asistente o un alumno expositor reserva un lugar. Los integrantes vinculados no reservan lugares adicionales. Los reportes separan esas reservas del total de personas que podrían concurrir. No hay cupos separados por modalidad en esta entrega. En Configuración se puede marcar **Sin límite de cupo**; en ese caso no hay cierre ni confirmación presencial por exceso de cantidad, y se mantienen el cierre manual y la finalización del evento.
 
 La acreditación confirma presencia individual; no cambia la modalidad ni acredita a otros integrantes. En alta presencial solo se acredita a la persona principal atendida y se mantiene la confirmación administrativa cuando se supera el cupo. Las personas vinculadas ya existentes se buscan en la lista para acreditarlas.
 

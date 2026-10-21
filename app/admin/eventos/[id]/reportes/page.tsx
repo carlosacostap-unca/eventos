@@ -10,6 +10,7 @@ import { listModalities } from "@/lib/services/modalities";
 import { eventExhibitions } from "@/lib/services/modal-registration";
 import { ParticipantFilters } from "@/components/participant-filters";
 import { createServicePocketBase } from "@/lib/pocketbase/client";
+import { publicCapacity, publicCapacityLabel } from "@/lib/domain/events";
 
 function normalizeFilters(input: { q?: string; source?: string; attendance?: string; modality?: string; role?: string }): RegistrationFilters {
   return {
@@ -100,7 +101,7 @@ export default async function ReportsPage({
         </article>
       </section>
 
-      <section className="panel"><h2>Participación por modalidad</h2><p>{reservations} reservas principales de {event.cupo} lugares públicos · {groups.exhibitions.length} exposiciones · {certificates.length} documentos emitidos</p><div className="table-wrap"><table><thead><tr><th>Modalidad</th><th>Personas únicas</th><th>Acreditadas</th><th>Porcentaje</th><th>PDFs emitidos</th></tr></thead><tbody>{modes.map((mode) => { const people = allRegistrations.filter((p) => p.modalidad === mode.id); const present = people.filter((p) => p.acreditado).length; return <tr key={mode.id}><td>{mode.nombre}</td><td>{people.length}</td><td>{present}</td><td>{people.length ? Math.round(present * 100 / people.length) : 0}%</td><td>{certificates.filter((c) => c.modalidad === mode.id).length}</td></tr>; })}</tbody></table></div></section>
+      <section className="panel"><h2>Participación por modalidad</h2><p>{reservations} reservas principales{publicCapacity(event) === null ? " · " : " de "}{publicCapacityLabel(event)} · {groups.exhibitions.length} exposiciones · {certificates.length} documentos emitidos</p><div className="table-wrap"><table><thead><tr><th>Modalidad</th><th>Personas únicas</th><th>Acreditadas</th><th>Porcentaje</th><th>PDFs emitidos</th></tr></thead><tbody>{modes.map((mode) => { const people = allRegistrations.filter((p) => p.modalidad === mode.id); const present = people.filter((p) => p.acreditado).length; return <tr key={mode.id}><td>{mode.nombre}</td><td>{people.length}</td><td>{present}</td><td>{people.length ? Math.round(present * 100 / people.length) : 0}%</td><td>{certificates.filter((c) => c.modalidad === mode.id).length}</td></tr>; })}</tbody></table></div></section>
 
       <section className="panel">
         <ParticipantFilters modes={modes} members={groups.members} filters={filters} />

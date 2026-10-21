@@ -12,6 +12,7 @@ import { WalkInForm } from "@/components/walk-in-form";
 import { RegistrationEditForm } from "@/components/registration-edit-form";
 import { SubmitButton } from "@/components/submit-button";
 import { getEventById } from "@/lib/services/events";
+import { isCapacityFull } from "@/lib/domain/events";
 import {
   countPublicRegistrations,
   listRegistrationsPage,
@@ -138,7 +139,7 @@ export default async function AccreditationPage({
             </nav>
           ) : null}
         </div>
-        <WalkInForm eventId={id} isFull={publicCount >= event.cupo} modes={publicModes} operation={randomUUID()} />
+        <WalkInForm eventId={id} isFull={isCapacityFull(event, publicCount)} modes={publicModes} operation={randomUUID()} />
       </section>
     </main>
   );

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { publicCapacityLabel } from "@/lib/domain/events";
 import { EventCatalog } from "@/components/event-catalog";
 import { AdminLogin } from "@/components/admin-login";
 import { getAuthenticatedAdmin } from "@/lib/auth/session";
@@ -55,7 +56,7 @@ export default async function AdminPage() {
               </div>
               <div className="admin-event-meta">
                 <span>{formatDate(event.inicio)}</span>
-                <span>{event.cupo} lugares</span>
+                <span>{publicCapacityLabel(event)}</span>
               </div>
               <span className="row-arrow" aria-hidden="true">→</span>
             </Link>

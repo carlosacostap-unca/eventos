@@ -54,6 +54,14 @@ Colecciones creadas:
 
 ## Desarrollo y verificación
 
+### Eventos sin límite de cupo
+
+En **Evento → Configuración → Cupo público**, marcar **Sin límite de cupo** para recibir inscripciones sin cierre por cantidad de participantes. Al desmarcarlo se puede indicar nuevamente una cantidad. Se conserva el último límite numérico y no se eliminan inscripciones al volver a un cupo inferior al total ya registrado; en ese caso las nuevas altas públicas quedan cerradas hasta ampliar el cupo o quitar el límite.
+
+El cierre manual y la finalización del evento siguen vigentes. Las altas presenciales de un evento sin límite no requieren confirmación de exceso. Listado, resumen y reportes muestran **Sin límite de cupo**. Los eventos anteriores conservan sus límites actuales.
+
+Antes de desplegar en una base existente, respaldar PocketBase y ejecutar `npm run schema:unlimited-capacity -- --apply`. Sin `--apply` solo informa el estado. La migración agrega el booleano opcional `eventos.cupo_ilimitado` y elimina el máximo global de `inscripciones.numero_cupo_publico`, conservando el índice único, su validación de entero no negativo y todos los registros. Los límites por evento continúan aplicándose cuando la opción está desmarcada.
+
 ### Configurar la página pública de inscripción
 
 En **Evento → Configuración → Página pública de inscripción** se puede mostrar u ocultar tipo de evento, descripción, fecha y hora, duración, lugar, participación gratuita/arancelada, información de certificados y disertantes. Cada evento conserva sus propias opciones. Los datos siguen disponibles para la gestión y los certificados; el título, el estado de inscripción y el formulario permanecen visibles cuando corresponde.

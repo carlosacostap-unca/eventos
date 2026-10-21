@@ -3,7 +3,7 @@ import "server-only";
 import { ClientResponseError, type RecordModel } from "pocketbase";
 
 import { DomainError } from "@/lib/domain/errors";
-import { getRegistrationAvailability, nextPublicSlot } from "@/lib/domain/events";
+import { getRegistrationAvailability, isCapacityFull, nextPublicSlot, publicCapacity } from "@/lib/domain/events";
 import {
   normalizeDocument,
   registrationInputSchema,
@@ -89,7 +89,7 @@ export async function registerPublic(
       throw new DomainError("CLOSED", "La inscripción no está disponible.");
     }
 
-    const slot = nextPublicSlot(await usedPublicSlots(event.id), event.cupo);
+    const slot = nextPublicSlot(await usedPublicSlots(event.id), publicCapacity(event));
     if (!slot) throw new DomainError("FULL", "El cupo del evento está completo.");
 
     const pb = await createServicePocketBase();
@@ -333,7 +333,7 @@ export async function createWalkIn(
   if (duplicate) throw new DomainError("DUPLICATE", "La persona ya figura en el evento.");
 
   const publicCount = await countPublicRegistrations(eventId);
-  if (publicCount >= event.cupo && !allowOverCapacity) {
+  if (isCapacityFull(event, publicCount) && !allowOverCapacity) {
     throw new DomainError(
       "CONFIRMATION_REQUIRED",
       "Confirmá que querés superar el cupo público.",
@@ -361,7 +361,7 @@ export async function createWalkIn(
     action: "inscripcion.presencial",
     entity: "inscripcion",
     entityId: registration.id,
-    data: { excedeCupo: publicCount >= event.cupo, evento: eventId },
+    data: { excedeCupo: isCapacityFull(event, publicCount), evento: eventId },
   });
   return registration;
 }

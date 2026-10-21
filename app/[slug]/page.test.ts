@@ -24,6 +24,12 @@ describe("página pública por evento", () => {
     mocks.event.mockResolvedValue(event); mocks.count.mockResolvedValue(0); mocks.modes.mockResolvedValue([]);
     mocks.types.mockResolvedValue([{ id: "tipo", nombre: "Categoría de prueba" }]); mocks.speakers.mockResolvedValue([{ id: "ponente" }]);
   });
+  it("mantiene el formulario abierto en un evento sin límite aunque se haya superado el cupo anterior", async () => {
+    mocks.event.mockResolvedValue({ ...event, cupo_ilimitado: true });
+    mocks.count.mockResolvedValue(200000);
+    const output = await html();
+    expect(output).toContain("Inscripción abierta"); expect(output).toContain("Formulario de inscripción"); expect(output).not.toContain("El cupo está completo");
+  });
   it("omite tipo y duración del HTML, manteniendo los otros datos y la inscripción", async () => {
     mocks.event.mockResolvedValue({ ...event, pagina_publica: { tipoEvento: false, duracion: false } });
     const output = await html();

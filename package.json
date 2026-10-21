@@ -16,6 +16,7 @@
     "schema:modalities": "tsx scripts/migrate-modalities.ts",
     "schema:modalities-check": "tsx scripts/check-modality-batch.ts",
     "schema:public-page": "tsx scripts/migrate-public-event-page.ts",
+    "schema:unlimited-capacity": "tsx scripts/migrate-unlimited-capacity.ts",
     "schema:import": "tsx scripts/import-pocketbase-schema.ts",
     "mcp:pocketbase": "tsx mcp/pocketbase-server.ts",
     "mcp:check": "tsx scripts/check-pocketbase-mcp.ts"

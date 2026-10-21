@@ -66,7 +66,16 @@ El sistema SHALL permitir buscar, acreditar y revocar la acreditación de cualqu
 - **THEN** la repetición no duplica la operación y el acceso no autorizado no modifica datos
 
 ### Requirement: Cupo público y alta presencial compatibles
-El sistema SHALL mantener el cupo público común del evento para solicitudes principales de Asistente o alumno Expositor, reservando un lugar por solicitud principal. Los directores y codirectores vinculados MUST ser identificables como altas vinculadas y no consumir una reserva pública adicional. Se MUST conservar el cierre manual, por finalización y por cupo, y la excepción presencial administrativa con confirmación de exceso.
+El sistema SHALL permitir un cupo público común limitado o sin límite para solicitudes principales de Asistente o alumno Expositor, reservando un lugar por solicitud principal. Los directores y codirectores vinculados MUST ser identificables como altas vinculadas y no consumir una reserva pública adicional. Se MUST conservar el cierre manual y por finalización. El cierre por cupo y la excepción presencial administrativa con confirmación de exceso SHALL aplicarse solamente a eventos con cupo limitado. Los eventos anteriores MUST conservar sus límites hasta que la organización cambie la configuración.
+
+#### Scenario: Evento sin límite de cupo
+- **WHEN** la organización marca Sin límite de cupo y el evento mantiene la inscripción pública disponible
+- **THEN** las modalidades admiten solicitudes aunque se supere el límite numérico anterior y las altas presenciales no requieren confirmación de exceso
+- **AND** los números de reserva continúan siendo únicos sin un máximo global de cien mil
+
+#### Scenario: Volver a un cupo limitado
+- **WHEN** se desmarca la opción y la cantidad de reservas existentes ya alcanza el límite configurado
+- **THEN** las nuevas solicitudes públicas quedan cerradas y se conservan todas las inscripciones existentes
 
 #### Scenario: Último lugar entre modalidades
 - **WHEN** un asistente y un alumno expositor solicitan simultáneamente el último lugar

@@ -31,6 +31,7 @@ function inputFromForm(formData: FormData) {
     fin: parseArgentinaDateTime(formData.get("fin")),
     lugar: formData.get("lugar"),
     cupo: formData.get("cupo"),
+    cupoIlimitado: formData.get("cupoConfigurado") === "1" ? formData.get("cupoIlimitado") === "on" : undefined,
     costo: formData.get("costo"),
     certificadoAsistencia: formData.get("certificadoAsistencia"),
     inscripcionHabilitada: formData.get("inscripcionHabilitada") === "on",
@@ -96,7 +97,7 @@ export async function updateEventAction(
       action: "evento.actualizado",
       entity: "evento",
       entityId: id,
-      data: { slug: parsed.data.slug, cupo: parsed.data.cupo, tipoEvento: parsed.data.tipoEvento },
+      data: { slug: parsed.data.slug, cupo: parsed.data.cupo, cupoIlimitado: parsed.data.cupoIlimitado, tipoEvento: parsed.data.tipoEvento },
     });
   } catch (error) {
     return errorState(error);

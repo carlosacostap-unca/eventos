@@ -5,7 +5,7 @@ import { DomainError } from "@/lib/domain/errors";
 import { fingerprint, recordId } from "@/lib/domain/fingerprints";
 import { normalizeDocument, type EventRecord, type RegistrationRecord } from "@/lib/domain/models";
 import { coherentIdentity, parseSubmission, type Modality, type Exhibition, type ExhibitionMember } from "@/lib/domain/modalities";
-import { getRegistrationAvailability, nextPublicSlot } from "@/lib/domain/events";
+import { getRegistrationAvailability, isCapacityFull, nextPublicSlot, publicCapacity } from "@/lib/domain/events";
 import { modalityVersion } from "./modalities";
 import { withOperationLock } from "./operation-lock";
 
@@ -30,8 +30,8 @@ export async function registerWithModality(eventId: string, raw: unknown, option
     if (!options.presencial) {
       const availability = getRegistrationAvailability(event, publicPrincipals.length);
       if (availability !== "disponible") throw new DomainError(availability === "completo" ? "FULL" : "CLOSED", availability === "completo" ? "El cupo del evento está completo." : "La inscripción no está disponible.");
-    } else if (publicPrincipals.length >= event.cupo && !options.allowOverCapacity) throw new DomainError("CONFIRMATION_REQUIRED", "Confirmá que querés superar el cupo público.");
-    const slot = options.presencial ? 0 : nextPublicSlot(publicPrincipals.map((p) => p.numero_cupo_publico), event.cupo);
+    } else if (isCapacityFull(event, publicPrincipals.length) && !options.allowOverCapacity) throw new DomainError("CONFIRMATION_REQUIRED", "Confirmá que querés superar el cupo público.");
+    const slot = options.presencial ? 0 : nextPublicSlot(publicPrincipals.map((p) => p.numero_cupo_publico), publicCapacity(event));
     if (slot === null) throw new DomainError("FULL", "El cupo del evento está completo.");
     const batch = pb.createBatch();
     const people = [input.principal, ...input.integrantes];

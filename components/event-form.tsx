@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 
 import {
   createEventAction,
@@ -19,6 +19,10 @@ export function EventForm({ event, types, certificatesConfigured = false }: { ev
   const action = event ? updateEventAction.bind(null, event.id) : createEventAction;
   const [state, formAction] = useActionState(action, initialActionState);
   const publicPage = resolvePublicEventPage(event?.pagina_publica);
+  const [unlimitedCapacity, setUnlimitedCapacity] = useState(event?.cupo_ilimitado === true);
+  const [capacity, setCapacity] = useState(String(event?.cupo ?? 100));
+  const numericCapacity = Number(capacity);
+  const savedCapacity = Number.isInteger(numericCapacity) && numericCapacity >= 1 && numericCapacity <= 100000 ? capacity : event?.cupo ?? 100;
 
   return (
     <form action={formAction} className="panel form-stack">
@@ -83,18 +87,15 @@ export function EventForm({ event, types, certificatesConfigured = false }: { ev
           />
           <FieldError errors={state.fields?.fin} />
         </label>
-        <label className="field">
+        <div className="field">
           <span>Cupo público</span>
-          <input
-            name="cupo"
-            type="number"
-            min="1"
-            max="100000"
-            defaultValue={event?.cupo ?? 100}
-            required
-          />
+          <input type="hidden" name="cupoConfigurado" value="1" />
+          <label className="confirmation-check"><input name="cupoIlimitado" type="checkbox" checked={unlimitedCapacity} onChange={e => setUnlimitedCapacity(e.target.checked)} /> Sin límite de cupo</label>
+          {unlimitedCapacity ? <input type="hidden" name="cupo" value={savedCapacity} /> : <label className="field"><span>Cantidad de lugares</span><input name="cupo" type="number" min="1" max="100000" value={capacity} onChange={e => setCapacity(e.target.value)} required /></label>}
+          {unlimitedCapacity && <small>El cierre manual y la fecha de finalización siguen vigentes.</small>}
           <FieldError errors={state.fields?.cupo} />
-        </label>
+          <FieldError errors={state.fields?.cupoIlimitado} />
+        </div>
         <label className="field">
           <span>Participación</span>
           <select name="costo" defaultValue={event?.costo || "gratuito"}>
@@ -152,7 +153,7 @@ export function EventForm({ event, types, certificatesConfigured = false }: { ev
         />
         <span>
           <strong>Inscripción pública habilitada</strong>
-          <small>También se cerrará automáticamente cuando se complete el cupo.</small>
+          <small>{unlimitedCapacity ? "La inscripción no se cerrará por cantidad de participantes." : "También se cerrará automáticamente cuando se complete el cupo."}</small>
         </span>
       </label>
       {event ? (

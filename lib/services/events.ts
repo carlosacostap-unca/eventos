@@ -58,6 +58,7 @@ function eventPayload(input: EventInput) {
     fin: input.fin.toISOString(),
     lugar: input.lugar,
     cupo: input.cupo,
+    ...(input.cupoIlimitado !== undefined ? { cupo_ilimitado: input.cupoIlimitado } : {}),
     costo: input.costo,
     certificado_asistencia: input.certificadoAsistencia,
     inscripcion_habilitada: input.inscripcionHabilitada,

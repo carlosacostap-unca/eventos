@@ -112,6 +112,7 @@ export const pocketBaseSchema = [
       { name: "fin", type: "date", required: true },
       { name: "lugar", type: "text", required: true, max: 240 },
       { name: "cupo", type: "number", required: true, min: 1, max: 100000, onlyInt: true },
+      { name: "cupo_ilimitado", type: "bool" },
       {
         name: "costo",
         type: "select",
@@ -226,7 +227,7 @@ export const pocketBaseSchema = [
         maxSelect: 1,
         values: ["publica", "presencial"],
       },
-      { name: "numero_cupo_publico", type: "number", min: 0, max: 100000, onlyInt: true },
+      { name: "numero_cupo_publico", type: "number", min: 0, onlyInt: true },
       { name: "acreditado", type: "bool" },
       { name: "acreditado_en", type: "date" },
       {

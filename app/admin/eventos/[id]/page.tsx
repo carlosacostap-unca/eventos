@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { EventAdminNav } from "@/components/event-admin-nav";
 import { EventSharePanel } from "@/components/event-share-panel";
 import { calculateEventMetrics } from "@/lib/domain/metrics";
-import { getRegistrationAvailability } from "@/lib/domain/events";
+import { getRegistrationAvailability, publicCapacityLabel } from "@/lib/domain/events";
 import { isEventFree, offersAttendanceCertificate } from "@/lib/domain/event-details";
 import { eventTypeName } from "@/lib/domain/event-types";
 import { listEventTypes } from "@/lib/services/event-types";
@@ -57,7 +57,7 @@ export default async function EventDashboardPage({
         <article className="metric-card">
           <span>Participantes</span>
           <strong>{metrics.total}</strong>
-          <small>{event.cupo} lugares públicos</small>
+          <small>{publicCapacityLabel(event)}</small>
         </article>
         <article className="metric-card">
           <span>Acreditados</span>

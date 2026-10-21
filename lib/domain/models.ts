@@ -43,6 +43,7 @@ export const eventInputSchema = z
     fin: z.coerce.date(),
     lugar: requiredText("El lugar", 2, 240),
     cupo: z.coerce.number().int().min(1).max(100000),
+    cupoIlimitado: z.boolean().optional(),
     costo: z.enum(["gratuito", "arancelado"]),
     certificadoAsistencia: z.enum(["si", "no"]),
     inscripcionHabilitada: z.coerce.boolean(),
@@ -111,6 +112,7 @@ export type EventRecord = {
   fin: string;
   lugar: string;
   cupo: number;
+  cupo_ilimitado?: boolean;
   costo?: "gratuito" | "arancelado" | "";
   certificado_asistencia?: "si" | "no" | "";
   inscripcion_habilitada: boolean;

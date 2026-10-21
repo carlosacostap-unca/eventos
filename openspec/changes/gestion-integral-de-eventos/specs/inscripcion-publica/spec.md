@@ -42,7 +42,7 @@ La unicidad MUST abarcar todas las modalidades: una persona no puede ser Asisten
 - **THEN** el sistema permite la nueva inscripción si cumple las demás condiciones
 
 ### Requirement: Reserva consistente de cupo
-El sistema MUST garantizar que las solicitudes principales públicas confirmadas nunca superen el cupo común configurado, incluso cuando varias modalidades se procesan simultáneamente. Cada asistente o alumno expositor reserva un lugar; los directores y codirectores vinculados MUST distinguirse y no consumir reservas adicionales.
+Cuando el evento tiene cupo limitado, el sistema MUST garantizar que las solicitudes principales públicas confirmadas nunca superen el cupo común configurado, incluso cuando varias modalidades se procesan simultáneamente. Cada asistente o alumno expositor reserva un lugar; los directores y codirectores vinculados MUST distinguirse y no consumir reservas adicionales. La organización SHALL poder configurar el evento sin límite de cupo, manteniendo el cierre manual y por finalización, la prevención de duplicados y la numeración única de reservas.
 
 #### Scenario: Último lugar solicitado simultáneamente
 - **WHEN** dos personas intentan ocupar al mismo tiempo el último lugar disponible
