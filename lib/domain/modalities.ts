@@ -40,7 +40,7 @@ export type ExhibitionMember = { id: string; exposicion: string; participante: s
 export type PersonSubmission = RegistrationInput & { respuestas: Answers };
 export type GroupSubmission = { modalidad: string; version: string; operacion: string; principal: PersonSubmission; integrantes: Array<PersonSubmission & { funcion: string }> };
 export const attendeeDefinition: FormDefinition = { fields: [], roles: [], principal: "Participante", certificate: "individual" };
-export const exhibitorDefinition: FormDefinition = { fields: [], principal: "Alumno expositor", certificate: "grupo", roles: [
+export const exhibitorDefinition: FormDefinition = { fields: [{ id: "titulo_trabajo", label: "Título del trabajo", type: "text", required: true, options: [], section: "Trabajo a exponer", help: "Ingresá el título completo del trabajo que vas a exponer." }], principal: "Alumno expositor", certificate: "grupo", roles: [
   { id: "director", label: "Director", min: 1, max: 1, fields: [] },
   { id: "codirector", label: "Codirector", min: 0, max: 1, fields: [] },
 ] };

@@ -5,7 +5,7 @@ La configuración está en **Evento → Modalidades y formularios**. Cada evento
 ## Configurar una jornada
 
 1. Mantener Asistente con apellido, nombre, DNI y email. Usar certificado individual condicionado a acreditación propia.
-2. Agregar Expositor con dirección. La configuración inicial pide los mismos cuatro datos para el alumno, un director obligatorio y un codirector opcional. El teléfono es un campo adicional disponible, no un requisito predeterminado de esta jornada.
+2. Agregar Expositor con dirección. La configuración inicial pide los mismos cuatro datos para el alumno, el título del trabajo obligatorio, un director obligatorio y un codirector opcional. El título lo completa el alumno una sola vez por exposición. El teléfono es un campo adicional disponible, no un requisito predeterminado de esta jornada.
 3. Agregar y ordenar los campos particulares. Se admiten texto corto/largo, número con límites, fecha, email, teléfono, selección simple/múltiple y casilla. Las secciones agrupan campos y los grupos definen funciones, mínimos y máximos de personas.
 4. Elegir para Expositor un PDF compartido condicionado a acreditación de la persona principal. Todos sus integrantes son destinatarios del mismo documento, con sus nombres, DNI y funciones.
 5. Guardar la configuración y comprobar la vista previa PDF. Cada modalidad tiene su entrega, plantilla y textos. Se puede cargar un fondo PDF, PNG o JPG de hasta 10 MB o volver al fondo institucional.

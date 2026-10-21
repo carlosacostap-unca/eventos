@@ -4,6 +4,13 @@ Permitir que la administración adapte las modalidades, los datos solicitados y 
 
 ## ADDED Requirements
 
+### Requirement: Título del trabajo en la configuración inicial de Expositor
+La configuración inicial Expositor con dirección SHALL incluir un campo obligatorio Título del trabajo para la persona principal. El título SHALL solicitarse una sola vez por exposición, sin exigirlo a director ni codirector. Las versiones publicadas existentes MUST conservar su configuración hasta una edición explícita.
+
+#### Scenario: Expositor intenta confirmar sin título
+- **WHEN** se utiliza esa configuración inicial y el alumno omite el título o completa solamente espacios
+- **THEN** el sistema rechaza la inscripción completa sin crear registros parciales
+
 ### Requirement: Visibilidad de la página pública por evento
 El sistema SHALL permitir configurar por evento la visibilidad del tipo de evento, descripción, fecha y hora, duración, lugar, participación gratuita o arancelada, información de certificados y disertantes en su página pública de inscripción. Las elecciones MUST afectar la presentación y conservar los datos administrativos, la disponibilidad de inscripción y las reglas de certificación.
 

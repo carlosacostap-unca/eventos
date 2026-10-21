@@ -2,8 +2,14 @@ import { describe, expect, it } from "vitest";
 import { attendeeDefinition, exhibitorDefinition, formSchema, parseSubmission, parseAnswers, coherentIdentity, fieldSchema } from "./modalities";
 import { fingerprint } from "./fingerprints";
 const person = { nombres: "Ana", apellidos: "Perez", documento: "12345678", email: "ana@example.com", respuestas: {} };
-const submission = { modalidad: "modalidad", version: "version", operacion: "123456789012345", principal: person, integrantes: [{ ...person, nombres: "Luis", documento: "23456789", funcion: "director" }] };
+const submission = { modalidad: "modalidad", version: "version", operacion: "123456789012345", principal: { ...person, respuestas: { titulo_trabajo: "Investigación de prueba" } }, integrantes: [{ ...person, nombres: "Luis", documento: "23456789", funcion: "director" }] };
 describe("formularios por modalidad", () => {
+  it("pide el título al expositor y rechaza títulos vacíos sin exigirlo a los integrantes vinculados", () => {
+    expect(parseSubmission(exhibitorDefinition, submission).principal.respuestas.titulo_trabajo).toBe("Investigación de prueba");
+    for (const respuestas of [{}, { titulo_trabajo: "" }, { titulo_trabajo: "   " }]) expect(() => parseSubmission(exhibitorDefinition, { ...submission, principal: { ...person, respuestas } })).toThrow();
+    expect(parseSubmission(exhibitorDefinition, submission).integrantes[0].respuestas).toEqual({});
+    expect(parseSubmission(attendeeDefinition, { ...submission, principal: person, integrantes: [] }).principal.respuestas).toEqual({});
+  });
   it("acepta las configuraciones de asistente y expositor", () => { expect(formSchema.parse(attendeeDefinition)).toEqual(attendeeDefinition); expect(formSchema.parse(exhibitorDefinition)).toEqual(exhibitorDefinition); expect(parseSubmission(exhibitorDefinition, submission).integrantes).toHaveLength(1); });
   it("exige director y codirector completo", () => {
     expect(() => parseSubmission(exhibitorDefinition, { ...submission, integrantes: [] })).toThrow();

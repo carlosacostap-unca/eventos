@@ -38,7 +38,8 @@ describe.skipIf(!enabled)("modalidades contra PocketBase local aislado", () => {
       const modes = await listModalities(event.id);
       const mode = modes.find((m) => m.id === exhibitor)!;
       const director = { nombres: "Director", apellidos: "Compartido", documento: "22222222", email: "director@example.com", respuestas: {}, funcion: "director" };
-      const input = { modalidad: mode.id, version: mode.version_publicada, operacion: randomUUID(), principal: { nombres: "Alumna", apellidos: "Primera", documento: "11111111", email: "alumna@example.com", respuestas: {} }, integrantes: [director, { ...director, nombres: "Codirectora", documento: "33333333", email: "codirectora@example.com", funcion: "codirector" }] };
+      const input = { modalidad: mode.id, version: mode.version_publicada, operacion: randomUUID(), principal: { nombres: "Alumna", apellidos: "Primera", documento: "11111111", email: "alumna@example.com", respuestas: { titulo_trabajo: "Trabajo de investigación de prueba" } }, integrantes: [director, { ...director, nombres: "Codirectora", documento: "33333333", email: "codirectora@example.com", funcion: "codirector" }] };
+      await expect(registerWithModality(event.id, { ...input, principal: { ...input.principal, respuestas: {} } })).rejects.toThrow();
       await expect(registerWithModality(event.id, { ...input, integrantes: [] })).rejects.toThrow();
       expect((await pb.collection("inscripciones").getFullList({ filter: pb.filter("evento = {:id}", { id: event.id }) })).length).toBe(0);
       const student = await registerWithModality(event.id, input);
@@ -82,7 +83,7 @@ describe.skipIf(!enabled)("modalidades contra PocketBase local aislado", () => {
       expect(await generateCertificates(event.id, "", { regenerate: true })).toMatchObject({ regenerated: 2 });
       expect((await getCertificateDownload(certificate.id, { registrationIds: [dir.id], certificateIds: [] })).bytes.length).toBeGreaterThan(1000);
       // Último lugar entre modalidades: el bloqueo persistente y el índice protegen el cupo.
-      const attempts = await Promise.allSettled([5, 6].map((n) => registerWithModality(event.id, { modalidad: attendee.id, version: attendee.version_publicada, operacion: randomUUID(), principal: { ...input.principal, documento: String(n).repeat(8) }, integrantes: [] })));
+      const attempts = await Promise.allSettled([5, 6].map((n) => registerWithModality(event.id, { modalidad: attendee.id, version: attendee.version_publicada, operacion: randomUUID(), principal: { ...input.principal, documento: String(n).repeat(8), respuestas: {} }, integrantes: [] })));
       expect(attempts.filter((r) => r.status === "fulfilled")).toHaveLength(1);
       expect(await countPublicRegistrations(event.id)).toBe(3);
     } finally {
@@ -125,17 +126,18 @@ describe.skipIf(!enabled)("modalidades contra PocketBase local aislado", () => {
       const mode = modes.find((m) => m.id === modeId)!;
       const attendee = modes.find((m) => m.codigo === "asistente")!;
       const person = (documento: string) => ({ nombres: "Nombre", apellidos: "Apellido", documento, email: `persona-${documento}@example.com`, respuestas: {} });
-      const input = { modalidad: mode.id, version: mode.version_publicada, operacion: randomUUID(), principal: person("12398765"), integrantes: [{ ...person("22398765"), funcion: "director" }] };
-      const raced = await Promise.allSettled([registerWithModality(event.id, input), registerWithModality(event.id, { ...input, modalidad: attendee.id, version: attendee.version_publicada, operacion: randomUUID(), integrantes: [] })]);
+      const studentPerson = (documento: string) => ({ ...person(documento), respuestas: { titulo_trabajo: "Trabajo de prueba " + documento } });
+      const input = { modalidad: mode.id, version: mode.version_publicada, operacion: randomUUID(), principal: studentPerson("12398765"), integrantes: [{ ...person("22398765"), funcion: "director" }] };
+      const raced = await Promise.allSettled([registerWithModality(event.id, input), registerWithModality(event.id, { ...input, modalidad: attendee.id, version: attendee.version_publicada, operacion: randomUUID(), principal: person("12398765"), integrantes: [] })]);
       expect(raced.filter((r) => r.status === "fulfilled")).toHaveLength(1);
       const racedPeople = await pb.collection("inscripciones").getFullList({ filter: pb.filter("evento = {:id}", { id: event.id }) });
       expect(racedPeople.filter((p) => p.documento === "12398765")).toHaveLength(1);
       expect(racedPeople.length).toBe(raced[0].status === "fulfilled" ? 2 : 1);
-      const primaryInput = { ...input, operacion: randomUUID(), principal: person("72398765"), integrantes: [{ ...person("82398765"), funcion: "director" }] };
+      const primaryInput = { ...input, operacion: randomUUID(), principal: studentPerson("72398765"), integrantes: [{ ...person("82398765"), funcion: "director" }] };
       const student = await registerWithModality(event.id, primaryInput);
       const director = (await pb.collection("inscripciones").getFullList({ filter: pb.filter("evento = {:event} && documento = {:doc}", { event: event.id, doc: "82398765" }) }))[0];
       await setAttendance(director.id, true, "", event.id);
-      const promoted = await registerWithModality(event.id, { ...primaryInput, operacion: randomUUID(), principal: person("82398765"), integrantes: [{ ...person("92398765"), funcion: "director" }] });
+      const promoted = await registerWithModality(event.id, { ...primaryInput, operacion: randomUUID(), principal: studentPerson("82398765"), integrantes: [{ ...person("92398765"), funcion: "director" }] });
       expect(promoted).toMatchObject({ id: director.id, tipo_alta: "principal", acreditado: true });
       await setAttendance(student.id, true, "", event.id);
       const timestamp = (await pb.collection("inscripciones").getOne(student.id)).acreditado_en;
