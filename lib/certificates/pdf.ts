@@ -18,6 +18,7 @@ import {
   type CertificateTextSections,
 } from "@/lib/domain/certificate-texts";
 import type { EventRecord, RegistrationRecord } from "@/lib/domain/models";
+import { drawCertificateLayout, readCertificateLayout, type CertificateLayout } from "./template-layout";
 
 const PAGE_WIDTH = 842;
 const PAGE_HEIGHT = 595;
@@ -60,6 +61,7 @@ export async function validateCertificateTemplate(file: File) {
     if (document.getPageCount() < 1) throw new Error("El PDF no contiene páginas.");
     const { width, height } = document.getPage(0).getSize();
     if (width < 400 || height < 280) throw new Error("La plantilla es demasiado pequeña.");
+    readCertificateLayout(document);
     return;
   }
   if (file.type !== "image/png" && file.type !== "image/jpeg") {
@@ -306,14 +308,18 @@ export async function createCertificatePdf(input: {
     RegistrationRecord,
     "id" | "nombres" | "apellidos"
   > &
-    Partial<Pick<RegistrationRecord, "documento">>;
+    Partial<Pick<RegistrationRecord, "documento" | "respuestas">>;
   template?: { bytes: Uint8Array; mimeType: string };
 }): Promise<Uint8Array> {
   let document: PDFDocument;
   let page: PDFPage;
+  let templateSource: PDFDocument | undefined;
+  let templateLayout: CertificateLayout | null = null;
 
   if (input.template?.mimeType.includes("pdf")) {
     const source = await PDFDocument.load(input.template.bytes);
+    templateLayout = readCertificateLayout(source);
+    templateSource = source;
     document = await PDFDocument.create();
     const [copied] = await document.copyPages(source, [0]);
     page = document.addPage(copied);
@@ -340,6 +346,7 @@ export async function createCertificatePdf(input: {
     timeZone: ARGENTINA_TIME_ZONE,
   }).format(new Date(input.event.inicio));
   const variables: CertificateTextVariables = {
+    respuestas: input.registration.respuestas,
     responsable: participant,
     integrantes: input.members?.map((m) => `${m.role}: ${m.apellidos}, ${m.nombres} - DNI ${m.documento}`).join("; ") ?? participant,
     participante: participant,
@@ -377,6 +384,10 @@ export async function createCertificatePdf(input: {
   const scaleX = width / PAGE_WIDTH;
   const scaleY = height / PAGE_HEIGHT;
   const textScale = Math.min(scaleX, scaleY);
+  if (templateLayout && templateSource) {
+    await drawCertificateLayout({ document, page, source: templateSource, layout: templateLayout, texts, variables, identifier: input.event.id + "-" + input.registration.id, members: input.members });
+    return document.save();
+  }
   if (input.members?.length) {
     // Bloque grupal independiente: el número de integrantes no pisa textos ni firmas.
     const content = [

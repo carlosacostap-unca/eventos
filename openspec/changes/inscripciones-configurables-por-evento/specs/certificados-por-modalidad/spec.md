@@ -4,6 +4,21 @@ Emitir y ofrecer certificados según la modalidad de participación, incluyendo 
 
 ## ADDED Requirements
 
+### Requirement: Composición configurable de plantillas y datos del trabajo
+El sistema SHALL admitir plantillas PDF con áreas de cuerpo, integrantes y fecha, conservando su marco, encabezado y firmas. Los textos SHALL poder utilizar respuestas principales configuradas mediante variables de campo, sin interpretar su contenido como instrucciones ni como otras variables. El sistema MUST mantener todos los nombres, DNI y funciones dentro de áreas legibles y continuar en páginas adicionales si es necesario.
+
+#### Scenario: Certificado de una comunicación oral
+- **WHEN** la modalidad solicita un título obligatorio y su certificado incluye ese campo
+- **THEN** el PDF contiene el título, la identidad del alumno y los integrantes con DNI, respetando las áreas de la plantilla y sin conservar campos interactivos
+
+#### Scenario: Corrección del título emitido
+- **WHEN** se modifica una respuesta principal utilizada en un certificado emitido
+- **THEN** el documento queda pendiente de regeneración y se conserva el mismo criterio de acceso para todos sus destinatarios
+
+#### Scenario: Fondo sin áreas configuradas
+- **WHEN** una modalidad utiliza una plantilla anterior sin campos de composición
+- **THEN** el generador conserva el comportamiento anterior
+
 ### Requirement: Certificado individual de asistencia
 El sistema SHALL generar un certificado individual para un Asistente solamente cuando su modalidad tenga entrega habilitada y su propia acreditación esté vigente, utilizando la plantilla y los textos configurados para esa modalidad.
 

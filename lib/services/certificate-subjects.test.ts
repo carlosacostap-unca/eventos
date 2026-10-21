@@ -11,6 +11,16 @@ function fixture(studentPresent: boolean, directorPresent: boolean, codirectorPr
   return { pb, people, event: { id: "event" } as EventRecord };
 }
 describe("regla del certificado compartido", () => {
+  it("cambiar el título del trabajo invalida el PDF emitido y los formularios vacíos conservan su huella anterior", async () => {
+    const { pb, people, event } = fixture(true, false, false);
+    const original = await certificateSubject(pb, event, people[0]);
+    people[0].respuestas = {};
+    expect((await certificateSubject(pb, event, people[0]))?.hash).toBe(original?.hash);
+    people[0].respuestas = { titulo_trabajo: "Trabajo original" };
+    const titled = await certificateSubject(pb, event, people[0]);
+    people[0].respuestas.titulo_trabajo = "Trabajo corregido";
+    expect((await certificateSubject(pb, event, people[0]))?.hash).not.toBe(titled?.hash);
+  });
   for (const student of [true, false]) for (const director of [true, false]) for (const codirector of [true, false]) it(`alumno=${student}, director=${director}, codirector=${codirector}`, async () => {
     const { pb, people, event } = fixture(student, director, codirector);
     expect((await certificateSubject(pb, event, people[0]))?.eligible).toBe(student);

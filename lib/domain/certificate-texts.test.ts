@@ -9,6 +9,10 @@ import {
 } from "@/lib/domain/certificate-texts";
 
 describe("textos de certificados", () => {
+  it("incluye respuestas configuradas sin interpretar su contenido como otra variable", () => {
+    const variables = { participante: "Ana", documento: "12345", evento: "Jornada", lugar: "Facultad", fecha: "3 de noviembre", respuestas: { titulo_trabajo: "Investigación sobre {evento}", lineas: ["Robótica", "Energía"], autoriza: true, cantidad: 0 } };
+    expect(renderCertificateText("Trabajo: {campo:titulo_trabajo}; {campo:lineas}; {campo:autoriza}; {campo:cantidad}; {campo:ausente}", variables)).toBe("Trabajo: Investigación sobre {evento}; Robótica, Energía; Sí; 0;");
+  });
   it("sustituye responsable e integrantes del certificado compartido", () => {
     expect(renderCertificateText("Responsable: {responsable}. Integrantes: {integrantes}", { participante: "Alumno", responsable: "Pérez, Ana", integrantes: "Alumno: Pérez, Ana; Director: Gómez, Luis", documento: "12345", evento: "Jornada", lugar: "Facultad", fecha: "21 de octubre" })).toBe("Responsable: Pérez, Ana. Integrantes: Alumno: Pérez, Ana; Director: Gómez, Luis");
   });

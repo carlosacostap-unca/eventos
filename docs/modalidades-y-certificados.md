@@ -39,6 +39,14 @@ El portal conserva su consulta por DNI y autorización temporal. Un director pue
 
 Cambiar campos o grupos publica una nueva versión. Las inscripciones anteriores conservan su versión; no se les exige un campo agregado posteriormente. Un formulario abierto con una versión anterior debe actualizarse antes de confirmar.
 
+### Títulos de trabajos y plantillas con composición propia
+
+Los textos pueden incluir respuestas principales mediante `{campo:identificador}`. El editor muestra las variables disponibles junto a sus etiquetas. Por ejemplo, un campo obligatorio `titulo_trabajo` puede aparecer en Participación como `expositor de la comunicación oral: «{campo:titulo_trabajo}»`. Las respuestas se sustituyen como texto, sin interpretar variables que contengan. Corregirlas deja pendiente de regeneración un certificado emitido con esos datos.
+
+Una plantilla PDF puede definir campos de texto vacíos `certificado.cuerpo`, `certificado.integrantes` y `certificado.fecha` en su primera página. El primero activa la composición de párrafo y es obligatorio; el segundo es necesario para grupos; el tercero coloca Lugar y fecha. Sus rectángulos y tamaños de fuente fijan las áreas de impresión. Deben quedar dentro de la página y sin superponerse, con fuente entre 9 y 30 puntos. El cuerpo une introducción, participante, documento, participación y evento; los campos del formulario y el participante se destacan en negrita cursiva. Los integrantes vinculados se detallan por función con su DNI; la persona principal figura en el cuerpo.
+
+El generador conserva las imágenes y textos estáticos de esa plantilla, elimina los campos interactivos del PDF final y ajusta los textos dentro de sus áreas. Si no caben a nueve puntos, continúa en otras páginas del mismo documento. Las plantillas sin esos campos conservan la composición anterior. Los fondos deben estar limpios de nombres, DNI y trabajos de ejemplo: subir un certificado completo como fondo duplica sus datos al generar uno nuevo.
+
 ## Preparación y despliegue de la base
 
 La migración específica utiliza las credenciales existentes para autenticar y **no crea usuarios ni cambia contraseñas**. No se debe sustituir por el aprovisionador general de credenciales. Antes de aplicarla, respaldar datos y archivos de PocketBase y suspender altas durante el backfill.

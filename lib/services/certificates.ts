@@ -80,7 +80,7 @@ export async function previewCertificate(eventId: string, modalityId?: string) {
     if (!mode) throw new DomainError("NOT_FOUND", "La modalidad no pertenece al evento.");
     const definition = (await modalityVersion(mode.version_publicada)).esquema;
     const members = definition.certificate === "grupo" ? [{ nombres: "Nombre del alumno", apellidos: "Apellido", documento: "12345678", role: definition.principal }, ...definition.roles.flatMap((r) => Array.from({ length: Math.max(r.min, 1) }, () => ({ nombres: "Nombre de ejemplo", apellidos: "Apellido del integrante", documento: "23456789", role: r.label })))] : undefined;
-    return createCertificatePdf({ event: { ...event, textos_certificado: mode.textos_certificado }, eventTypeName: await loadEventTypeName(event), registration: { id: "vista-previa", nombres: "Nombre", apellidos: "Apellido", documento: "12345678" }, members, template: mode.plantilla_certificado ? await fetchProtectedFile(mode as unknown as RecordModel, mode.plantilla_certificado) : undefined });
+    return createCertificatePdf({ event: { ...event, textos_certificado: mode.textos_certificado }, eventTypeName: await loadEventTypeName(event), registration: { id: "vista-previa", nombres: members?.[0].nombres ?? "Nombre", apellidos: members?.[0].apellidos ?? "Apellido", documento: "12345678", respuestas: Object.fromEntries(definition.fields.map(field => [field.id, field.label + " de ejemplo"])) }, members, template: mode.plantilla_certificado ? await fetchProtectedFile(mode as unknown as RecordModel, mode.plantilla_certificado) : undefined });
   }
   if (!offersAttendanceCertificate(event)) {
     throw new DomainError("DISABLED", "Este evento no entrega certificados.");

@@ -22,7 +22,7 @@ export async function certificateSubject(pb: PocketBase, event: EventRecord, reg
     members = await Promise.all(links.map(async (link) => ({ person: await pb.collection("inscripciones").getOne<RegistrationRecord>(link.participante), role: link.etiqueta, functionId: link.funcion })));
     if (!members.some((m) => m.person.id === registration.id && m.functionId === "principal") || members.some((m) => m.person.evento !== event.id || m.person.modalidad !== mode.id)) return null;
   }
-  const hash = fingerprint({ principal: registration.id, members: members.map((m) => ({ id: m.person.id, nombres: m.person.nombres, apellidos: m.person.apellidos, documento: m.person.documento, funcion: m.functionId, etiqueta: m.role })) });
+  const hash = fingerprint({ principal: registration.id, members: members.map((m) => ({ id: m.person.id, nombres: m.person.nombres, apellidos: m.person.apellidos, documento: m.person.documento, funcion: m.functionId, etiqueta: m.role })), ...(Object.keys(registration.respuestas ?? {}).length ? { respuestas: registration.respuestas } : {}) });
   return { mode, event, registration, exhibition, members, hash, eligible: mode.entrega && registration.acreditado };
 }
 export async function canDownloadModalCertificate(pb: PocketBase, certificate: CertificateRecord, participantIds: string[]) {

@@ -61,6 +61,7 @@ export function resolveCertificateTexts(input: unknown): CertificateTextSections
 }
 
 export type CertificateTextVariables = {
+  respuestas?: Record<string, string | number | boolean | string[]>;
   integrantes?: string;
   responsable?: string;
   participante: string;
@@ -78,8 +79,14 @@ export function renderCertificateText(
 ): string {
   return template
     .replace(
-      /\{(participante|documento|evento|tipoEvento|horas|lugar|fecha|integrantes|responsable)\}/g,
-      (_match, key: keyof CertificateTextVariables) => variables[key] ?? (key === "tipoEvento" ? "Evento" : ""),
+      /\{(participante|documento|evento|tipoEvento|horas|lugar|fecha|integrantes|responsable|campo:([a-z][a-z0-9_]{0,39}))\}/g,
+      (_match, key: string, field?: string) => {
+        if (field) {
+          const value = Object.hasOwn(variables.respuestas ?? {}, field) ? variables.respuestas?.[field] : undefined;
+          return Array.isArray(value) ? value.join(", ") : typeof value === "boolean" ? value ? "Sí" : "No" : value === undefined ? "" : String(value);
+        }
+        return String(variables[key as Exclude<keyof CertificateTextVariables, "respuestas">] ?? (key === "tipoEvento" ? "Evento" : ""));
+      },
     )
     .replace(/\s+/g, " ")
     .trim();
