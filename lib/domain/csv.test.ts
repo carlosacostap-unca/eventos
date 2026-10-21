@@ -3,6 +3,11 @@ import { describe, expect, it } from "vitest";
 import { escapeCsv, registrationsToCsv } from "@/lib/domain/csv";
 
 describe("CSV", () => {
+  it("trata las fórmulas como texto y conserva valores comunes", () => {
+    expect(escapeCsv("=1+1")).toBe("'=1+1");
+    expect(escapeCsv("  @SUM(A1)")).toBe("'  @SUM(A1)");
+    expect(escapeCsv("12345678")).toBe("12345678");
+  });
   it("escapa comillas, comas y saltos de línea", () => {
     expect(escapeCsv('Pérez, "Ana"\n')).toBe('"Pérez, ""Ana""\n"');
   });

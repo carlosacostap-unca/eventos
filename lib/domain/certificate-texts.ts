@@ -61,6 +61,8 @@ export function resolveCertificateTexts(input: unknown): CertificateTextSections
 }
 
 export type CertificateTextVariables = {
+  integrantes?: string;
+  responsable?: string;
   participante: string;
   documento: string;
   evento: string;
@@ -76,7 +78,7 @@ export function renderCertificateText(
 ): string {
   return template
     .replace(
-      /\{(participante|documento|evento|tipoEvento|horas|lugar|fecha)\}/g,
+      /\{(participante|documento|evento|tipoEvento|horas|lugar|fecha|integrantes|responsable)\}/g,
       (_match, key: keyof CertificateTextVariables) => variables[key] ?? (key === "tipoEvento" ? "Evento" : ""),
     )
     .replace(/\s+/g, " ")

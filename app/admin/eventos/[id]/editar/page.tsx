@@ -5,6 +5,7 @@ import { EventAdminNav } from "@/components/event-admin-nav";
 import { EventForm } from "@/components/event-form";
 import { getEventById } from "@/lib/services/events";
 import { listEventTypes } from "@/lib/services/event-types";
+import { listModalities } from "@/lib/services/modalities";
 
 export default async function EditEventPage({
   params,
@@ -27,7 +28,7 @@ export default async function EditEventPage({
         </div>
       </div>
       <EventAdminNav event={event} />
-      <EventForm event={event} types={types} />
+      <EventForm event={event} types={types} certificatesConfigured={(await listModalities(id)).length > 0} />
     </main>
   );
 }

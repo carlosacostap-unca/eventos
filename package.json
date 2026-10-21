@@ -13,6 +13,8 @@
     "typecheck": "tsc --noEmit",
     "schema:apply": "tsx scripts/setup-pocketbase.ts",
     "schema:materials": "tsx scripts/setup-materials.ts",
+    "schema:modalities": "tsx scripts/migrate-modalities.ts",
+    "schema:modalities-check": "tsx scripts/check-modality-batch.ts",
     "schema:import": "tsx scripts/import-pocketbase-schema.ts",
     "mcp:pocketbase": "tsx mcp/pocketbase-server.ts",
     "mcp:check": "tsx scripts/check-pocketbase-mcp.ts"

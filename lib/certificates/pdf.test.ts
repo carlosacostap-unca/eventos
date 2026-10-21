@@ -7,6 +7,17 @@ import {
 } from "@/lib/certificates/pdf";
 
 describe("certificados PDF", () => {
+  it("incluye todos los integrantes de un grupo extenso en un PDF de varias páginas legibles", async () => {
+    const drawn = vi.spyOn(PDFPage.prototype, "drawText");
+    try {
+      const members = Array.from({ length: 21 }, (_, i) => ({ nombres: "María Alejandra del Valle de los Ángeles", apellidos: "Fernández de la Cruz Rodríguez de Villanueva", documento: String(12000000 + i), role: "Integrante " + i }));
+      const bytes = await createCertificatePdf({ event: { id: "event", titulo: "Jornada de exposición", descripcion: "Prueba", slug: "prueba", inicio: "2027-04-02T10:00:00Z", fin: "2027-04-02T12:00:00Z", lugar: "Facultad", cupo: 100, inscripcion_habilitada: false, estado: "finalizado", created: "", updated: "" }, registration: { id: "group", ...members[0] }, members });
+      expect((await PDFDocument.load(bytes)).getPageCount()).toBeGreaterThan(1);
+      for (const member of members) expect(drawn.mock.calls.some(([text]) => text.includes(member.documento))).toBe(true);
+      const memberCalls = drawn.mock.calls.filter(([text]) => text.includes("Integrante "));
+      expect(memberCalls.every(([, options]) => (options?.size ?? 0) >= 9 && (options?.y ?? 0) >= 595 * 0.37)).toBe(true);
+    } finally { drawn.mockRestore(); }
+  });
   it("genera un PDF válido con datos del asistente", async () => {
     const drawn = vi.spyOn(PDFPage.prototype, "drawText");
     try {

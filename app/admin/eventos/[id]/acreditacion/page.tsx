@@ -1,4 +1,9 @@
 import Link from "next/link";
+import { randomUUID } from "node:crypto";
+import { publicModalities, listModalities, modalityVersion } from "@/lib/services/modalities";
+import { eventExhibitions } from "@/lib/services/modal-registration";
+import { ParticipantFilters } from "@/components/participant-filters";
+import type { RegistrationFilters } from "@/lib/services/registrations";
 import { notFound } from "next/navigation";
 
 import { toggleAttendanceAction } from "@/app/actions/registrations";
@@ -12,10 +17,14 @@ import {
   listRegistrationsPage,
 } from "@/lib/services/registrations";
 
-function pageHref(eventId: string, query: string, page: number) {
+function pageHref(eventId: string, query: string, page: number, filters: RegistrationFilters) {
   const params = new URLSearchParams();
   if (query) params.set("q", query);
   params.set("page", String(page));
+  if (filters.modality) params.set("modality", filters.modality);
+  if (filters.role) params.set("role", filters.role);
+  if (filters.source) params.set("source", filters.source);
+  if (filters.attendance) params.set("attendance", filters.attendance);
   return "/admin/eventos/" + eventId + "/acreditacion?" + params.toString();
 }
 
@@ -24,7 +33,7 @@ export default async function AccreditationPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ q?: string; page?: string }>;
+  searchParams: Promise<{ q?: string; page?: string; modality?: string; role?: string; source?: string; attendance?: string }>;
 }) {
   const { id } = await params;
   const query = await searchParams;
@@ -33,10 +42,13 @@ export default async function AccreditationPage({
   const event = await getEventById(id);
   if (!event) notFound();
 
-  const [result, publicCount] = await Promise.all([
-    listRegistrationsPage(id, { query: q || undefined }, requestedPage, 40),
+  const filters: RegistrationFilters = { query: q || undefined, modality: query.modality || undefined, role: query.role || undefined, source: query.source === "publica" || query.source === "presencial" ? query.source : undefined, attendance: query.attendance === "acreditado" || query.attendance === "ausente" ? query.attendance : undefined };
+  const [result, publicCount, modes, publicModes, groups] = await Promise.all([
+    listRegistrationsPage(id, filters, requestedPage, 40),
     countPublicRegistrations(id),
+    listModalities(id), publicModalities(event), eventExhibitions(id),
   ]);
+  const versions = new Map(await Promise.all([...new Set(result.items.map((r) => r.version_formulario).filter((v): v is string => !!v))].map(async (v) => [v, await modalityVersion(v)] as const)));
 
   return (
     <main className="admin-main">
@@ -54,17 +66,8 @@ export default async function AccreditationPage({
 
       <section className="accreditation-layout">
         <div className="panel">
-          <form className="search-bar">
-            <input
-              name="q"
-              defaultValue={q}
-              placeholder="Buscar por nombre, email o documento"
-              aria-label="Buscar participantes"
-            />
-            <button className="button button-secondary" type="submit">
-              Buscar
-            </button>
-          </form>
+          <ParticipantFilters modes={modes} members={groups.members} filters={filters} />
+
           <div className="catalog-summary"><p>{result.totalItems} participantes{q ? " encontrados" : " registrados"}</p>{q && <Link className="text-link" href={"/admin/eventos/" + id + "/acreditacion"}>Limpiar búsqueda</Link>}</div>
           <div className="participant-list">
             {result.items.length === 0 ? (
@@ -88,6 +91,8 @@ export default async function AccreditationPage({
                         ? "Alta presencial"
                         : "Inscripción pública"}
                     </small>
+                    <small><strong>{modes.find((m) => m.id === registration.modalidad)?.nombre ?? "Asistente"}</strong>{registration.tipo_alta === "vinculada" ? " · Integrante vinculado" : ""}</small>
+                    {groups.members.filter((m) => m.participante === registration.id).map((m) => <small key={m.id}>{m.etiqueta} · <Link className="text-link" href={`/admin/eventos/${id}/exposiciones#${m.exposicion}`}>Ver exposición</Link></small>)}
                   </div>
                   <form action={toggleAttendanceAction}>
                     <input type="hidden" name="registrationId" value={registration.id} />
@@ -109,7 +114,7 @@ export default async function AccreditationPage({
                     </SubmitButton>
                   </form>
                   <div className="participant-edit">
-                    <RegistrationEditForm registration={registration} />
+                    <RegistrationEditForm registration={registration} fields={versions.get(registration.version_formulario ?? "")?.esquema.fields} />
                   </div>
                 </article>
               ))
@@ -118,7 +123,7 @@ export default async function AccreditationPage({
           {result.totalPages > 1 ? (
             <nav className="pagination" aria-label="Páginas de participantes">
               {result.page > 1 ? (
-                <Link href={pageHref(id, q, result.page - 1)}>← Anterior</Link>
+                <Link href={pageHref(id, q, result.page - 1, filters)}>← Anterior</Link>
               ) : (
                 <span />
               )}
@@ -126,14 +131,14 @@ export default async function AccreditationPage({
                 Página {result.page} de {result.totalPages} · {result.totalItems} personas
               </span>
               {result.page < result.totalPages ? (
-                <Link href={pageHref(id, q, result.page + 1)}>Siguiente →</Link>
+                <Link href={pageHref(id, q, result.page + 1, filters)}>Siguiente →</Link>
               ) : (
                 <span />
               )}
             </nav>
           ) : null}
         </div>
-        <WalkInForm eventId={id} isFull={publicCount >= event.cupo} />
+        <WalkInForm eventId={id} isFull={publicCount >= event.cupo} modes={publicModes} operation={randomUUID()} />
       </section>
     </main>
   );

@@ -2,6 +2,7 @@ import { ClientResponseError } from "pocketbase";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
+vi.mock("@/lib/services/modalities", () => ({ listModalities: async () => [] }));
 const mocks = vi.hoisted(() => ({
   getEvent: vi.fn(), registrations: vi.fn(), pdf: vi.fn(),
   find: vi.fn(), create: vi.fn(), update: vi.fn(), audit: vi.fn(),

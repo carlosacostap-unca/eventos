@@ -9,6 +9,9 @@ import {
 } from "@/lib/domain/certificate-texts";
 
 describe("textos de certificados", () => {
+  it("sustituye responsable e integrantes del certificado compartido", () => {
+    expect(renderCertificateText("Responsable: {responsable}. Integrantes: {integrantes}", { participante: "Alumno", responsable: "Pérez, Ana", integrantes: "Alumno: Pérez, Ana; Director: Gómez, Luis", documento: "12345", evento: "Jornada", lugar: "Facultad", fecha: "21 de octubre" })).toBe("Responsable: Pérez, Ana. Integrantes: Alumno: Pérez, Ana; Director: Gómez, Luis");
+  });
   it("incluye las horas del evento en el texto de participación", () => {
     expect(certificateDurationHours("2026-09-28T19:00:00Z", "2026-09-28T22:00:00Z")).toBe("3");
     const horas = certificateDurationHours("2026-09-29T21:00:00Z", "2026-09-29T22:30:00Z");

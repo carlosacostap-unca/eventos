@@ -6,9 +6,15 @@ import { calculateEventMetrics } from "@/lib/domain/metrics";
 import type { RegistrationFilters } from "@/lib/services/registrations";
 import { getEventById } from "@/lib/services/events";
 import { listRegistrations } from "@/lib/services/registrations";
+import { listModalities } from "@/lib/services/modalities";
+import { eventExhibitions } from "@/lib/services/modal-registration";
+import { ParticipantFilters } from "@/components/participant-filters";
+import { createServicePocketBase } from "@/lib/pocketbase/client";
 
-function normalizeFilters(input: { q?: string; source?: string; attendance?: string }): RegistrationFilters {
+function normalizeFilters(input: { q?: string; source?: string; attendance?: string; modality?: string; role?: string }): RegistrationFilters {
   return {
+    modality: input.modality || undefined,
+    role: input.role || undefined,
     query: input.q?.trim() || undefined,
     source:
       input.source === "publica" || input.source === "presencial"
@@ -26,7 +32,7 @@ export default async function ReportsPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ q?: string; source?: string; attendance?: string }>;
+  searchParams: Promise<{ q?: string; source?: string; attendance?: string; modality?: string; role?: string }>;
 }) {
   const { id } = await params;
   const query = await searchParams;
@@ -37,10 +43,16 @@ export default async function ReportsPage({
   const registrations = await listRegistrations(id, filters);
   const allRegistrations = await listRegistrations(id);
   const metrics = calculateEventMetrics(allRegistrations);
+  const [modes, groups] = await Promise.all([listModalities(id), eventExhibitions(id)]);
+  const pb = await createServicePocketBase();
+  const certificates = await pb.collection("certificados").getFullList({ filter: pb.filter("evento = {:id}", { id }), fields: "id,modalidad,exposicion" });
+  const reservations = allRegistrations.filter((p) => p.origen === "publica" && p.numero_cupo_publico > 0).length;
   const exportQuery = new URLSearchParams();
   if (filters.query) exportQuery.set("q", filters.query);
   if (filters.source) exportQuery.set("source", filters.source);
   if (filters.attendance) exportQuery.set("attendance", filters.attendance);
+  if (filters.modality) exportQuery.set("modality", filters.modality);
+  if (filters.role) exportQuery.set("role", filters.role);
   const exportUrl =
     "/api/admin/eventos/" +
     id +
@@ -61,6 +73,7 @@ export default async function ReportsPage({
         <a className="button button-primary" href={exportUrl}>
           Exportar CSV
         </a>
+        <a className="button button-secondary" href={exportUrl + (exportQuery.size ? "&" : "?") + "groups=1"}>Exportar integrantes por exposición</a>
       </div>
       <EventAdminNav event={event} />
 
@@ -68,7 +81,7 @@ export default async function ReportsPage({
         <article className="metric-card">
           <span>Total</span>
           <strong>{metrics.total}</strong>
-          <small>{metrics.publicas} públicas</small>
+          <small>{metrics.publicas} personas de origen público</small>
         </article>
         <article className="metric-card">
           <span>Presenciales</span>
@@ -87,36 +100,11 @@ export default async function ReportsPage({
         </article>
       </section>
 
+      <section className="panel"><h2>Participación por modalidad</h2><p>{reservations} reservas principales de {event.cupo} lugares públicos · {groups.exhibitions.length} exposiciones · {certificates.length} documentos emitidos</p><div className="table-wrap"><table><thead><tr><th>Modalidad</th><th>Personas únicas</th><th>Acreditadas</th><th>Porcentaje</th><th>PDFs emitidos</th></tr></thead><tbody>{modes.map((mode) => { const people = allRegistrations.filter((p) => p.modalidad === mode.id); const present = people.filter((p) => p.acreditado).length; return <tr key={mode.id}><td>{mode.nombre}</td><td>{people.length}</td><td>{present}</td><td>{people.length ? Math.round(present * 100 / people.length) : 0}%</td><td>{certificates.filter((c) => c.modalidad === mode.id).length}</td></tr>; })}</tbody></table></div></section>
+
       <section className="panel">
-        <form className="filter-bar">
-          <label>
-            <span>Buscar</span>
-            <input
-              name="q"
-              defaultValue={filters.query}
-              placeholder="Nombre, email o documento"
-            />
-          </label>
-          <label>
-            <span>Origen</span>
-            <select name="source" defaultValue={filters.source || ""}>
-              <option value="">Todos</option>
-              <option value="publica">Pública</option>
-              <option value="presencial">Presencial</option>
-            </select>
-          </label>
-          <label>
-            <span>Asistencia</span>
-            <select name="attendance" defaultValue={filters.attendance || ""}>
-              <option value="">Todos</option>
-              <option value="acreditado">Acreditados</option>
-              <option value="ausente">Ausentes</option>
-            </select>
-          </label>
-          <button className="button button-secondary" type="submit">
-            Aplicar filtros
-          </button>
-        </form>
+        <ParticipantFilters modes={modes} members={groups.members} filters={filters} />
+
 
         <div className="catalog-summary"><p>{registrations.length} participantes en el reporte</p>{(filters.query || filters.source || filters.attendance) && <Link className="text-link" href={"/admin/eventos/" + id + "/reportes"}>Limpiar filtros</Link>}</div>
         <div className="table-wrap" role="region" aria-label="Listado de participantes" tabIndex={0}>
@@ -125,6 +113,7 @@ export default async function ReportsPage({
               <tr>
                 <th>Participante</th>
                 <th>Documento</th>
+                <th>Modalidad y funciones</th>
                 <th>Origen</th>
                 <th>Estado</th>
                 <th>Inscripción</th>
@@ -140,6 +129,7 @@ export default async function ReportsPage({
                     <small>{registration.email}</small>
                   </td>
                   <td>{registration.documento}</td>
+                  <td>{modes.find((m) => m.id === registration.modalidad)?.nombre ?? "Asistente"}<small>{[...new Set(groups.members.filter((m) => m.participante === registration.id).map((m) => m.etiqueta))].join(", ")}</small></td>
                   <td>{registration.origen === "publica" ? "Pública" : "Presencial"}</td>
                   <td>
                     <span

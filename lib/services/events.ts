@@ -5,6 +5,9 @@ import type { RecordModel } from "pocketbase";
 import type { CertificateTextSections } from "@/lib/domain/certificate-texts";
 import type { EventInput, EventRecord } from "@/lib/domain/models";
 import { createServicePocketBase } from "@/lib/pocketbase/client";
+import { recordId } from "@/lib/domain/fingerprints";
+import { attendeeDefinition } from "@/lib/domain/modalities";
+import { ClientResponseError } from "pocketbase";
 
 function toEvent(record: RecordModel): EventRecord {
   return record as unknown as EventRecord;
@@ -64,6 +67,19 @@ function eventPayload(input: EventInput) {
 
 export async function createEvent(input: EventInput): Promise<EventRecord> {
   const pb = await createServicePocketBase();
+  let configured = false;
+  try { await pb.collection("modalidades_inscripcion").getList(1, 1, { fields: "id" }); configured = true; }
+  catch (error) { if (!(error instanceof ClientResponseError) || error.status !== 404) throw error; }
+  if (configured) {
+    const id = recordId(), mode = recordId(), version = recordId();
+    const batch = pb.createBatch();
+    batch.collection("eventos").create({ ...eventPayload(input), id });
+    batch.collection("modalidades_inscripcion").create({ id: mode, evento: id, codigo: "asistente", nombre: "Asistente", orden: 0, habilitada: true, entrega: input.certificadoAsistencia === "si" });
+    batch.collection("versiones_modalidad").create({ id: version, modalidad: mode, numero: 1, esquema: attendeeDefinition });
+    batch.collection("modalidades_inscripcion").update(mode, { version_publicada: version });
+    await batch.send();
+    return pb.collection("eventos").getOne<EventRecord>(id);
+  }
   return toEvent(await pb.collection("eventos").create(eventPayload(input)));
 }
 

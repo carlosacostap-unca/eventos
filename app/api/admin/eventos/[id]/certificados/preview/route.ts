@@ -4,14 +4,14 @@ import { previewCertificate } from "@/lib/services/certificates";
 export const dynamic = "force-dynamic";
 
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
   const admin = await getAuthenticatedAdmin();
   if (!admin) return new Response("No autorizado", { status: 401 });
   const { id } = await params;
   try {
-    const pdf = await previewCertificate(id);
+    const pdf = await previewCertificate(id, new URL(request.url).searchParams.get("modalidad") ?? undefined);
     return new Response(Buffer.from(pdf), {
       headers: {
         "Cache-Control": "no-store, private",

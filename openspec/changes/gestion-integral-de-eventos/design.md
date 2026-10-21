@@ -1,5 +1,7 @@
 ## Context
 
+Actualización de compatibilidad: el diseño de modalidades, formularios versionados, integrantes vinculados y certificados compartidos se define en `../inscripciones-configurables-por-evento/design.md`. Ese diseño reemplaza las simplificaciones históricas de este documento sobre formulario fijo, certificado siempre individual y consulta por documento más email. La consulta vigente es por DNI con autorización temporal; los certificados grupales dependen de la acreditación del alumno responsable, mientras que los materiales siguen requiriendo acreditación propia. Antes de archivar deben conservarse estas reglas y las especificaciones reconciliadas de ambos cambios.
+
 El repositorio contiene una aplicación Next.js 16 con App Router y Tailwind CSS, todavía sin dominio ni persistencia. PocketBase ya existe en un VPS y debe utilizarse para autenticación administrativa, almacenamiento de registros y archivos. Véanse `proposal.md` y las especificaciones del cambio para el comportamiento requerido.
 
 PocketBase recomienda precaución con SSR porque compartir una instancia autenticada del SDK entre solicitudes puede mezclar sesiones. Además, el requisito del producto establece que el navegador no debe acceder directamente a PocketBase y que las reglas de negocio deben permanecer en Next.js.

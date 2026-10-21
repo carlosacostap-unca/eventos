@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 
 import { getAuthenticatedAdmin } from "@/lib/auth/session";
-import { registrationsToCsv } from "@/lib/domain/csv";
+import { participantCsv } from "@/lib/services/participant-reports";
 import { audit } from "@/lib/services/audit";
 import { getEventById } from "@/lib/services/events";
 import {
@@ -24,6 +24,8 @@ export async function GET(
   const source = request.nextUrl.searchParams.get("source");
   const attendance = request.nextUrl.searchParams.get("attendance");
   const filters: RegistrationFilters = {
+    modality: request.nextUrl.searchParams.get("modality") || undefined,
+    role: request.nextUrl.searchParams.get("role") || undefined,
     query: request.nextUrl.searchParams.get("q")?.trim() || undefined,
     source:
       source === "publica" || source === "presencial" ? source : undefined,
@@ -48,7 +50,7 @@ export async function GET(
     },
   });
 
-  return new Response(registrationsToCsv(registrations), {
+  return new Response(await participantCsv(id, filters, request.nextUrl.searchParams.get("groups") === "1"), {
     headers: {
       "Cache-Control": "no-store",
       "Content-Disposition":

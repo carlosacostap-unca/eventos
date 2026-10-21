@@ -3,7 +3,7 @@ vi.mock("server-only", () => ({}));
 const mocks = vi.hoisted(() => ({ certificate: vi.fn(), registration: vi.fn(), fetch: vi.fn(), fileURL: vi.fn() }));
 vi.mock("@/lib/pocketbase/client", () => ({ createServicePocketBase: async () => ({
   collection: (name: string) => ({ getOne: name === "certificados" ? mocks.certificate : mocks.registration }),
-  files: { getURL: mocks.fileURL }, authStore: { token: "service" },
+  files: { getURL: mocks.fileURL, getToken: async () => "file-token" }, authStore: { token: "service" },
 }) }));
 vi.mock("@/lib/services/events", () => ({}));
 vi.mock("@/lib/services/event-types", () => ({}));

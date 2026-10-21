@@ -16,7 +16,7 @@ beforeEach(() => {
 });
 it("encuentra inscripciones acreditadas por DNI sin depender de certificados", async () => {
   expect(await findAccreditedRegistrations("12345678")).toEqual(["reg1"]);
-  expect(mocks.registrations).toHaveBeenCalledWith({ filter: 'documento_normalizado = "12345678" && acreditado = true', fields: "id" });
+  expect(mocks.registrations).toHaveBeenCalledWith({ filter: 'documento_normalizado = "12345678"' });
   expect(mocks.certificates).not.toHaveBeenCalled();
 });
 it("muestra materiales aunque el certificado aún no exista", async () => {

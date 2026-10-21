@@ -26,7 +26,7 @@ export default async function CertificateResultsPage() {
         <h2 id="certificate-participant">
           {results.participant.apellidos}, {results.participant.nombres}
         </h2>
-        <p className="muted">Descargá los materiales y certificados de los eventos donde acreditaste tu asistencia.</p>
+        <p className="muted">Consultá tus certificados individuales o compartidos y los materiales habilitados por tu acreditación.</p>
       </div>
       <div className="certificate-result-list">
         {results.events.map((event) => (
@@ -35,7 +35,7 @@ export default async function CertificateResultsPage() {
               <h3>{event.title}</h3>
               <p>{dateFormat.format(new Date(event.date))}</p>
             </div>
-            {event.certificateId ? <a className="button button-primary" href={`/api/certificados/${event.certificateId}`} target="_blank" rel="noreferrer">
+            {event.certificates.length > 0 ? event.certificates.map((certificate, i) => <div key={certificate.id ?? i}><p><strong>{certificate.label}</strong></p>{certificate.id ? <a className="button button-primary" href={`/api/certificados/${certificate.id}`} target="_blank" rel="noreferrer">Descargar certificado</a> : <p className="muted">{certificate.stale ? "El certificado está pendiente de regeneración." : "El certificado todavía no fue emitido."}</p>}</div>) : event.certificateId ? <a className="button button-primary" href={`/api/certificados/${event.certificateId}`} target="_blank" rel="noreferrer">
               Descargar certificado
             </a> : <p className="muted">{event.offersCertificate ? "El certificado todavía no fue emitido." : "Este evento no entrega certificado."}</p>}
             <div className="event-materials">
@@ -43,7 +43,7 @@ export default async function CertificateResultsPage() {
               {event.materials.length ? <ul className="material-list">{event.materials.map((material) => <li key={material.id}>
                 <div><strong>{material.titulo}</strong><p className="muted">{material.nombre_original} · {materialSize(material.tamano)}</p></div>
                 <a className="button button-secondary" href={`/api/materiales/${material.id}`}>Descargar material</a>
-              </li>)}</ul> : <p className="muted">Todavía no hay materiales disponibles.</p>}
+              </li>)}</ul> : <p className="muted">{event.accredited ? "Todavía no hay materiales disponibles." : "Los materiales requieren tu acreditación personal en el evento."}</p>}
             </div>
           </article>
         ))}

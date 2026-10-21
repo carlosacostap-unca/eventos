@@ -6,11 +6,13 @@ import { updateRegistrationAction } from "@/app/actions/registrations";
 import { initialActionState } from "@/app/actions/state";
 import { FieldError, FormMessage } from "@/components/form-feedback";
 import type { RegistrationInput, RegistrationRecord } from "@/lib/domain/models";
+import type { ExtraField } from "@/lib/domain/modalities";
+import { ConfiguredFields } from "./configured-fields";
 
-export function RegistrationEditForm({ registration }: { registration: RegistrationRecord }) {
+export function RegistrationEditForm({ registration, fields = [] }: { registration: RegistrationRecord; fields?: ExtraField[] }) {
   const [editing, setEditing] = useState(false);
   return editing ? (
-    <EditForm registration={registration} onClose={() => setEditing(false)} />
+    <EditForm registration={registration} fields={fields} onClose={() => setEditing(false)} />
   ) : (
     <button type="button" className="text-button" onClick={() => setEditing(true)}>
       Editar datos
@@ -18,10 +20,12 @@ export function RegistrationEditForm({ registration }: { registration: Registrat
   );
 }
 
-function EditForm({ registration, onClose }: {
+function EditForm({ registration, onClose, fields }: {
+  fields: ExtraField[];
   registration: RegistrationRecord;
   onClose: () => void;
 }) {
+  const [answers, setAnswers] = useState(registration.respuestas ?? {});
   const [values, setValues] = useState<RegistrationInput>({
     apellidos: registration.apellidos,
     nombres: registration.nombres,
@@ -50,6 +54,7 @@ function EditForm({ registration, onClose }: {
           </label>
         ))}
       </div>
+      {fields.length > 0 && <><input name="respuestas" type="hidden" value={JSON.stringify(answers)} /><ConfiguredFields fields={fields} values={answers} onChange={setAnswers} errors={state.fields} /></>}
       <FormMessage message={state.message} success={state.ok} />
       <div className="registration-edit-actions">
         <button className="button button-primary" type="submit" disabled={pending} aria-busy={pending}>

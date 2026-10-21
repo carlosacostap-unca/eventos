@@ -1,4 +1,6 @@
 import Image from "next/image";
+import { randomUUID } from "node:crypto";
+import { publicModalities } from "@/lib/services/modalities";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -47,10 +49,11 @@ export default async function PublicEventPage({
   const { slug } = await params;
   const event = await getEventBySlug(slug);
   if (!event || event.estado === "borrador") notFound();
-  const [count, types, speakers] = await Promise.all([
+  const [count, types, speakers, modes] = await Promise.all([
     countPublicRegistrations(event.id),
     listEventTypes(),
     listSpeakersByEvent(event.id),
+    publicModalities(event),
   ]);
   const availability = getRegistrationAvailability(event, count);
 
@@ -101,8 +104,8 @@ export default async function PublicEventPage({
                 <dd>{isEventFree(event) ? "Gratuita" : "Arancelada"}</dd>
               </div>
               <div>
-                <dt>Certificado de asistencia</dt>
-                <dd>{offersAttendanceCertificate(event) ? "Se entregará" : "No se entregará"}</dd>
+                <dt>Certificados</dt>
+                <dd>{modes.some((m) => m.id !== "legacy") ? modes.map((m) => `${m.nombre}: ${m.entrega ? "sí" : "no"}`).join(" · ") : offersAttendanceCertificate(event) ? "Se entregará" : "No se entregará"}</dd>
               </div>
             </dl>
             {availability === "disponible" && <a className="button button-primary" href="#inscripcion">Reservar mi lugar <span aria-hidden="true">↓</span></a>}
@@ -121,7 +124,7 @@ export default async function PublicEventPage({
       </section>
       <section className="container registration-section" id="inscripcion">
         {availability === "disponible" ? (
-          <RegistrationForm slug={slug} offersCertificate={offersAttendanceCertificate(event)} />
+          <RegistrationForm slug={slug} eventId={event.id} modes={modes} operation={randomUUID()} offersCertificate={offersAttendanceCertificate(event)} />
         ) : (
           <div className="panel closed-panel">
             <p className="eyebrow">Inscripción</p>

@@ -18,6 +18,8 @@ El sistema SHALL publicar una URL única por evento que muestre su información 
 ### Requirement: Formulario de inscripción sin cuenta
 El sistema SHALL permitir registrarse sin crear una cuenta mediante nombres, apellidos, email y número de documento. Todos esos datos MUST ser obligatorios y normalizados antes de guardarse.
 
+El sistema SHALL aplicar además los campos y grupos configurados para la modalidad elegida y confirmar las altas grupales de forma transaccional, conservando la versión del formulario.
+
 #### Scenario: Inscripción válida
 - **WHEN** una persona envía datos válidos a un evento con inscripción disponible
 - **THEN** el sistema registra la inscripción y muestra una confirmación inequívoca
@@ -29,6 +31,8 @@ El sistema SHALL permitir registrarse sin crear una cuenta mediante nombres, ape
 ### Requirement: Prevención de duplicados por evento
 El sistema SHALL admitir un mismo documento una sola vez dentro de cada evento, con independencia de diferencias de formato o espacios.
 
+La unicidad MUST abarcar todas las modalidades: una persona no puede ser Asistente y Expositor simultáneamente. Un integrante compatible de varias exposiciones SHALL reutilizar su identidad mediante vínculos sin crear otra inscripción personal.
+
 #### Scenario: Documento ya inscripto
 - **WHEN** se intenta registrar en un evento un documento normalizado que ya posee una inscripción
 - **THEN** el sistema no crea un duplicado e informa que la persona ya está registrada
@@ -38,7 +42,7 @@ El sistema SHALL admitir un mismo documento una sola vez dentro de cada evento, 
 - **THEN** el sistema permite la nueva inscripción si cumple las demás condiciones
 
 ### Requirement: Reserva consistente de cupo
-El sistema MUST garantizar que las inscripciones públicas confirmadas nunca superen el cupo configurado, incluso cuando varias solicitudes se procesan simultáneamente.
+El sistema MUST garantizar que las solicitudes principales públicas confirmadas nunca superen el cupo común configurado, incluso cuando varias modalidades se procesan simultáneamente. Cada asistente o alumno expositor reserva un lugar; los directores y codirectores vinculados MUST distinguirse y no consumir reservas adicionales.
 
 #### Scenario: Último lugar solicitado simultáneamente
 - **WHEN** dos personas intentan ocupar al mismo tiempo el último lugar disponible

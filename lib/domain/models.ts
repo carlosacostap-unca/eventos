@@ -121,6 +121,10 @@ export type EventRecord = {
 };
 
 export type RegistrationRecord = {
+  modalidad?: string;
+  tipo_alta?: "principal" | "vinculada";
+  version_formulario?: string;
+  respuestas?: import("./modalities").Answers;
   id: string;
   evento: string;
   nombres: string;
@@ -138,6 +142,11 @@ export type RegistrationRecord = {
 };
 
 export type CertificateRecord = {
+  modalidad?: string;
+  alcance?: "individual" | "grupo";
+  exposicion?: string;
+  huella?: string;
+  version_formulario?: string;
   id: string;
   evento: string;
   inscripcion: string;

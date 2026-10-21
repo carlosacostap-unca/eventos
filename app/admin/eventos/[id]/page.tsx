@@ -9,6 +9,7 @@ import { isEventFree, offersAttendanceCertificate } from "@/lib/domain/event-det
 import { eventTypeName } from "@/lib/domain/event-types";
 import { listEventTypes } from "@/lib/services/event-types";
 import { getEventById } from "@/lib/services/events";
+import { listModalities } from "@/lib/services/modalities";
 import {
   countPublicRegistrations,
   listRegistrations,
@@ -24,7 +25,8 @@ export default async function EventDashboardPage({
   if (!event) notFound();
   const [registrations, types] = await Promise.all([listRegistrations(id), listEventTypes()]);
   const metrics = calculateEventMetrics(registrations);
-  const certificateEnabled = offersAttendanceCertificate(event);
+  const modes = await listModalities(id);
+  const certificateEnabled = modes.length ? modes.some((m) => m.entrega) : offersAttendanceCertificate(event);
   const availability = getRegistrationAvailability(
     event,
     await countPublicRegistrations(id),

@@ -1463,6 +1463,13 @@ td small {
   }
 }
 
+.modality-editor { padding-top: 1.5rem; }
+.modality-editor fieldset, .member-section fieldset { border: 1px solid var(--line); border-radius: 12px; padding: 1.2rem; min-width: 0; }
+.modality-editor legend, .member-section legend { font-weight: 650; padding-inline: .4rem; }
+.panel > summary, .form-stack details > summary { cursor: pointer; font-weight: 650; }
+.filter-bar { grid-template-columns: repeat(auto-fit, minmax(145px, 1fr)); align-items: end; }
+.filter-bar .field { min-width: 0; }
+
 .confirmation-check {
   display: flex;
   gap: 0.65rem;

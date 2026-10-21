@@ -6,8 +6,15 @@ import { registerAction } from "@/app/actions/registrations";
 import { initialActionState } from "@/app/actions/state";
 import { FieldError, FormMessage } from "@/components/form-feedback";
 import { SubmitButton } from "@/components/submit-button";
+import { ModalRegistrationForm } from "./modal-registration-form";
+import type { PublicModality } from "@/lib/domain/modalities";
 
-export function RegistrationForm({
+export function RegistrationForm(props: { slug: string; offersCertificate: boolean; eventId?: string; modes?: PublicModality[]; operation?: string }) {
+  if (props.modes && !props.modes.some((m) => m.id === "legacy")) return <ModalRegistrationForm eventId={props.eventId!} modes={props.modes} operation={props.operation!} />;
+  return <LegacyRegistrationForm slug={props.slug} offersCertificate={props.offersCertificate} />;
+}
+
+function LegacyRegistrationForm({
   slug,
   offersCertificate,
 }: {

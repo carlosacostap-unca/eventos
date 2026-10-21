@@ -1,5 +1,6 @@
 import type { CollectionModel } from "pocketbase";
 import { MATERIAL_MAX_BYTES } from "../domain/materials";
+import { modalityCollections, registrationModalityFields, certificateModalityFields } from "./modalities-schema";
 
 export const COLLECTION_IDS = {
   administradores: "evadmin00000001",
@@ -291,6 +292,7 @@ export const pocketBaseSchema = [
         maxSelect: 1,
         maxSize: 10485760,
         mimeTypes: ["application/pdf"],
+        protected: true,
       },
       { name: "generado_en", type: "date", required: true },
     ],
@@ -361,11 +363,15 @@ export const pocketBaseSchema = [
       "CREATE UNIQUE INDEX idx_limites_consulta_clave ON limites_consulta_certificados (clave)",
     ],
   },
+  ...modalityCollections,
 ].map((collection) => ({
   ...collection,
   fields: [
     ...collection.fields,
+    ...(collection.name === "inscripciones" ? registrationModalityFields : []),
+    ...(collection.name === "certificados" ? certificateModalityFields : []),
     { name: "created", type: "autodate", onCreate: true, onUpdate: false },
     { name: "updated", type: "autodate", onCreate: true, onUpdate: true },
   ],
+  indexes: [...("indexes" in collection ? collection.indexes ?? [] : []), ...(collection.name === "certificados" ? ["CREATE UNIQUE INDEX idx_certificado_exposicion ON certificados (exposicion) WHERE exposicion != ''"] : [])],
 })) as unknown as CollectionModel[];

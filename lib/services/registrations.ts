@@ -14,6 +14,11 @@ import {
 import { createServicePocketBase } from "@/lib/pocketbase/client";
 import { audit } from "@/lib/services/audit";
 import { getEventById } from "@/lib/services/events";
+import { listModalities, modalityVersion } from "./modalities";
+import { registerWithModality, eventExhibitions } from "./modal-registration";
+import { withOperationLock } from "./operation-lock";
+import { parseAnswers, type Answers } from "@/lib/domain/modalities";
+import { randomUUID } from "node:crypto";
 
 function toRegistration(record: RecordModel): RegistrationRecord {
   return record as unknown as RegistrationRecord;
@@ -22,7 +27,7 @@ function toRegistration(record: RecordModel): RegistrationRecord {
 export async function countPublicRegistrations(eventId: string): Promise<number> {
   const pb = await createServicePocketBase();
   const result = await pb.collection("inscripciones").getList(1, 1, {
-    filter: pb.filter('evento = {:eventId} && origen = "publica"', { eventId }),
+    filter: pb.filter('evento = {:eventId} && origen = "publica" && numero_cupo_publico > 0', { eventId }),
     fields: "id",
   });
   return result.totalItems;
@@ -63,6 +68,12 @@ export async function registerPublic(
   event: EventRecord,
   input: RegistrationInput,
 ): Promise<RegistrationRecord> {
+  const modes = await listModalities(event.id);
+  if (modes.length) {
+    const mode = modes.find((m) => m.codigo === "asistente" && m.habilitada);
+    if (!mode || modes.length > 1) throw new DomainError("INVALID", "Elegí una modalidad en el formulario del evento.");
+    return registerWithModality(event.id, { modalidad: mode.id, version: mode.version_publicada, operacion: randomUUID(), principal: { ...input, respuestas: {} }, integrantes: [] });
+  }
   const normalizedDocument = normalizeDocument(input.documento);
   if (await existingByDocument(event.id, normalizedDocument)) {
     throw new DomainError("DUPLICATE", "Ya existe una inscripción con ese documento.");
@@ -111,6 +122,8 @@ export async function registerPublic(
 }
 
 export type RegistrationFilters = {
+  modality?: string;
+  role?: string;
   query?: string;
   source?: "publica" | "presencial";
   attendance?: "acreditado" | "ausente";
@@ -129,6 +142,7 @@ function registrationFilter(
   filters: RegistrationFilters,
 ) {
   const clauses = [pb.filter("evento = {:eventId}", { eventId })];
+  if (filters.modality) clauses.push(pb.filter("modalidad = {:modality}", { modality: filters.modality }));
   if (filters.query) {
     clauses.push(
       pb.filter(
@@ -156,6 +170,10 @@ export async function listRegistrationsPage(
   perPage = 50,
 ): Promise<RegistrationPage> {
   const pb = await createServicePocketBase();
+  if (filters.role) {
+    const items = await listRegistrations(eventId, filters);
+    return { items: items.slice((page - 1) * perPage, page * perPage), page, totalPages: Math.ceil(items.length / perPage), totalItems: items.length };
+  }
   const result = await pb.collection("inscripciones").getList(page, perPage, {
     filter: registrationFilter(pb, eventId, filters),
     sort: "apellidos,nombres",
@@ -177,18 +195,34 @@ export async function listRegistrations(
     filter: registrationFilter(pb, eventId, filters),
     sort: "apellidos,nombres",
   });
-  return records.map(toRegistration);
+  let items = records.map(toRegistration);
+  if (filters.role) {
+    const { members } = await eventExhibitions(eventId);
+    const ids = new Set(members.filter((m) => m.funcion === filters.role).map((m) => m.participante));
+    items = items.filter((p) => ids.has(p.id));
+  }
+  return items;
 }
 
 export async function setAttendance(
   registrationId: string,
   accredited: boolean,
   adminId: string,
+  expectedEventId?: string,
 ): Promise<RegistrationRecord> {
   const pb = await createServicePocketBase();
   const current = toRegistration(
     await pb.collection("inscripciones").getOne(registrationId),
   );
+  if (expectedEventId && current.evento !== expectedEventId) throw new DomainError("NOT_FOUND", "La inscripción no pertenece a este evento.");
+  if (current.modalidad) return withOperationLock(pb, "evento:" + current.evento, async (assertOwned) => {
+    const fresh = toRegistration(await pb.collection("inscripciones").getOne(registrationId));
+    if (fresh.acreditado === accredited) return fresh;
+    await assertOwned();
+    const updated = toRegistration(await pb.collection("inscripciones").update(registrationId, { acreditado: accredited, acreditado_en: accredited ? new Date().toISOString() : "", acreditado_por: accredited ? adminId : "" }));
+    await audit({ adminId, action: accredited ? "asistencia.acreditada" : "asistencia.revocada", entity: "inscripcion", entityId: registrationId });
+    return updated;
+  });
   if (current.acreditado === accredited) return current;
 
   const updated = toRegistration(
@@ -210,7 +244,7 @@ export async function setAttendance(
 export async function updateRegistration(
   eventId: string,
   registrationId: string,
-  input: RegistrationInput,
+  input: RegistrationInput & { respuestas?: Answers },
   adminId: string,
 ): Promise<RegistrationRecord> {
   const parsed = registrationInputSchema.safeParse(input);
@@ -221,6 +255,29 @@ export async function updateRegistration(
   if (current.evento !== eventId) {
     throw new DomainError("NOT_FOUND", "La inscripción no pertenece a este evento.");
   }
+  if (current.modalidad) return withOperationLock(pb, "evento:" + eventId, async (assertOwned) => {
+    const duplicates = await collection.getList(1, 1, { filter: pb.filter("evento = {:eventId} && documento_normalizado = {:doc} && id != {:id}", { eventId, doc: normalizeDocument(parsed.data.documento), id: registrationId }), fields: "id" });
+    if (duplicates.totalItems) throw new DomainError("DUPLICATE", "Ya existe otra inscripción con ese DNI en el evento.");
+    const extra = input.respuestas && current.version_formulario ? { respuestas: parseAnswers((await modalityVersion(current.version_formulario)).esquema.fields, input.respuestas) } : {};
+    await assertOwned();
+    const data = { ...parsed.data, ...extra, documento_normalizado: normalizeDocument(parsed.data.documento) };
+    let updated: RegistrationRecord;
+    if (extra.respuestas) {
+      const groups = await pb.collection("exposiciones").getFullList({ filter: pb.filter("evento = {:eventId} && responsable = {:id}", { eventId, id: registrationId }) });
+      const batch = pb.createBatch();
+      batch.collection("inscripciones").update(registrationId, data);
+      for (const group of groups) {
+        batch.collection("exposiciones").update(group.id, { respuestas: extra.respuestas });
+        const links = await pb.collection("integrantes_exposicion").getFullList({ filter: pb.filter('exposicion = {:group} && participante = {:id} && funcion = "principal"', { group: group.id, id: registrationId }) });
+        for (const link of links) batch.collection("integrantes_exposicion").update(link.id, { respuestas: extra.respuestas });
+      }
+      await assertOwned();
+      await batch.send();
+      updated = toRegistration(await collection.getOne(registrationId));
+    } else updated = toRegistration(await collection.update(registrationId, data));
+    await audit({ adminId, action: "inscripcion.editada", entity: "inscripcion", entityId: registrationId, data: { evento: eventId, campos: [...Object.keys(parsed.data).filter((key) => current[key as keyof RegistrationInput] !== parsed.data[key as keyof RegistrationInput]), ...Object.keys(extra)] } });
+    return updated;
+  });
   const data = {
     ...parsed.data,
     documento_normalizado: normalizeDocument(parsed.data.documento),
@@ -265,6 +322,12 @@ export async function createWalkIn(
 ): Promise<RegistrationRecord> {
   const event = await getEventById(eventId);
   if (!event) throw new DomainError("NOT_FOUND", "El evento no existe.");
+  const modes = await listModalities(eventId);
+  if (modes.length) {
+    const mode = modes.find((m) => m.codigo === "asistente" && m.habilitada);
+    if (!mode || modes.length > 1) throw new DomainError("INVALID", "Elegí la modalidad de participación antes del alta.");
+    return registerWithModality(eventId, { modalidad: mode.id, version: mode.version_publicada, operacion: randomUUID(), principal: { ...input, respuestas: {} }, integrantes: [] }, { presencial: true, allowOverCapacity, adminId });
+  }
   const normalizedDocument = normalizeDocument(input.documento);
   const duplicate = await existingByDocument(eventId, normalizedDocument);
   if (duplicate) throw new DomainError("DUPLICATE", "La persona ya figura en el evento.");

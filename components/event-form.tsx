@@ -14,7 +14,7 @@ import type { EventRecord, EventTypeRecord } from "@/lib/domain/models";
 import Link from "next/link";
 
 
-export function EventForm({ event, types }: { event?: EventRecord; types: EventTypeRecord[] }) {
+export function EventForm({ event, types, certificatesConfigured = false }: { event?: EventRecord; types: EventTypeRecord[]; certificatesConfigured?: boolean }) {
   const action = event ? updateEventAction.bind(null, event.id) : createEventAction;
   const [state, formAction] = useActionState(action, initialActionState);
 
@@ -101,14 +101,14 @@ export function EventForm({ event, types }: { event?: EventRecord; types: EventT
           </select>
           <FieldError errors={state.fields?.costo} />
         </label>
-        <label className="field">
-          <span>Certificado de asistencia</span>
+        {certificatesConfigured ? <div className="field"><span>Certificados por modalidad</span><input type="hidden" name="certificadoAsistencia" value={event?.certificado_asistencia || "si"} /><Link className="text-link" href={`/admin/eventos/${event!.id}/modalidades`}>Configurar entrega, plantilla y textos</Link></div> : <label className="field">
+          <span>Certificado de asistencia inicial</span>
           <select name="certificadoAsistencia" defaultValue={event?.certificado_asistencia || "si"}>
             <option value="si">Sí, se entregará</option>
             <option value="no">No se entregará</option>
           </select>
           <FieldError errors={state.fields?.certificadoAsistencia} />
-        </label>
+        </label>}
         <label className="field">
           <span>Estado</span>
           <select name="estado" defaultValue={event?.estado ?? "borrador"}>

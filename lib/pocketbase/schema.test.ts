@@ -17,6 +17,7 @@ describe("esquema PocketBase", () => {
       "certificados",
       "envios_certificados",
       "limites_consulta_certificados",
+      "modalidades_inscripcion", "versiones_modalidad", "exposiciones", "integrantes_exposicion", "operaciones_inscripcion", "destinatarios_certificado", "bloqueos_operacion",
     ]);
     const events = pocketBaseSchema.find((collection) => collection.name === "eventos");
     expect(events?.fields.some((field) => field.name === "tipo_evento")).toBe(true);

@@ -10,6 +10,7 @@ import { offersAttendanceCertificate } from "@/lib/domain/event-details";
 import { getEventById } from "@/lib/services/events";
 import { listCertificateRows } from "@/lib/services/certificates";
 import { listRegistrations } from "@/lib/services/registrations";
+import { listModalities } from "@/lib/services/modalities";
 
 export default async function CertificatesPage({
   params,
@@ -29,13 +30,15 @@ export default async function CertificatesPage({
   const notice = await searchParams;
   const event = await getEventById(id);
   if (!event) notFound();
-  const enabled = offersAttendanceCertificate(event);
+  const modes = await listModalities(id);
+  const enabled = modes.length ? modes.some((m) => m.entrega) : offersAttendanceCertificate(event);
 
   const [rows, registrations] = await Promise.all([
     listCertificateRows(id),
     listRegistrations(id),
   ]);
   const accredited = registrations.filter((item) => item.acreditado).length;
+  const pending = registrations.filter((person) => person.tipo_alta !== "vinculada" && !rows.some((row) => row.registration.id === person.id) && (!person.modalidad ? enabled : modes.some((mode) => mode.id === person.modalidad && mode.entrega)));
 
   return (
     <main className="admin-main">
@@ -48,7 +51,7 @@ export default async function CertificatesPage({
           <h1>Certificados</h1>
           <p>{event.titulo}</p>
         </div>
-        {enabled && (
+        {enabled && !modes.length && (
           <a
           className="button button-secondary"
           href={"/api/admin/eventos/" + id + "/certificados/preview"}
@@ -71,7 +74,7 @@ export default async function CertificatesPage({
         <div className="notice notice-success" role="status">
           Lote procesado: {notice.created || 0} certificados nuevos,{" "}
           {notice.regenerated || 0} reemplazados y {notice.reused || 0} reutilizados
-          para {notice.eligible} asistentes.
+          para {notice.eligible} inscripciones o exposiciones elegibles.
         </div>
       ) : null}
       {notice.ok === "plantilla" ? (
@@ -87,7 +90,8 @@ export default async function CertificatesPage({
         </div>
       ) : null}
 
-      {enabled && (
+      {enabled && modes.length > 0 && <section className="panel form-stack"><h2>Certificados por modalidad</h2><p>Los certificados individuales requieren acreditación propia. Los compartidos requieren la acreditación del alumno responsable; incluyen a todos sus integrantes.</p><Link className="text-link" href={`/admin/eventos/${id}/modalidades`}>Configurar plantillas, textos y reglas por modalidad</Link><div className="actions-row">{modes.filter((m) => m.entrega).map((m) => <a className="button button-secondary" key={m.id} href={`/api/admin/eventos/${id}/certificados/preview?modalidad=${m.id}`} target="_blank" rel="noreferrer">Vista previa: {m.nombre}</a>)}</div><div className="actions-row"><form action={generateCertificatesAction.bind(null, id)}><SubmitButton pendingLabel="Generando…">Generar certificados</SubmitButton></form><form action={regenerateCertificatesAction.bind(null, id)}><SubmitButton className="button button-secondary" pendingLabel="Regenerando…">Regenerar certificados</SubmitButton></form></div><p className="muted">Generar reutiliza los archivos existentes. Regenerar reemplaza los PDFs con la configuración y los integrantes actuales.</p></section>}
+      {enabled && !modes.length && (
         <>
           <section className="certificate-setup">
             <article className="panel">
@@ -152,6 +156,7 @@ export default async function CertificatesPage({
         </>
       )}
 
+      {pending.length > 0 && <section className="panel"><h2>Pendientes de emisión</h2><ul>{pending.map((person) => <li key={person.id}><strong>{person.apellidos}, {person.nombres}</strong> · {modes.find((mode) => mode.id === person.modalidad)?.nombre ?? "Asistente"} · {person.acreditado ? "Listo para generar" : "Pendiente de acreditación de la persona principal"}</li>)}</ul></section>}
       <section className="panel">
         <div className="section-heading compact">
           <div>
@@ -173,13 +178,15 @@ export default async function CertificatesPage({
               </tr>
             </thead>
             <tbody>
-              {rows.map(({ registration, certificate }) => (
+              {rows.map(({ registration, certificate, stale, eligible, members }) => (
                 <tr key={certificate.id}>
                   <td>
                     <strong>
                       {registration.apellidos}, {registration.nombres}
                     </strong>
                     <small>{registration.email}</small>
+                    {members?.map((member) => <small key={member}>{member}</small>)}
+                    <small>{certificate.alcance === "grupo" ? "PDF compartido de exposición" : "Certificado individual"}{stale ? " · Pendiente de regeneración" : eligible === false ? " · No habilitado" : ""}</small>
                   </td>
                   <td>{new Intl.DateTimeFormat("es-AR", {
                     dateStyle: "short",
@@ -187,12 +194,12 @@ export default async function CertificatesPage({
                   }).format(new Date(certificate.generado_en))}</td>
                   <td>
                     <div className="row-actions">
-                      <a
+                      {!stale && eligible !== false && <a
                         className="text-link"
                         href={"/api/admin/certificados/" + certificate.id}
                       >
                         Descargar
-                      </a>
+                      </a>}
                     </div>
                   </td>
                 </tr>

@@ -6,6 +6,7 @@ import type { ActionState } from "@/app/actions/state";
 import { requireAdmin } from "@/lib/auth/session";
 import { DomainError } from "@/lib/domain/errors";
 import { registrationInputSchema } from "@/lib/domain/models";
+import { FormValidationError } from "@/lib/domain/modalities";
 import { getEventBySlug } from "@/lib/services/events";
 import {
   createWalkIn,
@@ -33,8 +34,9 @@ export async function updateRegistrationAction(
   const parsed = registrationInputSchema.safeParse(registrationFromForm(formData));
   if (!parsed.success) return { fields: parsed.error.flatten().fieldErrors };
   try {
-    await updateRegistration(eventId, registrationId, parsed.data, admin.adminId);
+    await updateRegistration(eventId, registrationId, { ...parsed.data, ...(formData.has("respuestas") ? { respuestas: JSON.parse(String(formData.get("respuestas"))) } : {}) }, admin.adminId);
   } catch (error) {
+    if (error instanceof FormValidationError) return { fields: error.fields, message: error.message };
     if (error instanceof DomainError) return { message: error.message };
     return { message: "No se pudieron guardar los cambios. Intentá nuevamente." };
   }
@@ -75,7 +77,7 @@ export async function toggleAttendanceAction(formData: FormData) {
   const eventId = String(formData.get("eventId") || "");
   const accredited = formData.get("accredited") === "true";
   if (!registrationId || !eventId) return;
-  await setAttendance(registrationId, accredited, admin.adminId);
+  await setAttendance(registrationId, accredited, admin.adminId, eventId);
   revalidatePath("/admin/eventos/" + eventId);
   revalidatePath("/admin/eventos/" + eventId + "/acreditacion");
   revalidatePath("/admin/eventos/" + eventId + "/reportes");

@@ -34,11 +34,11 @@ export function CertificateLookupForm() {
           Buscar certificados y materiales
         </SubmitButton>
         <p className="privacy-note">
-          La consulta es temporal y solo habilita recursos de los eventos donde acreditaste tu asistencia.
+          La consulta es temporal y habilita únicamente tus recursos individuales o los certificados compartidos de tus exposiciones.
         </p>
       </form>
 
-      <aside className="panel certificate-guide"><p className="eyebrow">Después de tu encuentro</p><h2>Recursos de tu participación</h2><p className="muted">Desde tu acreditación podés acceder a los materiales que comparta la organización. El certificado aparecerá cuando sea emitido.</p><ol><li>Ingresá el documento de tu inscripción.</li><li>Consultá tus eventos acreditados.</li><li>Descargá los materiales y certificados disponibles.</li></ol><p className="privacy-note">Si tu evento aún no aparece, consultá con la organización.</p></aside>
+      <aside className="panel certificate-guide"><p className="eyebrow">Después de tu encuentro</p><h2>Recursos de tu participación</h2><p className="muted">Tu acreditación personal habilita materiales y certificados individuales. Si integrás una exposición, su certificado compartido se habilita cuando se acredita el alumno responsable, aunque no hayas concurrido.</p><ol><li>Ingresá el documento de tu inscripción.</li><li>Consultá tus eventos y exposiciones habilitadas.</li><li>Descargá los recursos disponibles una vez publicados.</li></ol><p className="privacy-note">Si tu evento aún no aparece, consultá con la organización.</p></aside>
     </div>
   );
 }

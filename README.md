@@ -24,6 +24,8 @@ El aprovisionador usa esas credenciales de superusuario para crear el esquema. T
 
 ## Aprovisionamiento de PocketBase
 
+Para modalidades y formularios configurables, consultar [la guía de configuración y migración](docs/modalidades-y-certificados.md). Se requiere PocketBase con batches transaccionales habilitados (al menos 100 solicitudes por batch). En una base existente, `npm run schema:modalities` permite revisar el plan y `npm run schema:modalities -- --apply` realiza la migración aditiva sin modificar credenciales; `npm run schema:modalities-check -- --probe` verifica rollback antes de habilitar las altas configuradas.
+
 El comando siguiente importa las colecciones, campos, reglas e índices y sincroniza la cuenta técnica y el administrador del panel con el email y la contraseña indicados:
 
     npm run schema:apply

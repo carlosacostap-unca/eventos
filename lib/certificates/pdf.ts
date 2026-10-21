@@ -299,6 +299,7 @@ async function drawSignatures(
 }
 
 export async function createCertificatePdf(input: {
+  members?: Array<{ nombres: string; apellidos: string; documento: string; role: string }>;
   event: EventRecord;
   eventTypeName?: string;
   registration: Pick<
@@ -327,6 +328,7 @@ export async function createCertificatePdf(input: {
   const serifBoldItalic = await document.embedFont(StandardFonts.TimesRomanBoldItalic);
 
   const texts = resolveCertificateTexts(input.event.textos_certificado);
+  if (input.members?.length && input.event.textos_certificado?.participation === undefined) texts.participation = "han participado de la actividad de tipo {tipoEvento} de {horas} horas:";
   const participant = [input.registration.apellidos, input.registration.nombres]
     .map((value) => value.trim())
     .filter(Boolean)
@@ -338,6 +340,8 @@ export async function createCertificatePdf(input: {
     timeZone: ARGENTINA_TIME_ZONE,
   }).format(new Date(input.event.inicio));
   const variables: CertificateTextVariables = {
+    responsable: participant,
+    integrantes: input.members?.map((m) => `${m.role}: ${m.apellidos}, ${m.nombres} - DNI ${m.documento}`).join("; ") ?? participant,
     participante: participant,
     documento: input.registration.documento?.trim() ?? "",
     evento: input.event.titulo.trim(),
@@ -373,6 +377,61 @@ export async function createCertificatePdf(input: {
   const scaleX = width / PAGE_WIDTH;
   const scaleY = height / PAGE_HEIGHT;
   const textScale = Math.min(scaleX, scaleY);
+  if (input.members?.length) {
+    // Bloque grupal independiente: el número de integrantes no pisa textos ni firmas.
+    const content = [
+      renderCertificateText(texts.introduction, variables),
+      ...input.members.map((m) => `${m.role}: ${m.apellidos}, ${m.nombres} - DNI ${m.documento}`),
+      renderCertificateText(texts.participation, variables),
+      renderCertificateText(texts.event, variables),
+      renderCertificateText(texts.locationAndDate, variables),
+    ].filter(Boolean);
+    const top = height * 0.71;
+    const bottom = height * 0.37;
+    let fontSize = 13 * textScale;
+    let rows: string[][] = [];
+    while (fontSize >= 9 * textScale) {
+      rows = content.map((text) => wrapText(text, serif, fontSize, width * 0.74));
+      const needed = rows.reduce((n, lines) => n + lines.length * fontSize * 1.2 + fontSize * 0.5, 0);
+      if (needed <= top - bottom) break;
+      fontSize -= 0.5 * textScale;
+    }
+    if (fontSize < 9 * textScale) {
+      fontSize = 9 * textScale;
+      rows = content.map((text) => wrapText(text, serif, fontSize, width * 0.74));
+    }
+    let y = top;
+    const finishPage = async () => {
+      if (!input.template) await drawSignatures(document, page, serif, texts, variables);
+      page.drawText("ID " + input.event.id + "-" + input.registration.id, { x: width * 0.085, y: height * 0.105, size: 6.5 * textScale, font: sans });
+    };
+    const nextPage = async () => {
+      await finishPage();
+      if (input.template?.mimeType.includes("pdf")) {
+        const source = await PDFDocument.load(input.template.bytes);
+        const [copied] = await document.copyPages(source, [0]);
+        page = document.addPage(copied);
+      } else {
+        page = document.addPage([width, height]);
+        if (input.template) {
+          const background = input.template.mimeType.includes("png") ? await document.embedPng(input.template.bytes) : await document.embedJpg(input.template.bytes);
+          page.drawImage(background, { x: 0, y: 0, width, height });
+        } else await drawDefaultBackground({ document, page, sans, sansBold, institutionPrimary: renderCertificateText(texts.institutionPrimary, variables), institutionSecondary: renderCertificateText(texts.institutionSecondary, variables) });
+      }
+      y = top;
+    };
+    for (const lines of rows) {
+      if (y !== top && y - lines.length * fontSize * 1.2 < bottom) await nextPage();
+      for (const line of lines) {
+        if (y < bottom) await nextPage();
+        page.drawText(line, { x: centeredX(line, width, serif, fontSize), y, font: serif, size: fontSize, color: rgb(0.06, 0.06, 0.06) });
+        y -= fontSize * 1.2;
+      }
+      y -= fontSize * 0.5;
+    }
+    await finishPage();
+    return document.save();
+  }
   const introductionBlock = fitTextBlock({
     text: renderCertificateText(texts.introduction, variables),
     font: serif,

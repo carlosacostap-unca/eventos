@@ -5,7 +5,7 @@ Facilitar la operación del día del evento mediante búsqueda rápida, registro
 ## ADDED Requirements
 
 ### Requirement: Consulta operativa de inscriptos
-El sistema SHALL permitir a un administrador buscar participantes de un evento por nombre, apellido, email o documento y ver su estado de inscripción y asistencia.
+El sistema SHALL permitir a un administrador buscar participantes de un evento por nombre, apellido, email o documento y ver su modalidad, funciones, exposiciones vinculadas y estado de acreditación, con una sola fila por persona.
 
 #### Scenario: Búsqueda de una persona
 - **WHEN** un administrador introduce un dato parcial o completo de una persona
@@ -16,7 +16,7 @@ El sistema SHALL permitir marcar la asistencia de una persona inscripta y SHALL 
 
 #### Scenario: Primera acreditación
 - **WHEN** un administrador acredita a una persona inscripta
-- **THEN** el sistema la marca como asistente y registra fecha y responsable
+- **THEN** el sistema la marca como acreditada, conserva su modalidad y registra fecha y responsable sin acreditar a otras personas vinculadas
 
 #### Scenario: Acreditación repetida
 - **WHEN** se intenta acreditar nuevamente a una persona ya acreditada
@@ -24,6 +24,8 @@ El sistema SHALL permitir marcar la asistencia de una persona inscripta y SHALL 
 
 ### Requirement: Alta presencial con excepción de cupo
 El sistema SHALL permitir que un administrador registre y acredite a una persona presencial aunque el cupo público esté completo. El sistema SHALL advertir cuando el alta supera el cupo y SHALL identificar su origen como presencial.
+
+El alta MUST validar los campos y grupos de la modalidad seleccionada y acreditar únicamente a la persona atendida. Un director o codirector ya incorporado como Expositor MUST acreditarse sobre su registro existente sin crearlo como Asistente.
 
 #### Scenario: Alta presencial con evento completo
 - **WHEN** un administrador confirma el alta de una persona nueva en un evento sin cupo público disponible

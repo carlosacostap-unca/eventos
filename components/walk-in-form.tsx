@@ -6,8 +6,14 @@ import { createWalkInAction } from "@/app/actions/registrations";
 import { initialActionState } from "@/app/actions/state";
 import { FieldError, FormMessage } from "@/components/form-feedback";
 import { SubmitButton } from "@/components/submit-button";
+import { ModalRegistrationForm } from "./modal-registration-form";
+import type { PublicModality } from "@/lib/domain/modalities";
 
-export function WalkInForm({ eventId, isFull }: { eventId: string; isFull: boolean }) {
+export function WalkInForm(props: { eventId: string; isFull: boolean; modes?: PublicModality[]; operation?: string }) {
+  if (props.modes && !props.modes.some((m) => m.id === "legacy")) return <ModalRegistrationForm {...props} modes={props.modes} operation={props.operation!} presencial />;
+  return <LegacyWalkInForm eventId={props.eventId} isFull={props.isFull} />;
+}
+function LegacyWalkInForm({ eventId, isFull }: { eventId: string; isFull: boolean }) {
   const [state, action] = useActionState(
     createWalkInAction.bind(null, eventId),
     initialActionState,

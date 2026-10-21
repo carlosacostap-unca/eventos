@@ -30,7 +30,7 @@ El sistema SHALL permitir a un administrador crear y editar eventos con título,
 El sistema SHALL aceptar inscripciones públicas únicamente cuando el administrador las haya habilitado, el evento no haya finalizado y exista cupo disponible. El sistema SHALL considerar cerrado el formulario al alcanzar el cupo.
 
 #### Scenario: Cupo completo
-- **WHEN** la cantidad de inscripciones públicas alcanza el cupo máximo del evento
+- **WHEN** la cantidad de solicitudes principales públicas entre todas las modalidades alcanza el cupo máximo del evento
 - **THEN** el sistema deja de aceptar nuevas inscripciones públicas y muestra que el cupo está completo
 
 #### Scenario: Cierre anticipado
