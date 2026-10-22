@@ -1,6 +1,6 @@
+import { requireEventAccess } from "@/lib/auth/event-access";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { requireAdmin } from "@/lib/auth/session";
 import { EventAdminNav } from "@/components/event-admin-nav";
 import { MaterialUploadForm, MaterialDeleteForm } from "@/components/material-forms";
 import { materialSize } from "@/lib/domain/materials";
@@ -8,8 +8,8 @@ import { getEventById } from "@/lib/services/events";
 import { listMaterials } from "@/lib/services/materials";
 
 export default async function MaterialsPage({ params }: { params: Promise<{ id: string }> }) {
-  await requireAdmin();
   const { id } = await params;
+  await requireEventAccess(id);
   const event = await getEventById(id);
   if (!event) notFound();
   const materials = await listMaterials(id);

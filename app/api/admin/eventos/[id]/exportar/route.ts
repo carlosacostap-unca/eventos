@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 
-import { getAuthenticatedAdmin } from "@/lib/auth/session";
+import { getEventAccess } from "@/lib/auth/event-access";
 import { participantCsv } from "@/lib/services/participant-reports";
 import { audit } from "@/lib/services/audit";
 import { getEventById } from "@/lib/services/events";
@@ -15,9 +15,9 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const admin = await getAuthenticatedAdmin();
-  if (!admin) return new Response("No autorizado", { status: 401 });
   const { id } = await params;
+  const admin = await getEventAccess(id);
+  if (!admin) return new Response("No autorizado", { status: 401 });
   const event = await getEventById(id);
   if (!event) return new Response("Evento no encontrado", { status: 404 });
 

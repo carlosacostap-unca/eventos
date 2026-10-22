@@ -1,3 +1,4 @@
+import { requireEventAccess } from "@/lib/auth/event-access";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -21,6 +22,7 @@ export default async function EventDashboardPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  await requireEventAccess(id);
   const event = await getEventById(id);
   if (!event) notFound();
   const [registrations, types] = await Promise.all([listRegistrations(id), listEventTypes()]);

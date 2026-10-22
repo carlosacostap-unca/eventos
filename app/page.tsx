@@ -12,11 +12,12 @@ import { countPublicRegistrations } from "@/lib/services/registrations";
 export const dynamic = "force-dynamic";
 
 function formatDate(value: string) {
-  return new Intl.DateTimeFormat("es-AR", {
-    dateStyle: "long",
+  const formatted = new Intl.DateTimeFormat("es-AR", {
+    dateStyle: "full",
     timeStyle: "short",
     timeZone: "America/Argentina/Buenos_Aires",
   }).format(new Date(value));
+  return formatted.charAt(0).toUpperCase() + formatted.slice(1).replace(",", "");
 }
 
 const availabilityLabels = {

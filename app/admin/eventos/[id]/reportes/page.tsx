@@ -1,3 +1,4 @@
+import { requireEventAccess } from "@/lib/auth/event-access";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -36,6 +37,7 @@ export default async function ReportsPage({
   searchParams: Promise<{ q?: string; source?: string; attendance?: string; modality?: string; role?: string }>;
 }) {
   const { id } = await params;
+  await requireEventAccess(id);
   const query = await searchParams;
   const event = await getEventById(id);
   if (!event) notFound();

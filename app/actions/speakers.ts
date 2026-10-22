@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import type { ActionState } from "@/app/actions/state";
-import { requireAdmin } from "@/lib/auth/session";
+import { assignedEventRoles, requireEventAccess } from "@/lib/auth/event-access";
 import { speakerInputSchema } from "@/lib/domain/models";
 import { validateSpeakerPhoto } from "@/lib/domain/speakers";
 import { audit } from "@/lib/services/audit";
@@ -17,6 +17,7 @@ import {
   listSpeakerEventIds,
   unlinkSpeakerFromEvent,
   updateSpeaker,
+  updateEventSpeaker,
 } from "@/lib/services/speakers";
 
 function inputFromForm(formData: FormData) {
@@ -38,7 +39,7 @@ export async function createSpeakerAction(
   _state: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
-  const admin = await requireAdmin();
+  const admin = await requireEventAccess(eventId);
   const parsed = speakerInputSchema.safeParse(inputFromForm(formData));
   if (!parsed.success) return { fields: parsed.error.flatten().fieldErrors };
   const validation = await validateSpeakerPhoto(formData.get("foto"), true);
@@ -69,10 +70,15 @@ export async function linkExistingSpeakerAction(
   _state: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
-  const admin = await requireAdmin();
+  const admin = await requireEventAccess(eventId);
   const speakerId = formData.get("disertante");
   if (typeof speakerId !== "string" || !/^[a-z0-9]{15}$/.test(speakerId)) {
     return { fields: { disertante: ["Seleccioná un disertante."] } };
+  }
+  if (admin.role !== "admin") {
+    const roles = await assignedEventRoles(admin);
+    const linkedEvents = await listSpeakerEventIds(speakerId);
+    if (!linkedEvents.some(id => roles.get(id) === "administrador_evento")) return { message: "El disertante no pertenece a un evento que administrás." };
   }
   const [event, speaker] = await Promise.all([
     getEventById(eventId),
@@ -103,7 +109,7 @@ export async function updateSpeakerAction(
   _state: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
-  const admin = await requireAdmin();
+  const admin = await requireEventAccess(eventId);
   const parsed = speakerInputSchema.safeParse(inputFromForm(formData));
   if (!parsed.success) return { fields: parsed.error.flatten().fieldErrors };
   const validation = await validateSpeakerPhoto(formData.get("foto"), false);
@@ -117,19 +123,21 @@ export async function updateSpeakerAction(
   if (!event || !speaker || !linked) {
     return { message: "El disertante no pertenece a este evento." };
   }
+  let updatedSpeakerId = speakerId;
   try {
-    await updateSpeaker(speakerId, parsed.data, validation.photo);
+    if (admin.role === "admin") await updateSpeaker(speakerId, parsed.data, validation.photo);
+    else updatedSpeakerId = await updateEventSpeaker(eventId, speakerId, parsed.data, validation.photo);
     await audit({
       adminId: admin.adminId,
       action: "disertante.actualizado",
       entity: "disertante",
-      entityId: speakerId,
-      data: { evento: eventId, nombre: parsed.data.nombre },
+      entityId: updatedSpeakerId,
+      data: { evento: eventId, nombre: parsed.data.nombre, ...(updatedSpeakerId !== speakerId ? { perfilOrigen: speakerId } : {}) },
     });
   } catch {
     return { message: "No se pudo guardar el disertante. Intentá nuevamente." };
   }
-  const eventIds = await listSpeakerEventIds(speakerId);
+  const eventIds = await listSpeakerEventIds(updatedSpeakerId);
   const events = await Promise.all(eventIds.map(getEventById));
   for (const linkedEvent of events) {
     if (linkedEvent) refreshEvent(linkedEvent.id, linkedEvent.slug);
@@ -138,7 +146,7 @@ export async function updateSpeakerAction(
 }
 
 export async function unlinkSpeakerAction(eventId: string, speakerId: string) {
-  const admin = await requireAdmin();
+  const admin = await requireEventAccess(eventId);
   const [event, speaker] = await Promise.all([
     getEventById(eventId),
     getSpeakerById(speakerId),

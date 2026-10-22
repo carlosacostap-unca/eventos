@@ -13,9 +13,10 @@ function toEvent(record: RecordModel): EventRecord {
   return record as unknown as EventRecord;
 }
 
-export async function listEvents(): Promise<EventRecord[]> {
+export async function listEvents(eventIds?: string[]): Promise<EventRecord[]> {
+  if (eventIds && !eventIds.length) return [];
   const pb = await createServicePocketBase();
-  const records = await pb.collection("eventos").getFullList({ sort: "-inicio" });
+  const records = await pb.collection("eventos").getFullList({ sort: "-inicio", ...(eventIds ? { filter: eventIds.map(id => pb.filter("id = {:id}", { id })).join(" || ") } : {}) });
   return records.map(toEvent);
 }
 

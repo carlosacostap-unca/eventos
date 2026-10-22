@@ -12,6 +12,7 @@
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "schema:apply": "tsx scripts/setup-pocketbase.ts",
+    "schema:event-roles": "tsx scripts/migrate-event-roles.ts",
     "schema:materials": "tsx scripts/setup-materials.ts",
     "schema:modalities": "tsx scripts/migrate-modalities.ts",
     "schema:modalities-check": "tsx scripts/check-modality-batch.ts",

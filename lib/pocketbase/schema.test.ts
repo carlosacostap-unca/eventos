@@ -8,6 +8,7 @@ describe("esquema PocketBase", () => {
       "materiales_evento",
       "administradores",
       "cuentas_servicio",
+      "asignaciones_evento",
       "tipos_evento",
       "eventos",
       "disertantes",
@@ -65,5 +66,15 @@ describe("esquema PocketBase", () => {
     expect(materials?.listRule).toBe(materials?.viewRule);
     expect(materials?.fields.find((field) => field.name === "archivo")).toMatchObject({ protected: true, required: true, maxSize: 25 * 1024 * 1024 });
     expect(materials?.fields.find((field) => field.name === "evento")).toMatchObject({ required: true, cascadeDelete: true });
+  });
+
+  it("separa identidad operativa de permisos por evento y protege la elevación", () => {
+    const users = pocketBaseSchema.find(c => c.name === "administradores")!;
+    expect(users.fields.find(f => f.name === "role")?.values).toEqual(["admin", "personal"]);
+    expect(users.updateRule).toContain('@request.body.role:changed = false');
+    const assignments = pocketBaseSchema.find(c => c.name === "asignaciones_evento")!;
+    expect(assignments.indexes?.join(" ")).toContain("(usuario, evento)");
+    for (const rule of [assignments.listRule, assignments.viewRule, assignments.createRule, assignments.updateRule, assignments.deleteRule]) expect(rule).toBe('@request.auth.role = "service"');
+    expect(assignments.fields.find(f => f.name === "usuario")?.collectionId).toBe(users.id);
   });
 });

@@ -1,6 +1,6 @@
 import { beforeEach, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({ admin: vi.fn(), upload: vi.fn(), delete: vi.fn(), revalidate: vi.fn() }));
-vi.mock("@/lib/auth/session", () => ({ requireAdmin: mocks.admin }));
+vi.mock("@/lib/auth/event-access", () => ({ requireEventAccess: mocks.admin }));
 vi.mock("@/lib/services/materials", () => ({ uploadMaterial: mocks.upload, deleteMaterial: mocks.delete }));
 vi.mock("next/cache", () => ({ revalidatePath: mocks.revalidate }));
 import { uploadMaterialAction, deleteMaterialAction } from "./materials";

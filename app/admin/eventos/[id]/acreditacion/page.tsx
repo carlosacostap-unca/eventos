@@ -1,3 +1,4 @@
+import { requireEventAccess } from "@/lib/auth/event-access";
 import Link from "next/link";
 import { randomUUID } from "node:crypto";
 import { publicModalities, listModalities, modalityVersion } from "@/lib/services/modalities";
@@ -15,6 +16,7 @@ import { getEventById } from "@/lib/services/events";
 import { isCapacityFull } from "@/lib/domain/events";
 import {
   countPublicRegistrations,
+  countOccupiedPlaces,
   listRegistrationsPage,
 } from "@/lib/services/registrations";
 
@@ -37,6 +39,7 @@ export default async function AccreditationPage({
   searchParams: Promise<{ q?: string; page?: string; modality?: string; role?: string; source?: string; attendance?: string }>;
 }) {
   const { id } = await params;
+  const access = await requireEventAccess(id, "accredit");
   const query = await searchParams;
   const q = query.q?.trim() || "";
   const requestedPage = Math.max(1, Number.parseInt(query.page || "1", 10) || 1);
@@ -44,17 +47,18 @@ export default async function AccreditationPage({
   if (!event) notFound();
 
   const filters: RegistrationFilters = { query: q || undefined, modality: query.modality || undefined, role: query.role || undefined, source: query.source === "publica" || query.source === "presencial" ? query.source : undefined, attendance: query.attendance === "acreditado" || query.attendance === "ausente" ? query.attendance : undefined };
+  const canManage = access.eventRole === "administrador_evento";
   const [result, publicCount, modes, publicModes, groups] = await Promise.all([
     listRegistrationsPage(id, filters, requestedPage, 40),
-    countPublicRegistrations(id),
+    canManage ? countPublicRegistrations(id) : countOccupiedPlaces(id),
     listModalities(id), publicModalities(event), eventExhibitions(id),
   ]);
   const versions = new Map(await Promise.all([...new Set(result.items.map((r) => r.version_formulario).filter((v): v is string => !!v))].map(async (v) => [v, await modalityVersion(v)] as const)));
 
   return (
     <main className="admin-main">
-      <Link className="back-link" href={"/admin/eventos/" + id}>
-        ← Volver al evento
+      <Link className="back-link" href={canManage ? "/admin/eventos/" + id : "/admin"}>
+        {canManage ? "← Volver al evento" : "← Mis eventos"}
       </Link>
       <div className="page-heading">
         <div>
@@ -93,7 +97,7 @@ export default async function AccreditationPage({
                         : "Inscripción pública"}
                     </small>
                     <small><strong>{modes.find((m) => m.id === registration.modalidad)?.nombre ?? "Asistente"}</strong>{registration.tipo_alta === "vinculada" ? " · Integrante vinculado" : ""}</small>
-                    {groups.members.filter((m) => m.participante === registration.id).map((m) => <small key={m.id}>{m.etiqueta} · <Link className="text-link" href={`/admin/eventos/${id}/exposiciones#${m.exposicion}`}>Ver exposición</Link></small>)}
+                    {canManage && groups.members.filter((m) => m.participante === registration.id).map((m) => <small key={m.id}>{m.etiqueta} · <Link className="text-link" href={`/admin/eventos/${id}/exposiciones#${m.exposicion}`}>Ver exposición</Link></small>)}
                   </div>
                   <form action={toggleAttendanceAction}>
                     <input type="hidden" name="registrationId" value={registration.id} />
@@ -114,9 +118,9 @@ export default async function AccreditationPage({
                       {registration.acreditado ? "✓ Acreditado" : "Acreditar"}
                     </SubmitButton>
                   </form>
-                  <div className="participant-edit">
+                  {canManage && <div className="participant-edit">
                     <RegistrationEditForm registration={registration} fields={versions.get(registration.version_formulario ?? "")?.esquema.fields} />
-                  </div>
+                  </div>}
                 </article>
               ))
             )}
@@ -139,7 +143,7 @@ export default async function AccreditationPage({
             </nav>
           ) : null}
         </div>
-        <WalkInForm eventId={id} isFull={isCapacityFull(event, publicCount)} modes={publicModes} operation={randomUUID()} />
+        <WalkInForm eventId={id} isFull={isCapacityFull(event, publicCount)} modes={publicModes} operation={randomUUID()} allowException={canManage} />
       </section>
     </main>
   );

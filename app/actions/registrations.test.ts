@@ -2,7 +2,7 @@ import { beforeEach, expect, it, vi } from "vitest";
 import { DomainError } from "@/lib/domain/errors";
 
 const mocks = vi.hoisted(() => ({ admin: vi.fn(), update: vi.fn(), revalidate: vi.fn() }));
-vi.mock("@/lib/auth/session", () => ({ requireAdmin: mocks.admin }));
+vi.mock("@/lib/auth/event-access", () => ({ requireEventAccess: mocks.admin }));
 vi.mock("@/lib/services/events", () => ({ getEventBySlug: vi.fn() }));
 vi.mock("@/lib/services/registrations", () => ({ updateRegistration: mocks.update }));
 vi.mock("next/cache", () => ({ revalidatePath: mocks.revalidate }));

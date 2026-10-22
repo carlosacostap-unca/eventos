@@ -1,3 +1,4 @@
+import { requireAdmin } from "@/lib/auth/session";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -9,6 +10,7 @@ export default async function EditEventTypePage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  await requireAdmin();
   const { id } = await params;
   const type = await getEventTypeById(id);
   if (!type) notFound();

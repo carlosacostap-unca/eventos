@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import type { ActionState } from "@/app/actions/state";
-import { requireAdmin } from "@/lib/auth/session";
+import { requireEventAccess } from "@/lib/auth/event-access";
 import { DomainError } from "@/lib/domain/errors";
 import { registrationInputSchema } from "@/lib/domain/models";
 import { FormValidationError } from "@/lib/domain/modalities";
@@ -30,7 +30,7 @@ export async function updateRegistrationAction(
   _state: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
-  const admin = await requireAdmin();
+  const admin = await requireEventAccess(eventId);
   const parsed = registrationInputSchema.safeParse(registrationFromForm(formData));
   if (!parsed.success) return { fields: parsed.error.flatten().fieldErrors };
   try {
@@ -72,11 +72,11 @@ export async function registerAction(
 }
 
 export async function toggleAttendanceAction(formData: FormData) {
-  const admin = await requireAdmin();
   const registrationId = String(formData.get("registrationId") || "");
   const eventId = String(formData.get("eventId") || "");
   const accredited = formData.get("accredited") === "true";
   if (!registrationId || !eventId) return;
+  const admin = await requireEventAccess(eventId, "accredit");
   await setAttendance(registrationId, accredited, admin.adminId, eventId);
   revalidatePath("/admin/eventos/" + eventId);
   revalidatePath("/admin/eventos/" + eventId + "/acreditacion");
@@ -88,7 +88,7 @@ export async function createWalkInAction(
   _state: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
-  const admin = await requireAdmin();
+  const admin = await requireEventAccess(eventId, "accredit");
   const parsed = registrationInputSchema.safeParse(registrationFromForm(formData));
   if (!parsed.success) return { fields: parsed.error.flatten().fieldErrors };
 
@@ -97,7 +97,8 @@ export async function createWalkInAction(
       eventId,
       parsed.data,
       admin.adminId,
-      formData.get("confirmarExcepcion") === "on",
+      admin.eventRole === "administrador_evento" && formData.get("confirmarExcepcion") === "on",
+      admin.eventRole === "acreditador",
     );
     revalidatePath("/admin/eventos/" + eventId);
     revalidatePath("/admin/eventos/" + eventId + "/acreditacion");

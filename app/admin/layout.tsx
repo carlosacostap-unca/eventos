@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import { logoutAction } from "@/app/actions/auth";
-import { getAuthenticatedAdmin } from "@/lib/auth/session";
+import { getAuthenticatedStaff } from "@/lib/auth/session";
 import { ActiveNavLink } from "@/components/active-nav-link";
 import { FacultyBrand } from "@/components/faculty-brand";
 
@@ -12,7 +12,7 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const admin = await getAuthenticatedAdmin();
+  const admin = await getAuthenticatedStaff();
   if (!admin) return children;
   return (
     <div className="admin-shell">
@@ -33,7 +33,7 @@ export default async function AdminLayout({
       <nav className="admin-global-nav" aria-label="Administración">
         <div className="container">
           <ActiveNavLink href="/admin" exact>Mis eventos</ActiveNavLink>
-          <ActiveNavLink href="/admin/tipos">Tipos de eventos</ActiveNavLink>
+          {admin.role === "admin" && <><ActiveNavLink href="/admin/tipos">Tipos de eventos</ActiveNavLink><ActiveNavLink href="/admin/personal">Personal</ActiveNavLink></>}
           <Link href="/">Ver agenda pública <span aria-hidden="true">↗</span></Link>
         </div>
       </nav>

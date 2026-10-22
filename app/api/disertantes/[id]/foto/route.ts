@@ -1,4 +1,5 @@
 import { getAuthenticatedAdmin } from "@/lib/auth/session";
+import { getEventAccess } from "@/lib/auth/event-access";
 import type { SpeakerRecord } from "@/lib/domain/models";
 import { createServicePocketBase } from "@/lib/pocketbase/client";
 import { getEventById } from "@/lib/services/events";
@@ -17,7 +18,7 @@ export async function GET(
   const eventIds = await listSpeakerEventIds(id);
   const events = await Promise.all(eventIds.map(getEventById));
   if (!events.some((event) => event && event.estado !== "borrador") &&
-      !(await getAuthenticatedAdmin())) {
+      !(await getAuthenticatedAdmin()) && !(await Promise.all(eventIds.map(id => getEventAccess(id)))).some(Boolean)) {
     return new Response("Foto no encontrada.", { status: 404 });
   }
 

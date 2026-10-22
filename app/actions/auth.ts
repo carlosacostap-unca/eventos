@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 
 import type { ActionState } from "@/app/actions/state";
 import { clearSession, setSession } from "@/lib/auth/session";
+import { isStaffRole } from "@/lib/domain/access";
 import { loginInputSchema } from "@/lib/domain/models";
 import { getServerEnv } from "@/lib/env";
 import { createServicePocketBase } from "@/lib/pocketbase/client";
@@ -69,7 +70,7 @@ export async function loginAction(
     }
   }
 
-  if (!administrator || administrator.role !== "admin") {
+  if (!administrator || !isStaffRole(administrator.role)) {
     return { message: "Esta cuenta no tiene acceso al panel." };
   }
 
@@ -80,7 +81,7 @@ export async function loginAction(
       .getOne(administrator.id, { fields: "id,role" });
     if (
       visibleAdministrator.id !== administrator.id ||
-      visibleAdministrator.role !== "admin"
+      !isStaffRole(visibleAdministrator.role)
     ) {
       return { message: setupMessage };
     }

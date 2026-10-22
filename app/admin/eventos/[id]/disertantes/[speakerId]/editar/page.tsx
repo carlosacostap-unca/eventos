@@ -1,3 +1,4 @@
+import { requireEventAccess } from "@/lib/auth/event-access";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -13,6 +14,7 @@ export default async function EditSpeakerPage({
   params: Promise<{ id: string; speakerId: string }>;
 }) {
   const { id, speakerId } = await params;
+  const access = await requireEventAccess(id);
   const [event, speaker, linked] = await Promise.all([
     getEventById(id),
     getSpeakerById(speakerId),
@@ -33,7 +35,7 @@ export default async function EditSpeakerPage({
       </div>
       <EventAdminNav event={event} />
       <div className="speaker-edit-preview"><SpeakerCard speaker={speaker} unoptimized /></div>
-      <p className="muted">Los cambios de este perfil se verán en todos los eventos donde participe.</p>
+      <p className="muted">{access.role === "admin" ? "Los cambios de este perfil se verán en todos los eventos donde participe." : "Se guardará una copia del perfil para este evento. Los demás eventos conservarán el perfil actual."}</p>
       <SpeakerForm eventId={id} speaker={speaker} />
     </main>
   );

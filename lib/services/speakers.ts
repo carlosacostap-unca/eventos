@@ -4,6 +4,9 @@ import { ClientResponseError, type RecordModel } from "pocketbase";
 
 import type { SpeakerInput, SpeakerRecord } from "@/lib/domain/models";
 import { createServicePocketBase } from "@/lib/pocketbase/client";
+import { recordId } from "@/lib/domain/fingerprints";
+import { DomainError } from "@/lib/domain/errors";
+import { withOperationLock } from "@/lib/services/operation-lock";
 
 const collection = "disertantes";
 const linksCollection = "participaciones_disertantes";
@@ -130,4 +133,26 @@ export async function updateSpeaker(
     ...input,
     ...(photo ? { foto: photo } : {}),
   }));
+}
+
+// An event editor gets a local copy; shared profiles never change in other events.
+export async function updateEventSpeaker(eventId: string, speakerId: string, input: SpeakerInput, photo?: File) {
+  const pb = await createServicePocketBase();
+  return withOperationLock(pb, "evento:" + eventId, async assertOwned => {
+    const link = await pb.collection(linksCollection).getFirstListItem(pb.filter("evento = {:event} && disertante = {:speaker}", { event: eventId, speaker: speakerId }));
+    const original = await pb.collection(collection).getOne(speakerId);
+    let localPhoto = photo;
+    if (!localPhoto) {
+      const response = await fetch(pb.files.getURL(original, original.foto), { headers: { Authorization: pb.authStore.token }, cache: "no-store" });
+      if (!response.ok) throw new DomainError("INVALID", "No se pudo copiar la foto del perfil.");
+      localPhoto = new File([await response.arrayBuffer()], original.foto, { type: response.headers.get("content-type") ?? "image/jpeg" });
+    }
+    const id = recordId();
+    const batch = pb.createBatch();
+    batch.collection(collection).create({ id, evento: eventId, vinculos_migrados: true, ...input, foto: localPhoto });
+    batch.collection(linksCollection).update(link.id, { disertante: id });
+    await assertOwned();
+    await batch.send();
+    return id;
+  });
 }

@@ -6,12 +6,12 @@
   "input": "C:\\UNCA\\eventos\\docs\\arquitectura\\eventos.architecture.json",
   "output": "C:\\UNCA\\eventos\\docs\\arquitectura\\eventos.html",
   "specification": {
-    "sha256": "ca11aa9cfc1c408c3ca834c554c6438bba1f81365c7d6fb3d7154f6cd9d1e715",
-    "bytes": 3730
+    "sha256": "88c0af1c692b7453f9e2bc7f3443d80e902c3411b77b8b2e1b09dca4123011fc",
+    "bytes": 5077
   },
   "artifact": {
-    "sha256": "8c35184f35f13e0c3b3696e267440783bef00a9cc3b76b76d4d9b9a6ffa482c8",
-    "bytes": 810967
+    "sha256": "76cf1149f42cd3af31e989f91d596637c53376fec74da3f74073510f6f728d6f",
+    "bytes": 810943
   },
   "validation": {
     "checksPassed": 9,

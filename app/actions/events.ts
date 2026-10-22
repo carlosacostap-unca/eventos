@@ -7,6 +7,7 @@ import { redirect } from "next/navigation";
 import type { ActionState } from "@/app/actions/state";
 import { parseArgentinaDateTime } from "@/lib/domain/dates";
 import { requireAdmin } from "@/lib/auth/session";
+import { requireEventAccess } from "@/lib/auth/event-access";
 import { eventInputSchema } from "@/lib/domain/models";
 import { canAssignEventType } from "@/lib/domain/event-types";
 import { offersAttendanceCertificate } from "@/lib/domain/event-details";
@@ -80,7 +81,7 @@ export async function updateEventAction(
   _state: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
-  const admin = await requireAdmin();
+  const admin = await requireEventAccess(id);
   const parsed = eventInputSchema.safeParse(inputFromForm(formData));
   if (!parsed.success) return { fields: parsed.error.flatten().fieldErrors };
 
@@ -109,7 +110,7 @@ export async function updateEventAction(
 }
 
 export async function uploadTemplateAction(eventId: string, formData: FormData) {
-  const admin = await requireAdmin();
+  const admin = await requireEventAccess(eventId);
   const event = await getEventById(eventId);
   if (!event || !offersAttendanceCertificate(event)) {
     redirect("/admin/eventos/" + eventId + "/certificados?error=deshabilitado");

@@ -1,6 +1,6 @@
-import { requireAdmin } from "@/lib/auth/session";
+import { requireStaff } from "@/lib/auth/session";
 
 export default async function EventsLayout({ children }: { children: React.ReactNode }) {
-  await requireAdmin();
+  await requireStaff();
   return children;
 }

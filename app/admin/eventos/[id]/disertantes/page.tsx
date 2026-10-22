@@ -1,3 +1,4 @@
+import { assignedEventRoles, requireEventAccess } from "@/lib/auth/event-access";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -15,11 +16,13 @@ export default async function EventSpeakersPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  const access = await requireEventAccess(id);
   const event = await getEventById(id);
   if (!event) notFound();
+  const roles = await assignedEventRoles(access);
   const [speakers, catalog] = await Promise.all([
     listSpeakersByEvent(id),
-    listAllSpeakers(),
+    access.role === "admin" ? listAllSpeakers() : Promise.all([...roles].filter(([, role]) => role === "administrador_evento").map(([id]) => listSpeakersByEvent(id))).then(groups => [...new Map(groups.flat().map(s => [s.id, s])).values()]),
   ]);
   const linkedIds = new Set(speakers.map((speaker) => speaker.id));
   const availableSpeakers = catalog.filter((speaker) => !linkedIds.has(speaker.id));

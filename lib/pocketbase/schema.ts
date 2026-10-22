@@ -4,6 +4,7 @@ import { modalityCollections, registrationModalityFields, certificateModalityFie
 
 export const COLLECTION_IDS = {
   administradores: "evadmin00000001",
+  asignaciones: "evassign0000001",
   cuentasServicio: "evservice000001",
   eventos: "evevents0000001",
   disertantes: "evspeakers00001",
@@ -47,15 +48,15 @@ export const pocketBaseSchema = [
     id: COLLECTION_IDS.administradores,
     name: "administradores",
     type: "auth",
-    listRule: null,
+    listRule: '@request.auth.role = "service"',
     viewRule:
       'id = @request.auth.id || @request.auth.role = "service"',
-    createRule: null,
-    updateRule: "id = @request.auth.id",
+    createRule: '@request.auth.role = "service" && @request.body.role = "personal"',
+    updateRule: 'id = @request.auth.id && @request.body.role:changed = false',
     deleteRule: null,
     fields: [
       { name: "nombre", type: "text", required: true, max: 120 },
-      { name: "role", type: "select", required: true, maxSelect: 1, values: ["admin"] },
+      { name: "role", type: "select", required: true, maxSelect: 1, values: ["admin", "personal"] },
     ],
     passwordAuth: { enabled: true, identityFields: ["email"] },
   },
@@ -73,6 +74,22 @@ export const pocketBaseSchema = [
       { name: "role", type: "select", required: true, maxSelect: 1, values: ["service"] },
     ],
     passwordAuth: { enabled: true, identityFields: ["email"] },
+  },
+  {
+    id: COLLECTION_IDS.asignaciones,
+    name: "asignaciones_evento",
+    type: "base",
+    listRule: '@request.auth.role = "service"',
+    viewRule: '@request.auth.role = "service"',
+    createRule: '@request.auth.role = "service"',
+    updateRule: '@request.auth.role = "service"',
+    deleteRule: '@request.auth.role = "service"',
+    fields: [
+      { name: "usuario", type: "relation", required: true, maxSelect: 1, collectionId: COLLECTION_IDS.administradores, cascadeDelete: true },
+      { name: "evento", type: "relation", required: true, maxSelect: 1, collectionId: COLLECTION_IDS.eventos, cascadeDelete: true },
+      { name: "rol", type: "select", required: true, maxSelect: 1, values: ["administrador_evento", "acreditador"] },
+    ],
+    indexes: ["CREATE UNIQUE INDEX idx_asignacion_usuario_evento ON asignaciones_evento (usuario, evento)"],
   },
   {
     ...protectedCollection,

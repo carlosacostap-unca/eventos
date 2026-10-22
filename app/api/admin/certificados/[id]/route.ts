@@ -1,4 +1,4 @@
-import { getAuthenticatedAdmin } from "@/lib/auth/session";
+import { getResourceAccess } from "@/lib/auth/event-access";
 import { getCertificateDownload } from "@/lib/services/certificates";
 
 export const dynamic = "force-dynamic";
@@ -7,7 +7,7 @@ export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const admin = await getAuthenticatedAdmin();
+  const admin = await getResourceAccess("certificados", (await params).id);
   if (!admin) return new Response("No autorizado", { status: 401 });
   const { id } = await params;
   try {

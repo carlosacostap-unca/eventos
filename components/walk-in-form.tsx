@@ -9,7 +9,8 @@ import { SubmitButton } from "@/components/submit-button";
 import { ModalRegistrationForm } from "./modal-registration-form";
 import type { PublicModality } from "@/lib/domain/modalities";
 
-export function WalkInForm(props: { eventId: string; isFull: boolean; modes?: PublicModality[]; operation?: string }) {
+export function WalkInForm(props: { eventId: string; isFull: boolean; modes?: PublicModality[]; operation?: string; allowException?: boolean }) {
+  if (props.isFull && props.allowException === false) return <div className="panel notice notice-warning"><h2>Cupo completo</h2><p>No se pueden inscribir nuevas personas. Podés seguir acreditando a quienes ya están inscriptos.</p></div>;
   if (props.modes && !props.modes.some((m) => m.id === "legacy")) return <ModalRegistrationForm {...props} modes={props.modes} operation={props.operation!} presencial />;
   return <LegacyWalkInForm eventId={props.eventId} isFull={props.isFull} />;
 }

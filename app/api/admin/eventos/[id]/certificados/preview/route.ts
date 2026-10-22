@@ -1,4 +1,4 @@
-import { getAuthenticatedAdmin } from "@/lib/auth/session";
+import { getEventAccess } from "@/lib/auth/event-access";
 import { previewCertificate } from "@/lib/services/certificates";
 
 export const dynamic = "force-dynamic";
@@ -7,9 +7,9 @@ export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const admin = await getAuthenticatedAdmin();
-  if (!admin) return new Response("No autorizado", { status: 401 });
   const { id } = await params;
+  const admin = await getEventAccess(id);
+  if (!admin) return new Response("No autorizado", { status: 401 });
   try {
     const pdf = await previewCertificate(id, new URL(request.url).searchParams.get("modalidad") ?? undefined);
     return new Response(Buffer.from(pdf), {

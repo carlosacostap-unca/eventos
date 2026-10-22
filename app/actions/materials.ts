@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import type { ActionState } from "@/app/actions/state";
-import { requireAdmin } from "@/lib/auth/session";
+import { requireEventAccess } from "@/lib/auth/event-access";
 import { DomainError } from "@/lib/domain/errors";
 import { uploadMaterial, deleteMaterial } from "@/lib/services/materials";
 
@@ -12,7 +12,7 @@ function refreshMaterials(eventId: string) {
 }
 
 export async function uploadMaterialAction(eventId: string, _state: ActionState, form: FormData): Promise<ActionState> {
-  const admin = await requireAdmin();
+  const admin = await requireEventAccess(eventId);
   const file = form.get("archivo");
   if (!(file instanceof File)) return { message: "Seleccioná un archivo." };
   try {
@@ -25,7 +25,7 @@ export async function uploadMaterialAction(eventId: string, _state: ActionState,
 }
 
 export async function deleteMaterialAction(eventId: string, materialId: string): Promise<ActionState> {
-  const admin = await requireAdmin();
+  const admin = await requireEventAccess(eventId);
   try {
     await deleteMaterial(eventId, materialId, admin.adminId);
   } catch (error) {

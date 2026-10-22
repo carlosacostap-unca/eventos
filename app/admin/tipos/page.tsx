@@ -1,9 +1,11 @@
+import { requireAdmin } from "@/lib/auth/session";
 import Link from "next/link";
 
 import { EventTypeForm } from "@/components/event-type-form";
 import { listEventTypes } from "@/lib/services/event-types";
 
 export default async function EventTypesPage() {
+  await requireAdmin();
   const types = await listEventTypes();
 
   return (

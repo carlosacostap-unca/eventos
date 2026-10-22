@@ -1,7 +1,8 @@
 import "server-only";
 
 import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
+import { isStaffRole, type StaffRole } from "@/lib/domain/access";
 
 import {
   ADMIN_SESSION_COOKIE,
@@ -43,7 +44,9 @@ export async function getSession(): Promise<AdminSession | null> {
   return value ? unsealSession(value) : null;
 }
 
-export async function getAuthenticatedAdmin(): Promise<AdminSession | null> {
+export type StaffSession = AdminSession & { role: StaffRole };
+
+export async function getAuthenticatedStaff(): Promise<StaffSession | null> {
   const session = await getSession();
   if (!session) return null;
 
@@ -52,16 +55,27 @@ export async function getAuthenticatedAdmin(): Promise<AdminSession | null> {
     const administrator = await client
       .collection("administradores")
       .getOne(session.adminId, { fields: "id,role" });
-    return administrator.id === session.adminId && administrator.role === "admin"
-      ? session
+    return administrator.id === session.adminId && isStaffRole(administrator.role)
+      ? { ...session, role: administrator.role }
       : null;
   } catch {
     return null;
   }
 }
 
+export async function getAuthenticatedAdmin(): Promise<StaffSession | null> {
+  const staff = await getAuthenticatedStaff();
+  return staff?.role === "admin" ? staff : null;
+}
+
+export async function requireStaff(): Promise<StaffSession> {
+  const staff = await getAuthenticatedStaff();
+  if (!staff) redirect("/iniciar-sesion");
+  return staff;
+}
+
 export async function requireAdmin(): Promise<AdminSession> {
-  const session = await getAuthenticatedAdmin();
-  if (!session) redirect("/admin");
+  const session = await requireStaff();
+  if (session.role !== "admin") notFound();
   return session;
 }

@@ -1,6 +1,6 @@
+import { requireEventAccess } from "@/lib/auth/event-access";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { requireAdmin } from "@/lib/auth/session";
 import { getEventById } from "@/lib/services/events";
 import { eventExhibitions } from "@/lib/services/modal-registration";
 import { listRegistrations } from "@/lib/services/registrations";
@@ -10,8 +10,8 @@ import { ConfiguredForm } from "@/components/modal-registration-form";
 import { updateExhibitionAction } from "@/app/actions/modalities";
 
 export default async function ExhibitionsPage({ params }: { params: Promise<{ id: string }> }) {
-  await requireAdmin();
   const { id } = await params;
+  await requireEventAccess(id);
   const event = await getEventById(id);
   if (!event) notFound();
   const [groups, people, modes] = await Promise.all([eventExhibitions(id), listRegistrations(id), listModalities(id)]);

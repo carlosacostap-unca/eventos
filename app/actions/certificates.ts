@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import type { ActionState } from "@/app/actions/state";
-import { requireAdmin } from "@/lib/auth/session";
+import { requireEventAccess } from "@/lib/auth/event-access";
 import {
   CERTIFICATE_TEXT_KEYS,
   certificateTextInputSchema,
@@ -26,7 +26,7 @@ export async function saveCertificateTextsAction(
   _state: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
-  const admin = await requireAdmin();
+  const admin = await requireEventAccess(eventId);
   const parsed = certificateTextInputSchema.safeParse(
     certificateTextsFromForm(formData),
   );
@@ -66,7 +66,7 @@ export async function regenerateCertificatesAction(eventId: string) {
 }
 
 async function processCertificates(eventId: string, regenerate: boolean) {
-  const admin = await requireAdmin();
+  const admin = await requireEventAccess(eventId);
   let result;
   try {
     result = await generateCertificates(eventId, admin.adminId, { regenerate });

@@ -9,7 +9,7 @@ import { getRegistrationAvailability, isCapacityFull, nextPublicSlot, publicCapa
 import { modalityVersion } from "./modalities";
 import { withOperationLock } from "./operation-lock";
 
-export async function registerWithModality(eventId: string, raw: unknown, options: { presencial?: boolean; allowOverCapacity?: boolean; adminId?: string } = {}): Promise<RegistrationRecord> {
+export async function registerWithModality(eventId: string, raw: unknown, options: { presencial?: boolean; allowOverCapacity?: boolean; strictCapacity?: boolean; adminId?: string } = {}): Promise<RegistrationRecord> {
   const pb = await createServicePocketBase();
   return withOperationLock(pb, "evento:" + eventId, async (assertOwned) => {
     const event = await pb.collection("eventos").getOne<EventRecord>(eventId);
@@ -27,6 +27,9 @@ export async function registerWithModality(eventId: string, raw: unknown, option
     }
     const all = await pb.collection("inscripciones").getFullList<RegistrationRecord>({ filter: pb.filter("evento = {:eventId}", { eventId }) });
     const publicPrincipals = all.filter((r) => r.origen === "publica" && r.tipo_alta !== "vinculada");
+    if (options.presencial && options.strictCapacity && isCapacityFull(event, all.filter(r => r.tipo_alta !== "vinculada").length)) {
+      throw new DomainError("FULL", "El cupo del evento está completo. No se pueden agregar más personas.");
+    }
     if (!options.presencial) {
       const availability = getRegistrationAvailability(event, publicPrincipals.length);
       if (availability !== "disponible") throw new DomainError(availability === "completo" ? "FULL" : "CLOSED", availability === "completo" ? "El cupo del evento está completo." : "La inscripción no está disponible.");

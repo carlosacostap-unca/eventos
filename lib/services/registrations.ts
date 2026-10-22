@@ -33,6 +33,14 @@ export async function countPublicRegistrations(eventId: string): Promise<number>
   return result.totalItems;
 }
 
+export async function countOccupiedPlaces(eventId: string): Promise<number> {
+  const pb = await createServicePocketBase();
+  const result = await pb.collection("inscripciones").getList(1, 1, {
+    filter: pb.filter('evento = {:id} && tipo_alta != "vinculada"', { id: eventId }), fields: "id",
+  });
+  return result.totalItems;
+}
+
 async function existingByDocument(eventId: string, document: string) {
   const pb = await createServicePocketBase();
   try {
@@ -74,51 +82,54 @@ export async function registerPublic(
     if (!mode || modes.length > 1) throw new DomainError("INVALID", "Elegí una modalidad en el formulario del evento.");
     return registerWithModality(event.id, { modalidad: mode.id, version: mode.version_publicada, operacion: randomUUID(), principal: { ...input, respuestas: {} }, integrantes: [] });
   }
-  const normalizedDocument = normalizeDocument(input.documento);
-  if (await existingByDocument(event.id, normalizedDocument)) {
-    throw new DomainError("DUPLICATE", "Ya existe una inscripción con ese documento.");
-  }
-
-  for (let attempt = 0; attempt < 4; attempt += 1) {
-    const publicCount = await countPublicRegistrations(event.id);
-    const availability = getRegistrationAvailability(event, publicCount);
-    if (availability === "completo") {
-      throw new DomainError("FULL", "El cupo del evento está completo.");
-    }
-    if (availability !== "disponible") {
-      throw new DomainError("CLOSED", "La inscripción no está disponible.");
+  const pb = await createServicePocketBase();
+  return withOperationLock(pb, "evento:" + event.id, async (assertOwned) => {
+    const normalizedDocument = normalizeDocument(input.documento);
+    if (await existingByDocument(event.id, normalizedDocument)) {
+      throw new DomainError("DUPLICATE", "Ya existe una inscripción con ese documento.");
     }
 
-    const slot = nextPublicSlot(await usedPublicSlots(event.id), publicCapacity(event));
-    if (!slot) throw new DomainError("FULL", "El cupo del evento está completo.");
+    for (let attempt = 0; attempt < 4; attempt += 1) {
+      const publicCount = await countPublicRegistrations(event.id);
+      const availability = getRegistrationAvailability(event, publicCount);
+      if (availability === "completo") {
+        throw new DomainError("FULL", "El cupo del evento está completo.");
+      }
+      if (availability !== "disponible") {
+        throw new DomainError("CLOSED", "La inscripción no está disponible.");
+      }
 
-    const pb = await createServicePocketBase();
-    try {
-      return toRegistration(
-        await pb.collection("inscripciones").create({
-          evento: event.id,
-          nombres: input.nombres,
-          apellidos: input.apellidos,
-          email: input.email,
-          documento: input.documento,
-          documento_normalizado: normalizedDocument,
-          origen: "publica",
-          numero_cupo_publico: slot,
-          acreditado: false,
-        }),
-      );
-    } catch (error) {
-      if (!(error instanceof ClientResponseError) || error.status !== 400) throw error;
-      if (await existingByDocument(event.id, normalizedDocument)) {
-        throw new DomainError("DUPLICATE", "Ya existe una inscripción con ese documento.");
+      const slot = nextPublicSlot(await usedPublicSlots(event.id), publicCapacity(event));
+      if (!slot) throw new DomainError("FULL", "El cupo del evento está completo.");
+
+      try {
+        await assertOwned();
+        return toRegistration(
+          await pb.collection("inscripciones").create({
+            evento: event.id,
+            nombres: input.nombres,
+            apellidos: input.apellidos,
+            email: input.email,
+            documento: input.documento,
+            documento_normalizado: normalizedDocument,
+            origen: "publica",
+            numero_cupo_publico: slot,
+            acreditado: false,
+          }),
+        );
+      } catch (error) {
+        if (!(error instanceof ClientResponseError) || error.status !== 400) throw error;
+        if (await existingByDocument(event.id, normalizedDocument)) {
+          throw new DomainError("DUPLICATE", "Ya existe una inscripción con ese documento.");
+        }
       }
     }
-  }
 
-  throw new DomainError(
-    "FULL",
-    "No pudimos reservar el lugar. Intentá nuevamente en unos segundos.",
-  );
+    throw new DomainError(
+      "FULL",
+      "No pudimos reservar el lugar. Intentá nuevamente en unos segundos.",
+    );
+  });
 }
 
 export type RegistrationFilters = {
@@ -319,6 +330,7 @@ export async function createWalkIn(
   input: RegistrationInput,
   adminId: string,
   allowOverCapacity = false,
+  strictCapacity = false,
 ): Promise<RegistrationRecord> {
   const event = await getEventById(eventId);
   if (!event) throw new DomainError("NOT_FOUND", "El evento no existe.");
@@ -326,42 +338,50 @@ export async function createWalkIn(
   if (modes.length) {
     const mode = modes.find((m) => m.codigo === "asistente" && m.habilitada);
     if (!mode || modes.length > 1) throw new DomainError("INVALID", "Elegí la modalidad de participación antes del alta.");
-    return registerWithModality(eventId, { modalidad: mode.id, version: mode.version_publicada, operacion: randomUUID(), principal: { ...input, respuestas: {} }, integrantes: [] }, { presencial: true, allowOverCapacity, adminId });
-  }
-  const normalizedDocument = normalizeDocument(input.documento);
-  const duplicate = await existingByDocument(eventId, normalizedDocument);
-  if (duplicate) throw new DomainError("DUPLICATE", "La persona ya figura en el evento.");
-
-  const publicCount = await countPublicRegistrations(eventId);
-  if (isCapacityFull(event, publicCount) && !allowOverCapacity) {
-    throw new DomainError(
-      "CONFIRMATION_REQUIRED",
-      "Confirmá que querés superar el cupo público.",
-    );
+    return registerWithModality(eventId, { modalidad: mode.id, version: mode.version_publicada, operacion: randomUUID(), principal: { ...input, respuestas: {} }, integrantes: [] }, { presencial: true, allowOverCapacity, strictCapacity, adminId });
   }
   const pb = await createServicePocketBase();
-  const registration = toRegistration(
-    await pb.collection("inscripciones").create({
-      evento: eventId,
-      nombres: input.nombres,
-      apellidos: input.apellidos,
-      email: input.email,
-      documento: input.documento,
-      documento_normalizado: normalizedDocument,
-      origen: "presencial",
-      numero_cupo_publico: 0,
-      acreditado: true,
-      acreditado_en: new Date().toISOString(),
-      acreditado_por: adminId,
-    }),
-  );
+  return withOperationLock(pb, "evento:" + eventId, async (assertOwned) => {
+    const currentEvent = await getEventById(eventId);
+    if (!currentEvent) throw new DomainError("NOT_FOUND", "El evento no existe.");
+    const normalizedDocument = normalizeDocument(input.documento);
+    const duplicate = await existingByDocument(eventId, normalizedDocument);
+    if (duplicate) throw new DomainError("DUPLICATE", "La persona ya figura en el evento.");
 
-  await audit({
-    adminId,
-    action: "inscripcion.presencial",
-    entity: "inscripcion",
-    entityId: registration.id,
-    data: { excedeCupo: isCapacityFull(event, publicCount), evento: eventId },
+    const publicCount = await countPublicRegistrations(eventId);
+    if (strictCapacity && isCapacityFull(currentEvent, await countOccupiedPlaces(eventId))) {
+      throw new DomainError("FULL", "El cupo del evento está completo. No se pueden agregar más personas.");
+    }
+    if (isCapacityFull(currentEvent, publicCount) && !allowOverCapacity) {
+      throw new DomainError(
+        "CONFIRMATION_REQUIRED",
+        "Confirmá que querés superar el cupo público.",
+      );
+    }
+    await assertOwned();
+    const registration = toRegistration(
+      await pb.collection("inscripciones").create({
+        evento: eventId,
+        nombres: input.nombres,
+        apellidos: input.apellidos,
+        email: input.email,
+        documento: input.documento,
+        documento_normalizado: normalizedDocument,
+        origen: "presencial",
+        numero_cupo_publico: 0,
+        acreditado: true,
+        acreditado_en: new Date().toISOString(),
+        acreditado_por: adminId,
+      }),
+    );
+
+    await audit({
+      adminId,
+      action: "inscripcion.presencial",
+      entity: "inscripcion",
+      entityId: registration.id,
+      data: { excedeCupo: isCapacityFull(event, publicCount), evento: eventId },
+    });
+    return registration;
   });
-  return registration;
 }
