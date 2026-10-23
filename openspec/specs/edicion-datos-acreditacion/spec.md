@@ -7,10 +7,10 @@ Permitir al personal administrativo corregir datos de inscripción durante la ac
 ## Requirements
 
 ### Requirement: Edición de identidad durante la acreditación
-El sistema SHALL permitir a administradores editar apellidos, nombres, documento y email desde la lista de acreditación de cualquier evento.
+El sistema SHALL permitir al administrador general y al administrador de evento asignado editar apellidos, nombres, documento y email desde la lista de acreditación del evento autorizado. El acreditador SHALL carecer de permiso para editar inscripciones existentes.
 
 #### Scenario: Corrección de una inscripción
-- **WHEN** un administrador guarda datos válidos de una inscripción pública o presencial del evento
+- **WHEN** un administrador autorizado guarda datos válidos de una inscripción pública o presencial del evento
 - **THEN** el sistema actualiza los datos personales y el documento normalizado, conservando asistencia, origen y cupo
 - **AND** registra el actor y los campos modificados en auditoría
 
@@ -24,7 +24,7 @@ El sistema SHALL permitir a administradores editar apellidos, nombres, documento
 - **THEN** el sistema permite guardar sin tratarla como un duplicado
 
 #### Scenario: Acceso no autorizado o evento incorrecto
-- **WHEN** se intenta editar sin sesión administrativa o usando una inscripción de otro evento
+- **WHEN** se intenta editar sin permiso administrativo para el evento, como acreditador o usando una inscripción de otro evento
 - **THEN** el sistema rechaza la operación sin modificar la inscripción
 
 #### Scenario: Cancelación

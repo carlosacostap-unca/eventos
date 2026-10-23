@@ -31,7 +31,9 @@ npm run schema:event-roles -- --apply
 
 La migración puede repetirse sin duplicar asignaciones ni cambiar cuentas. No crea personal real, no modifica contraseñas existentes y no envía mensajes. El esquema declarativo de instalaciones nuevas incluye los mismos cambios.
 
-Desplegar el código junto con el esquema actualizado. La implementación se verificó en una base local aislada; no se ejecutó esta migración en la base real durante el desarrollo.
+Desplegar el código junto con el esquema actualizado. La implementación se verificó primero en una base local aislada. El 23 de octubre de 2026 se aplicó y verificó la migración en la base real de Eventos: se conservaron las 4 cuentas administrativas, los 8 eventos, las 286 inscripciones y los 185 certificados existentes. La colección de asignaciones quedó inicialmente vacía; las personas y sus roles se asignan desde el panel.
+
+El respaldo previo a la primera aplicación es `pre_roles_por_evento_20261023115325.zip` (3.239.574 bytes), conservado en PocketBase y descargado a `output/production-migration/pre_roles_por_evento_20261023115325/`, fuera de Git. La verificación posterior confirmó los campos, reglas, relaciones e índice único; también el acceso general y de servicio y la repetición sin cambios funcionales. PocketBase actualiza el metadato `updated` del esquema al reimportarlo, por lo que la comparación de repetición excluye únicamente las fechas técnicas de las colecciones.
 
 ## Operación desde el panel
 
