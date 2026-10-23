@@ -44,6 +44,7 @@ export async function updateRegistrationAction(
   revalidatePath("/admin/eventos/" + eventId + "/acreditacion");
   revalidatePath("/admin/eventos/" + eventId + "/reportes");
   revalidatePath("/admin/eventos/" + eventId + "/certificados");
+  revalidatePath("/admin/eventos/" + eventId + "/inscritos");
   return { ok: true, message: "Los datos fueron actualizados." };
 }
 
@@ -60,6 +61,7 @@ export async function registerAction(
 
   try {
     await registerPublic(event, parsed.data);
+    revalidatePath("/admin/eventos/" + event.id + "/inscritos");
     revalidatePath("/" + slug);
     return {
       ok: true,
@@ -102,6 +104,7 @@ export async function createWalkInAction(
     );
     revalidatePath("/admin/eventos/" + eventId);
     revalidatePath("/admin/eventos/" + eventId + "/acreditacion");
+    revalidatePath("/admin/eventos/" + eventId + "/inscritos");
     return { ok: true, message: "La persona fue agregada y acreditada." };
   } catch (error) {
     if (error instanceof DomainError) return { message: error.message };

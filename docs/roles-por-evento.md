@@ -6,6 +6,7 @@ Las cuentas existentes con `role=admin` conservan la administración general. La
 | --- | --- | --- | --- |
 | Crear eventos, gestionar tipos y personal | Sí | No | No |
 | Asignar, cambiar o quitar roles por evento | Sí | No | No |
+| Consultar nombres en Inscritos | Todos | Asignados | No |
 | Configurar evento, modalidades y disertantes | Todos | Asignados | No |
 | Certificados, materiales, reportes y exportaciones | Todos | Asignados | No |
 | Corregir datos de inscripciones existentes | Todos | Asignados | No |
@@ -43,7 +44,7 @@ El respaldo previo a la primera aplicación es `pre_roles_por_evento_20261023115
 4. Elegir la persona y su rol en ese evento. Guardar la asignación.
 5. Para cambiar el rol, guardar el nuevo rol de esa persona; para revocar, usar **Quitar acceso a este evento**.
 
-Los administradores de evento reciben las secciones administrativas de sus eventos. Los acreditadores ingresan directamente a acreditación, pueden registrar llegadas e inscribir personas nuevas, y no reciben controles de edición de inscripciones, emisión de certificados ni administración general.
+Los administradores de evento reciben las secciones administrativas de sus eventos. La pestaña **Inscritos**, inmediatamente después de **Resumen**, muestra únicamente apellido y nombre de las personas inscritas, en orden alfabético. Los acreditadores ingresan directamente a acreditación, pueden registrar llegadas e inscribir personas nuevas, y no reciben controles de edición de inscripciones, emisión de certificados ni administración general.
 
 El acreditador no puede confirmar excepciones de cupo. Para sus altas se cuentan inscripciones principales públicas y presenciales; los integrantes vinculados mantienen la política vigente de cupo por inscripción principal. Los eventos con cupo ilimitado permiten nuevas altas. El control se repite dentro del bloqueo por evento para impedir que dos altas presenciales obtengan el último lugar. La inscripción pública conserva su política de cupo público existente.
 

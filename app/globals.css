@@ -989,6 +989,18 @@ h3 {
   display: grid;
 }
 
+.registration-name-list {
+  list-style: none;
+  margin: 1rem 0 0;
+  padding: 0;
+}
+
+.registration-name-list > li {
+  padding: 0.9rem 0;
+  border-top: 1px solid var(--line);
+  overflow-wrap: anywhere;
+}
+
 .event-materials { grid-column: 1 / -1; width: 100%; min-width: 0; }
 .materials-admin-layout { display: grid; gap: 1.5rem; }
 .material-list { list-style: none; padding: 0; margin: 1rem 0 0; }

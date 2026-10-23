@@ -11,6 +11,7 @@ export async function EventAdminNav({ event }: { event: EventRecord }) {
   return (
     <nav className="tabs" aria-label={"Secciones de " + event.titulo}>
       <ActiveNavLink href={base} exact>Resumen</ActiveNavLink>
+      <ActiveNavLink href={base + "/inscritos"}>Inscritos</ActiveNavLink>
       <ActiveNavLink href={base + "/editar"}>Configuración</ActiveNavLink>
       <ActiveNavLink href={base + "/modalidades"}>Modalidades y formularios</ActiveNavLink>
       <ActiveNavLink href={base + "/disertantes"}>Disertantes</ActiveNavLink>

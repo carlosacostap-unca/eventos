@@ -11,7 +11,7 @@ import { updateExhibition } from "@/lib/services/exhibition-edit";
 import { getEventById } from "@/lib/services/events";
 
 async function refreshEvent(eventId: string) {
-  for (const suffix of ["", "/modalidades", "/acreditacion", "/exposiciones", "/certificados", "/reportes"]) revalidatePath("/admin/eventos/" + eventId + suffix);
+  for (const suffix of ["", "/inscritos", "/modalidades", "/acreditacion", "/exposiciones", "/certificados", "/reportes"]) revalidatePath("/admin/eventos/" + eventId + suffix);
   const event = await getEventById(eventId);
   if (event) revalidatePath("/" + event.slug);
 }

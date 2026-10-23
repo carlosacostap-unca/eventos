@@ -215,6 +215,15 @@ export async function listRegistrations(
   return items;
 }
 
+export async function listRegistrationNames(eventId: string): Promise<Pick<RegistrationRecord, "id" | "nombres" | "apellidos">[]> {
+  const pb = await createServicePocketBase();
+  return pb.collection("inscripciones").getFullList({
+    filter: pb.filter("evento = {:eventId}", { eventId }),
+    fields: "id,nombres,apellidos",
+    sort: "apellidos,nombres",
+  });
+}
+
 export async function setAttendance(
   registrationId: string,
   accredited: boolean,
