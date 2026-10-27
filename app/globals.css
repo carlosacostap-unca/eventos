@@ -1522,6 +1522,13 @@ td small {
 }
 
 .verification-code { overflow-wrap: anywhere; }
+.presentation-delivery { max-width: 880px; padding-block: 2rem 4rem; }
+.presentation-callout { margin-bottom: 1.5rem; }
+.presentation-upload, .presentation-admin { padding: 1.15rem; border: 1px solid var(--line); border-radius: 12px; background: #f7fafb; min-width: 0; }
+.presentation-upload p, .presentation-admin p { margin-bottom: 0; overflow-wrap: anywhere; }
+.presentation-upload h3, .presentation-admin h3 { margin-bottom: 0; }
+.presentation-preview { display: block; width: 100%; height: min(75vh, 800px); min-height: 360px; margin-top: 1rem; border: 1px solid var(--line); border-radius: 8px; }
+.presentation-admin summary { cursor: pointer; min-height: 44px; padding-block: .65rem; }
 .verification-details { display: grid; gap: 1rem; margin: 0; }
 .verification-details dt { color: var(--ink-soft); font-size: .85rem; }
 .verification-details dd { margin: .25rem 0 0; overflow-wrap: anywhere; }

@@ -29,7 +29,7 @@ export async function modalityVersion(id: string): Promise<FormVersion> {
 export async function publicModalities(event: EventRecord): Promise<PublicModality[]> {
   const modes = await listModalities(event.id);
   if (!modes.length) return [{ id: "legacy", nombre: "Asistente", orden: 0, version: "legacy", definition: attendeeDefinition, entrega: event.certificado_asistencia !== "no" }];
-  return Promise.all(modes.filter((m) => m.habilitada).map(async (m) => ({ id: m.id, nombre: m.nombre, orden: m.orden, version: m.version_publicada, definition: (await modalityVersion(m.version_publicada)).esquema, entrega: m.entrega })));
+  return Promise.all(modes.filter((m) => m.habilitada).map(async (m) => ({ id: m.id, codigo: m.codigo, nombre: m.nombre, orden: m.orden, version: m.version_publicada, definition: (await modalityVersion(m.version_publicada)).esquema, entrega: m.entrega })));
 }
 const inputSchema = z.object({ id: z.string().optional(), nombre: z.string().trim().min(2).max(160), codigo: z.string().regex(/^[a-z][a-z0-9_-]{1,39}$/), orden: z.number().int().min(0).max(1000), habilitada: z.boolean(), entrega: z.boolean(), definition: formSchema, textos: certificateTextInputSchema.partial(), clearTemplate: z.boolean().optional() });
 export type ModalityInput = z.infer<typeof inputSchema>;

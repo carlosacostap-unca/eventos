@@ -11,6 +11,12 @@ import { createServicePocketBase } from "@/lib/pocketbase/client";
 import { signRegistrationEdit, verifyRegistrationEdit } from "@/lib/registrations/public-edit-access";
 import { modalityVersion } from "./modalities";
 import { withOperationLock } from "./operation-lock";
+import { presentationInfo } from "@/lib/domain/presentations";
+
+// Una entrega de archivo no modifica la identidad ni las respuestas de inscripción.
+function groupRevision({ id, evento, modalidad, version, responsable, respuestas }: Exhibition) {
+  return { id, evento, modalidad, version, responsable, respuestas };
+}
 
 export async function registrationEditSnapshot(registration: RegistrationRecord) {
   const pb = await createServicePocketBase();
@@ -25,8 +31,8 @@ export async function registrationEditSnapshot(registration: RegistrationRecord)
   const linkedGroups = await Promise.all([...new Set(otherMemberships.map((m) => m.exposicion))].map((id) => pb.collection("exposiciones").getOne<Exhibition>(id)));
   const { nombres, apellidos, documento, email, modalidad, version_formulario, respuestas, tipo_alta } = registration;
   const revision = fingerprint({ nombres, apellidos, documento, email, modalidad, version_formulario, respuestas, tipo_alta,
-    groups: [...groups].sort((a, b) => a.id.localeCompare(b.id)), links: [...links].sort((a, b) => a.id.localeCompare(b.id)),
-    otherMemberships: [...otherMemberships].sort((a, b) => a.id.localeCompare(b.id)), linkedGroups: [...linkedGroups].sort((a, b) => a.id.localeCompare(b.id)) });
+    groups: [...groups].sort((a, b) => a.id.localeCompare(b.id)).map(groupRevision), links: [...links].sort((a, b) => a.id.localeCompare(b.id)),
+    otherMemberships: [...otherMemberships].sort((a, b) => a.id.localeCompare(b.id)), linkedGroups: [...linkedGroups].sort((a, b) => a.id.localeCompare(b.id)).map(groupRevision) });
   return { groups, links, revision, otherMemberships, linkedGroups };
 }
 
@@ -49,7 +55,7 @@ export async function findEditableRegistration(document: string, eventId: string
       integrantes.push({ ...registrationInputSchema.parse(member), funcion: link.funcion, respuestas: link.respuestas ?? {} });
     }
     const answers = group.respuestas ?? (snapshot.groups.length === 1 ? registration.respuestas : undefined) ?? {};
-    exhibitions.push({ id: group.id, title: exhibitionTitle(version.esquema, answers), version: group.version, definition: version.esquema, principal: { ...registrationInputSchema.parse(registration), respuestas: answers }, integrantes });
+    exhibitions.push({ id: group.id, title: exhibitionTitle(version.esquema, answers), version: group.version, definition: version.esquema, principal: { ...registrationInputSchema.parse(registration), respuestas: answers }, integrantes, ...(presentationInfo(group) ? { presentation: presentationInfo(group) } : {}) });
   }
   const participations: NonNullable<EditableRegistration["participations"]> = [];
   for (const link of snapshot.otherMemberships) {

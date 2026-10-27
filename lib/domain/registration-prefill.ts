@@ -29,6 +29,7 @@ export type EditableExhibition = {
   definition: FormDefinition;
   principal: PersonSubmission;
   integrantes: Array<PersonSubmission & { funcion: string }>;
+  presentation?: import("./presentations").PresentationInfo;
 };
 
 export type ExhibitionParticipation = {

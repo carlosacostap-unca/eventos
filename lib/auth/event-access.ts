@@ -32,12 +32,13 @@ export async function requireEventAccess(eventId: string, capability: EventCapab
 }
 
 // Resource URLs carry only a resource ID: resolve its actual event before authorizing.
-export async function getResourceAccess(collection: "certificados" | "materiales_evento", id: string) {
+export async function getResourceAccess(collection: "certificados" | "materiales_evento" | "exposiciones", id: string) {
   if (!(await getAuthenticatedStaff())) return null;
   try {
     const pb = await createServicePocketBase();
     const record = await pb.collection(collection).getOne(id, { fields: "evento" });
-    return await getEventAccess(String(record.evento));
+    const access = await getEventAccess(String(record.evento));
+    return access ? { ...access, eventId: String(record.evento) } : null;
   } catch {
     return null;
   }

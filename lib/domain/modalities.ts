@@ -38,8 +38,8 @@ export function exhibitionTitle(definition: FormDefinition, answers: Answers = {
 }
 export type Modality = { id: string; evento: string; codigo: string; nombre: string; orden: number; habilitada: boolean; version_publicada: string; entrega: boolean; plantilla_certificado?: string; textos_certificado?: Partial<CertificateTextSections>; legacy?: boolean; };
 export type FormVersion = { id: string; modalidad: string; numero: number; esquema: FormDefinition };
-export type PublicModality = { id: string; nombre: string; orden: number; version: string; definition: FormDefinition; entrega: boolean };
-export type Exhibition = { id: string; evento: string; modalidad: string; version: string; responsable: string; respuestas?: Answers };
+export type PublicModality = { id: string; codigo?: string; nombre: string; orden: number; version: string; definition: FormDefinition; entrega: boolean };
+export type Exhibition = { id: string; evento: string; modalidad: string; version: string; responsable: string; respuestas?: Answers } & import("./presentations").PresentationFields;
 export type ExhibitionMember = { id: string; exposicion: string; participante: string; funcion: string; etiqueta: string; orden: number; respuestas?: Answers };
 export type PersonSubmission = RegistrationInput & { respuestas: Answers };
 export type GroupSubmission = { modalidad: string; version: string; operacion: string; principal: PersonSubmission; integrantes: Array<PersonSubmission & { funcion: string }> };

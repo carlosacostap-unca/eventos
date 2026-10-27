@@ -45,6 +45,14 @@ it("distingue el alta de otro trabajo de la edición de una exposición", async 
   expect(mocks.register).toHaveBeenLastCalledWith("event", {}, expect.objectContaining({ exhibitionId: "group" }));
 });
 
+it("envía la presentación y su revisión sin incluir el archivo en las respuestas JSON", async () => {
+  const data = new FormData(); data.set("payload", "{}");
+  data.set("presentacion", new File(["%PDF-1.7"], "trabajo.pdf", { type: "application/pdf" }));
+  data.set("presentationRevision", "previous-file");
+  expect((await registerConfiguredAction("event", false, {}, data)).ok).toBe(true);
+  expect(mocks.register).toHaveBeenCalledWith("event", {}, expect.objectContaining({ presentation: expect.any(File), presentationRevision: "previous-file" }));
+});
+
 it("permite al integrante editar sus datos con su permiso sin crear una exposición", async () => {
   const person = { nombres: "Ana", apellidos: "Pérez", documento: "12345678", email: "ana@example.com" };
   const data = new FormData(); data.set("payload", JSON.stringify(person)); data.set("editToken", "linked-token");

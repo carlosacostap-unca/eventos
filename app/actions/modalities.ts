@@ -42,7 +42,8 @@ export async function registerConfiguredAction(eventId: string, presencial: bool
   const editToken = !presencial ? String(data.get("editToken") ?? "") : "";
   const exhibitionId = !presencial ? String(data.get("exhibitionId") ?? "") : "";
   const newExhibition = !presencial && data.get("newExhibition") === "true";
-  try { await registerWithModality(eventId, JSON.parse(raw), { presencial, allowOverCapacity: admin?.eventRole === "administrador_evento" && data.get("confirmarExcepcion") === "on", strictCapacity: admin?.eventRole === "acreditador", adminId: admin?.adminId, ...(editToken ? { editToken } : {}), ...(exhibitionId ? { exhibitionId } : {}), ...(newExhibition ? { newExhibition } : {}) }); }
+  const presentation = data.get("presentacion");
+  try { await registerWithModality(eventId, JSON.parse(raw), { presencial, allowOverCapacity: admin?.eventRole === "administrador_evento" && data.get("confirmarExcepcion") === "on", strictCapacity: admin?.eventRole === "acreditador", adminId: admin?.adminId, ...(editToken ? { editToken } : {}), ...(exhibitionId ? { exhibitionId } : {}), ...(newExhibition ? { newExhibition } : {}), ...(presentation instanceof File && presentation.size ? { presentation, presentationRevision: String(data.get("presentationRevision") ?? "") } : {}) }); }
   catch (e) {
     if (e instanceof FormValidationError) return { message: e.message, fields: e.fields };
     return { message: e instanceof DomainError ? e.message : "No pudimos confirmar la inscripción. Intentá nuevamente o consultá con la organización." };

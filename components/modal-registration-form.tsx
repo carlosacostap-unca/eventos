@@ -9,6 +9,8 @@ import type { ActionState } from "@/app/actions/state";
 import { PersonFields } from "./registration-person-fields";
 import type { EditableRegistration, RegistrationPrefillResult } from "@/lib/domain/registration-prefill";
 import { ExhibitionMemberships, LinkedRegistrationForm } from "./linked-registration-form";
+import { PresentationFileInput } from "./presentation-file-input";
+import type { PresentationInfo } from "@/lib/domain/presentations";
 
 const emptyPerson = (): PersonSubmission => ({ nombres: "", apellidos: "", documento: "", email: "", respuestas: {} });
 export function ModalRegistrationForm({ eventId, modes, operation, presencial = false, isFull = false }: { eventId: string; modes: PublicModality[]; operation: string; presencial?: boolean; isFull?: boolean }) {
@@ -60,7 +62,7 @@ function PublicModalRegistrationForm({ eventId, modes, operation }: { eventId: s
     <h2>Inscribite o actualizá tu inscripción</h2>
     <p className="muted">{registration?.linked && !addingWork ? "Consultá tu exposición y revisá tus datos de inscripción." : ready && registration?.canAddExhibition ? "Podés editar uno de tus trabajos o inscribir otra exposición." : "Primero ingresá tu DNI. Si ya estás inscripto en este evento, podrás revisar tus datos y cambiar la modalidad."}</p>
     {registration?.linked && !addingWork ? <LinkedRegistrationForm key={lookupVersion} eventId={eventId} registration={registration} person={person} setPerson={setPerson} ready={ready} message={lookupMessage} onLookup={lookedUp} onReadyChange={identityReady} onAddExhibition={registration.canAddExhibition ? addWork : undefined} /> : <ConfiguredForm key={selected + "-" + lookupVersion + "-" + exhibitionChoice} eventId={eventId} mode={mode} operation={operation + "-" + selected + "-" + lookupVersion + "-" + (exhibitionChoice || "initial")} presencial={false} isFull={false} initial={initial}
-      publicIdentity={{ person, setPerson, ready, lookupMessage, onLookup: lookedUp, onReadyChange: identityReady, editToken: ready ? registration?.token : undefined, exhibitionId: sameMode ? chosenExhibition?.id : undefined, newExhibition: addingWork }}
+      publicIdentity={{ person, setPerson, ready, lookupMessage, onLookup: lookedUp, onReadyChange: identityReady, editToken: ready ? registration?.token : undefined, exhibitionId: sameMode ? chosenExhibition?.id : undefined, newExhibition: addingWork }} presentation={sameMode ? chosenExhibition?.presentation : undefined}
       modeSelector={ready ? <>
         {registration?.participations?.length ? <ExhibitionMemberships participations={registration.participations} /> : null}
         {registration?.canAddExhibition && <>
@@ -84,11 +86,17 @@ function WalkInModalRegistrationForm({ eventId, modes, operation, isFull }: { ev
     <ConfiguredForm key={selected} eventId={eventId} mode={mode} operation={operation + "-" + selected} presencial={true} isFull={isFull} />
   </div>;
 }
-export function ConfiguredForm({ eventId, mode, operation, presencial, isFull, initial, saveAction, publicIdentity, modeSelector, submitLabel }: { eventId: string; mode: PublicModality; operation: string; presencial: boolean; isFull: boolean; initial?: { principal: PersonSubmission; integrantes: Array<PersonSubmission & { funcion: string }> }; saveAction?: (state: ActionState, data: FormData) => Promise<ActionState>; publicIdentity?: { person: PersonSubmission; setPerson: Dispatch<SetStateAction<PersonSubmission>>; ready: boolean; lookupMessage: string; onLookup: (result: RegistrationPrefillResult) => void; onReadyChange: (ready: boolean) => void; editToken?: string; exhibitionId?: string; newExhibition?: boolean }; modeSelector?: React.ReactNode; submitLabel?: string }) {
+export function ConfiguredForm({ eventId, mode, operation, presencial, isFull, initial, saveAction, publicIdentity, modeSelector, submitLabel, presentation }: { eventId: string; mode: PublicModality; operation: string; presencial: boolean; isFull: boolean; initial?: { principal: PersonSubmission; integrantes: Array<PersonSubmission & { funcion: string }> }; saveAction?: (state: ActionState, data: FormData) => Promise<ActionState>; publicIdentity?: { person: PersonSubmission; setPerson: Dispatch<SetStateAction<PersonSubmission>>; ready: boolean; lookupMessage: string; onLookup: (result: RegistrationPrefillResult) => void; onReadyChange: (ready: boolean) => void; editToken?: string; exhibitionId?: string; newExhibition?: boolean }; modeSelector?: React.ReactNode; submitLabel?: string; presentation?: PresentationInfo }) {
   const [principal, setPrincipal] = useState(() => initial?.principal ?? emptyPerson());
   const [principalReady, setPrincipalReady] = useState(Boolean(initial));
   const [members, setMembers] = useState(() => (initial?.integrantes ?? mode.definition.roles.flatMap((role) => Array.from({ length: role.min }, () => ({ ...emptyPerson(), funcion: role.id })))).map((person) => ({ ...person, formKey: crypto.randomUUID() })));
-  const [state, action, pending] = useActionState(saveAction ?? registerConfiguredAction.bind(null, eventId, presencial), initialActionState);
+  const [file, setFile] = useState<File | null>(null);
+  const [fileError, setFileError] = useState<string>();
+  const [state, action, pending] = useActionState(async (previous: ActionState, data: FormData) => {
+    if (fileError) return { message: fileError };
+    if (file) data.set("presentacion", file);
+    return (saveAction ?? registerConfiguredAction.bind(null, eventId, presencial))(previous, data);
+  }, initialActionState);
   const payload = { modalidad: mode.id, version: mode.version, operacion: operation, principal: publicIdentity ? { ...publicIdentity.person, respuestas: principal.respuestas } : principal, integrantes: members.map(({ nombres, apellidos, documento, email, respuestas, funcion }) => ({ nombres, apellidos, documento, email, respuestas, funcion })) };
   const identityReady = publicIdentity ? publicIdentity.ready : principalReady || saveAction;
   function answers(index: number, value: Answers) { setMembers(members.map((p, i) => i === index ? { ...p, respuestas: value } : p)); }
@@ -103,11 +111,13 @@ export function ConfiguredForm({ eventId, mode, operation, presencial, isFull, i
       {publicIdentity?.editToken && <input type="hidden" name="editToken" value={publicIdentity.editToken} />}
       {publicIdentity?.exhibitionId && <input type="hidden" name="exhibitionId" value={publicIdentity.exhibitionId} />}
       {publicIdentity?.newExhibition && <input type="hidden" name="newExhibition" value="true" />}
+      <input type="hidden" name="presentationRevision" value={presentation?.revision ?? ""} />
       <h3>{publicIdentity ? "Tus datos" : mode.definition.principal}</h3>
       {publicIdentity ? <PersonFields person={publicIdentity.person} setPerson={publicIdentity.setPerson} prefix="principal" errors={state.fields} eventId={eventId} initialReady={publicIdentity.ready} initialMessage={publicIdentity.lookupMessage} includeRegistration onLookup={publicIdentity.onLookup} onReadyChange={publicIdentity.onReadyChange} /> : <PersonFields person={principal} setPerson={setPrincipal} prefix="principal" errors={state.fields} eventId={saveAction ? undefined : eventId} onReadyChange={setPrincipalReady} disableAutofill={presencial} />}
       {identityReady && <>
       {modeSelector}
       <ConfiguredFields fields={mode.definition.fields} values={principal.respuestas} onChange={(respuestas) => setPrincipal({ ...principal, respuestas })} prefix="principal.respuestas" errors={state.fields} />
+      {mode.codigo === "expositor" && !saveAction && <PresentationFileInput file={file} current={presentation} error={fileError} onChange={(next, problem) => { setFile(next); setFileError(problem ?? undefined); }} />}
       {mode.definition.roles.map((role) => <section className="form-stack member-section" key={role.id}>
         <h3>{role.label} {role.min > 0 ? "(obligatorio)" : "(opcional)"}</h3>
         <FieldError errors={state.fields?.["grupo." + role.id]} />

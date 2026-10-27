@@ -10,14 +10,17 @@ import { modalityVersion } from "./modalities";
 import { withOperationLock } from "./operation-lock";
 import { verifyRegistrationEdit } from "@/lib/registrations/public-edit-access";
 import { registrationEditSnapshot } from "./public-registration-edit";
+import { preparePresentation } from "./presentation-files";
 
-export async function registerWithModality(eventId: string, raw: unknown, options: { presencial?: boolean; allowOverCapacity?: boolean; strictCapacity?: boolean; adminId?: string; editToken?: string; exhibitionId?: string; newExhibition?: boolean } = {}): Promise<RegistrationRecord> {
+export async function registerWithModality(eventId: string, raw: unknown, options: { presencial?: boolean; allowOverCapacity?: boolean; strictCapacity?: boolean; adminId?: string; editToken?: string; exhibitionId?: string; newExhibition?: boolean; presentation?: File; presentationRevision?: string } = {}): Promise<RegistrationRecord> {
+  const presentation = options.presentation ? await preparePresentation(options.presentation) : undefined;
   const pb = await createServicePocketBase();
   return withOperationLock(pb, "evento:" + eventId, async (assertOwned) => {
     const event = await pb.collection("eventos").getOne<EventRecord>(eventId);
     const modeId = String((raw as Record<string, unknown>)?.modalidad ?? "");
     const mode = await pb.collection("modalidades_inscripcion").getOne<Modality>(modeId);
     if (mode.evento !== eventId || !mode.habilitada) throw new DomainError("CLOSED", "La modalidad no está disponible.");
+    if (presentation && mode.codigo !== "expositor") throw new DomainError("INVALID", "La presentación final está disponible solamente para trabajos de expositores.");
     const rawPrincipal = (raw as { principal?: { documento?: unknown } })?.principal;
     const access = options.editToken ? await verifyRegistrationEdit(options.editToken, eventId, normalizeDocument(String(rawPrincipal?.documento ?? ""))) : undefined;
     if (access && options.presencial) throw new DomainError("INVALID", "La edición pública no permite acreditar personas.");
@@ -35,12 +38,13 @@ export async function registerWithModality(eventId: string, raw: unknown, option
     if (options.newExhibition && version.esquema.certificate !== "grupo") throw new DomainError("INVALID", "La modalidad debe estar configurada para exposiciones con certificado grupal.");
     if ((raw as Record<string, unknown>)?.version !== version.id) throw new DomainError("INVALID", "El formulario cambió. Actualizá la página antes de inscribirte.");
     const input = parseSubmission(version.esquema, raw);
-    const signature = fingerprint({ input, presencial: !!options.presencial, ...(access ? { editToken: options.editToken } : {}), ...(options.exhibitionId ? { exhibitionId: options.exhibitionId } : {}), ...(options.newExhibition ? { newExhibition: true } : {}) });
+    const signature = fingerprint({ input, presencial: !!options.presencial, ...(access ? { editToken: options.editToken } : {}), ...(options.exhibitionId ? { exhibitionId: options.exhibitionId } : {}), ...(options.newExhibition ? { newExhibition: true } : {}), ...(presentation ? { presentation: { hash: presentation.data.presentacion_huella, name: presentation.data.presentacion_nombre } } : {}) });
     const operations = await pb.collection("operaciones_inscripcion").getFullList({ filter: pb.filter("evento = {:eventId} && clave = {:key}", { eventId, key: input.operacion }) });
     if (operations[0]) {
       if (operations[0].huella !== signature) throw new DomainError("INVALID", "La solicitud ya fue utilizada con otros datos.");
       return pb.collection("inscripciones").getOne<RegistrationRecord>(operations[0].participante);
     }
+    if (presentation && previousGroup && (previousGroup.presentacion_huella || previousGroup.presentacion_final || "") !== (options.presentationRevision ?? "")) throw new DomainError("INVALID", "La presentación cambió desde tu consulta. Volvé a buscar tu DNI antes de reemplazarla.");
     const all = await pb.collection("inscripciones").getFullList<RegistrationRecord>({ filter: pb.filter("evento = {:eventId}", { eventId }) });
     const editing = access ? all.find((r) => r.id === access.registrationId && r.documento_normalizado === access.document) : undefined;
     if (access && !editing) throw new DomainError("NOT_FOUND", "La inscripción ya no está disponible. Volvé a buscar tu DNI.");
@@ -87,11 +91,12 @@ export async function registerWithModality(eventId: string, raw: unknown, option
       }
     }
     const exhibitionId = version.esquema.certificate === "grupo" || input.integrantes.length ? previousGroup?.id ?? recordId() : "";
+    if (presentation && !exhibitionId) throw new DomainError("INVALID", "La modalidad debe permitir registrar un trabajo para adjuntar la presentación.");
     if (options.newExhibition && !exhibitionId) throw new DomainError("INVALID", "La modalidad debe permitir registrar exposiciones.");
     for (const link of snapshot?.links.filter((m) => m.exposicion === previousGroup?.id) ?? []) batch.collection("integrantes_exposicion").delete(link.id);
     if (previousGroup && !exhibitionId) batch.collection("exposiciones").delete(previousGroup.id);
     if (exhibitionId) {
-      const groupData = { evento: eventId, modalidad: mode.id, version: version.id, responsable: ids[0], respuestas: input.principal.respuestas };
+      const groupData = { evento: eventId, modalidad: mode.id, version: version.id, responsable: ids[0], respuestas: input.principal.respuestas, ...(presentation ? { presentacion_final: presentation.file, ...presentation.data } : {}) };
       if (previousGroup) batch.collection("exposiciones").update(exhibitionId, groupData);
       else batch.collection("exposiciones").create({ id: exhibitionId, ...groupData });
       people.forEach((person, index) => {
