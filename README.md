@@ -54,6 +54,12 @@ Colecciones creadas:
 
 ## Desarrollo y verificación
 
+### Varios trabajos por alumno expositor
+
+La consulta por DNI permite a un expositor editar uno de sus trabajos o elegir **Inscribir otro trabajo como expositor**. Cada exposición conserva sus respuestas, integrantes y certificado, con una sola identidad, acreditación y reserva por alumno responsable. Los asistentes mantienen su inscripción habitual. Un segundo expositor también puede presentar un trabajo propio, sujeto al cupo si es su primera inscripción como responsable.
+
+Antes del despliegue en una base existente, revisar `npm run schema:multiple-exhibitions` y aplicar `npm run schema:multiple-exhibitions -- --apply` con autorización. La migración ajusta únicamente índices de exposiciones y certificados; no modifica registros, archivos ni credenciales. Ver [modalidades y certificados](docs/modalidades-y-certificados.md).
+
 ### Eventos sin límite de cupo
 
 En **Evento → Configuración → Cupo público**, marcar **Sin límite de cupo** para recibir inscripciones sin cierre por cantidad de participantes. Al desmarcarlo se puede indicar nuevamente una cantidad. Se conserva el último límite numérico y no se eliminan inscripciones al volver a un cupo inferior al total ya registrado; en ese caso las nuevas altas públicas quedan cerradas hasta ampliar el cupo o quitar el límite.

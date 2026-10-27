@@ -11,7 +11,9 @@ import { offersAttendanceCertificate } from "@/lib/domain/event-details";
 import { getEventById } from "@/lib/services/events";
 import { listCertificateRows } from "@/lib/services/certificates";
 import { listRegistrations } from "@/lib/services/registrations";
-import { listModalities } from "@/lib/services/modalities";
+import { listModalities, modalityVersion } from "@/lib/services/modalities";
+import { eventExhibitions } from "@/lib/services/modal-registration";
+import { exhibitionTitle } from "@/lib/domain/modalities";
 
 export default async function CertificatesPage({
   params,
@@ -35,12 +37,18 @@ export default async function CertificatesPage({
   const modes = await listModalities(id);
   const enabled = modes.length ? modes.some((m) => m.entrega) : offersAttendanceCertificate(event);
 
-  const [rows, registrations] = await Promise.all([
+  const [rows, registrations, groups] = await Promise.all([
     listCertificateRows(id),
     listRegistrations(id),
+    modes.length ? eventExhibitions(id) : Promise.resolve({ exhibitions: [], members: [] }),
   ]);
   const accredited = registrations.filter((item) => item.acreditado).length;
-  const pending = registrations.filter((person) => person.tipo_alta !== "vinculada" && !rows.some((row) => row.registration.id === person.id) && (!person.modalidad ? enabled : modes.some((mode) => mode.id === person.modalidad && mode.entrega)));
+  const titles = new Map(await Promise.all(groups.exhibitions.map(async (group) => [group.id, exhibitionTitle((await modalityVersion(group.version)).esquema, group.respuestas)] as const)));
+  const pending = registrations.flatMap((person) => {
+    if (person.tipo_alta === "vinculada" || (person.modalidad ? !modes.some((mode) => mode.id === person.modalidad && mode.entrega) : !enabled)) return [];
+    const owned = groups.exhibitions.filter((group) => group.responsable === person.id);
+    return owned.length ? owned.filter((group) => !rows.some((row) => row.certificate.exposicion === group.id)).map((group) => ({ person, key: group.id, title: titles.get(group.id) })) : rows.some((row) => row.registration.id === person.id && !row.certificate.exposicion) ? [] : [{ person, key: person.id, title: undefined }];
+  });
 
   return (
     <main className="admin-main">
@@ -158,7 +166,7 @@ export default async function CertificatesPage({
         </>
       )}
 
-      {pending.length > 0 && <section className="panel"><h2>Pendientes de emisión</h2><ul>{pending.map((person) => <li key={person.id}><strong>{person.apellidos}, {person.nombres}</strong> · {modes.find((mode) => mode.id === person.modalidad)?.nombre ?? "Asistente"} · {person.acreditado ? "Listo para generar" : "Pendiente de acreditación de la persona principal"}</li>)}</ul></section>}
+      {pending.length > 0 && <section className="panel"><h2>Pendientes de emisión</h2><ul>{pending.map(({ person, key, title }) => <li key={key}><strong>{person.apellidos}, {person.nombres}</strong> · {title ?? modes.find((mode) => mode.id === person.modalidad)?.nombre ?? "Asistente"} · {person.acreditado ? "Listo para generar" : "Pendiente de acreditación de la persona principal"}</li>)}</ul></section>}
       <section className="panel">
         <div className="section-heading compact">
           <div>
@@ -180,13 +188,14 @@ export default async function CertificatesPage({
               </tr>
             </thead>
             <tbody>
-              {rows.map(({ registration, certificate, stale, eligible, members }) => (
+              {rows.map(({ registration, certificate, stale, eligible, members, exhibitionTitle }) => (
                 <tr key={certificate.id}>
                   <td>
                     <strong>
                       {registration.apellidos}, {registration.nombres}
                     </strong>
                     <small>{registration.email}</small>
+                    {exhibitionTitle && <small><strong>{exhibitionTitle}</strong></small>}
                     {members?.map((member) => <small key={member}>{member}</small>)}
                     <small>{certificate.alcance === "grupo" ? "PDF compartido de exposición" : "Certificado individual"}{stale ? " · Pendiente de regeneración" : eligible === false ? " · No habilitado" : ""}</small>
                   </td>

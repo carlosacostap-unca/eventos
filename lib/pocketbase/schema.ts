@@ -1,6 +1,7 @@
 import type { CollectionModel } from "pocketbase";
 import { MATERIAL_MAX_BYTES } from "../domain/materials";
 import { modalityCollections, registrationModalityFields, certificateModalityFields } from "./modalities-schema";
+import { INDIVIDUAL_CERTIFICATE_INDEX } from "./multiple-exhibitions-schema";
 
 export const COLLECTION_IDS = {
   administradores: "evadmin00000001",
@@ -316,7 +317,7 @@ export const pocketBaseSchema = [
       { name: "generado_en", type: "date", required: true },
     ],
     indexes: [
-      "CREATE UNIQUE INDEX idx_certificados_inscripcion ON certificados (inscripcion)",
+        INDIVIDUAL_CERTIFICATE_INDEX,
     ],
   },
   {

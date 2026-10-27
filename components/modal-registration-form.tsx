@@ -23,12 +23,17 @@ function PublicModalRegistrationForm({ eventId, modes, operation }: { eventId: s
   const [registration, setRegistration] = useState<EditableRegistration>();
   const [lookupVersion, setLookupVersion] = useState(0);
   const [lookupMessage, setLookupMessage] = useState("");
+  const [exhibitionChoice, setExhibitionChoice] = useState("");
+  const addingWork = exhibitionChoice === "new" && Boolean(registration?.canAddExhibition);
+  const chosenExhibition = registration?.exhibitions?.find((group) => group.id === exhibitionChoice);
   const publishedMode = modes.find((m) => m.id === selected);
-  const mode = publishedMode && registration?.modalidad === selected && registration.definition ? { ...publishedMode, version: registration.version, definition: registration.definition } : publishedMode;
+  const savedDefinition = chosenExhibition?.definition ?? registration?.definition;
+  const mode = publishedMode && !addingWork && registration?.modalidad === selected && savedDefinition ? { ...publishedMode, version: chosenExhibition?.version ?? registration!.version, definition: savedDefinition } : publishedMode;
   if (!mode) return <div className="panel">No hay modalidades de inscripción disponibles.</div>;
   function lookedUp(result: RegistrationPrefillResult) {
     setRegistration(result.registration);
     setLookupMessage(result.message);
+    setExhibitionChoice(result.registration?.exhibitions?.[0]?.id ?? "");
     if (result.registration && modes.some((m) => m.id === result.registration!.modalidad)) setSelected(result.registration.modalidad);
     setLookupVersion((value) => value + 1);
   }
@@ -36,23 +41,35 @@ function PublicModalRegistrationForm({ eventId, modes, operation }: { eventId: s
     setReady(value);
     if (!value) setLookupMessage("");
   }
-  const sameMode = ready && registration?.modalidad === selected;
+  function addWork() {
+    setSelected(registration!.modalidad);
+    setExhibitionChoice("new");
+  }
+  const sameMode = ready && !addingWork && registration?.modalidad === selected;
+  const savedPrincipal = chosenExhibition?.principal ?? registration?.principal;
+  const savedMembers = chosenExhibition?.integrantes ?? registration?.integrantes ?? [];
   const allowedAnswers = (value: Answers, ids: string[]) => Object.fromEntries(Object.entries(value).filter(([id]) => ids.includes(id)));
   const initial = {
-    principal: { ...person, respuestas: sameMode ? allowedAnswers(registration.principal.respuestas, mode.definition.fields.map((f) => f.id)) : {} },
+    principal: { ...person, respuestas: sameMode ? allowedAnswers(savedPrincipal!.respuestas, mode.definition.fields.map((f) => f.id)) : {} },
     integrantes: sameMode ? mode.definition.roles.flatMap((role) => {
-      const saved = registration.integrantes.filter((p) => p.funcion === role.id).slice(0, role.max).map((p) => ({ ...p, respuestas: allowedAnswers(p.respuestas, role.fields.map((f) => f.id)) }));
+      const saved = savedMembers.filter((p) => p.funcion === role.id).slice(0, role.max).map((p) => ({ ...p, respuestas: allowedAnswers(p.respuestas, role.fields.map((f) => f.id)) }));
       return [...saved, ...Array.from({ length: Math.max(0, role.min - saved.length) }, () => ({ ...emptyPerson(), funcion: role.id }))];
     }) : mode.definition.roles.flatMap((role) => Array.from({ length: role.min }, () => ({ ...emptyPerson(), funcion: role.id }))),
   };
   return <div className="panel form-stack">
     <h2>Inscribite o actualizá tu inscripción</h2>
-    <p className="muted">{registration?.linked ? "Consultá tu exposición y revisá tus datos de inscripción." : "Primero ingresá tu DNI. Si ya estás inscripto en este evento, podrás revisar tus datos y cambiar la modalidad."}</p>
-    {registration?.linked ? <LinkedRegistrationForm key={lookupVersion} eventId={eventId} registration={registration} person={person} setPerson={setPerson} ready={ready} message={lookupMessage} onLookup={lookedUp} onReadyChange={identityReady} /> : <ConfiguredForm key={selected + "-" + lookupVersion} eventId={eventId} mode={mode} operation={operation + "-" + selected + "-" + lookupVersion} presencial={false} isFull={false} initial={initial}
-      publicIdentity={{ person, setPerson, ready, lookupMessage, onLookup: lookedUp, onReadyChange: identityReady, editToken: ready ? registration?.token : undefined }}
+    <p className="muted">{registration?.linked && !addingWork ? "Consultá tu exposición y revisá tus datos de inscripción." : ready && registration?.canAddExhibition ? "Podés editar uno de tus trabajos o inscribir otra exposición." : "Primero ingresá tu DNI. Si ya estás inscripto en este evento, podrás revisar tus datos y cambiar la modalidad."}</p>
+    {registration?.linked && !addingWork ? <LinkedRegistrationForm key={lookupVersion} eventId={eventId} registration={registration} person={person} setPerson={setPerson} ready={ready} message={lookupMessage} onLookup={lookedUp} onReadyChange={identityReady} onAddExhibition={registration.canAddExhibition ? addWork : undefined} /> : <ConfiguredForm key={selected + "-" + lookupVersion + "-" + exhibitionChoice} eventId={eventId} mode={mode} operation={operation + "-" + selected + "-" + lookupVersion + "-" + (exhibitionChoice || "initial")} presencial={false} isFull={false} initial={initial}
+      publicIdentity={{ person, setPerson, ready, lookupMessage, onLookup: lookedUp, onReadyChange: identityReady, editToken: ready ? registration?.token : undefined, exhibitionId: sameMode ? chosenExhibition?.id : undefined, newExhibition: addingWork }}
       modeSelector={ready ? <>
         {registration?.participations?.length ? <ExhibitionMemberships participations={registration.participations} /> : null}
-        {modes.length > 1 && <label className="field"><span>Modalidad de inscripción</span><select value={selected} onChange={(e) => setSelected(e.target.value)}>{modes.map((m) => <option key={m.id} value={m.id}>{m.nombre}</option>)}</select></label>}
+        {registration?.canAddExhibition && <>
+          {Boolean(registration.exhibitions?.length) && <label className="field"><span>Trabajo que querés editar</span><select value={addingWork ? "new" : exhibitionChoice} onChange={(event) => { setExhibitionChoice(event.target.value); setSelected(registration.modalidad); }}>{registration.exhibitions!.map((group) => <option key={group.id} value={group.id}>{group.title}</option>)}<option value="new">Inscribir otro trabajo</option></select></label>}
+          {!addingWork && <button type="button" className="button button-secondary" onClick={(event) => { event.preventDefault(); addWork(); }}>Inscribir otro trabajo como expositor</button>}
+          {addingWork && <p role="status">Nuevo trabajo: completá los datos de esta exposición y sus integrantes.</p>}
+          {addingWork && registration.linked && <button type="button" className="button button-secondary" onClick={(event) => { event.preventDefault(); setExhibitionChoice(""); }}>Volver a mi inscripción</button>}
+        </>}
+        {!addingWork && modes.length > 1 && (registration?.exhibitions?.length ?? 0) <= 1 && <label className="field"><span>Modalidad de inscripción</span><select value={selected} onChange={(e) => setSelected(e.target.value)}>{modes.map((m) => <option key={m.id} value={m.id}>{m.nombre}</option>)}</select></label>}
       </> : undefined} />}
   </div>;
 }
@@ -67,7 +84,7 @@ function WalkInModalRegistrationForm({ eventId, modes, operation, isFull }: { ev
     <ConfiguredForm key={selected} eventId={eventId} mode={mode} operation={operation + "-" + selected} presencial={true} isFull={isFull} />
   </div>;
 }
-export function ConfiguredForm({ eventId, mode, operation, presencial, isFull, initial, saveAction, publicIdentity, modeSelector }: { eventId: string; mode: PublicModality; operation: string; presencial: boolean; isFull: boolean; initial?: { principal: PersonSubmission; integrantes: Array<PersonSubmission & { funcion: string }> }; saveAction?: (state: ActionState, data: FormData) => Promise<ActionState>; publicIdentity?: { person: PersonSubmission; setPerson: Dispatch<SetStateAction<PersonSubmission>>; ready: boolean; lookupMessage: string; onLookup: (result: RegistrationPrefillResult) => void; onReadyChange: (ready: boolean) => void; editToken?: string }; modeSelector?: React.ReactNode }) {
+export function ConfiguredForm({ eventId, mode, operation, presencial, isFull, initial, saveAction, publicIdentity, modeSelector }: { eventId: string; mode: PublicModality; operation: string; presencial: boolean; isFull: boolean; initial?: { principal: PersonSubmission; integrantes: Array<PersonSubmission & { funcion: string }> }; saveAction?: (state: ActionState, data: FormData) => Promise<ActionState>; publicIdentity?: { person: PersonSubmission; setPerson: Dispatch<SetStateAction<PersonSubmission>>; ready: boolean; lookupMessage: string; onLookup: (result: RegistrationPrefillResult) => void; onReadyChange: (ready: boolean) => void; editToken?: string; exhibitionId?: string; newExhibition?: boolean }; modeSelector?: React.ReactNode }) {
   const [principal, setPrincipal] = useState(() => initial?.principal ?? emptyPerson());
   const [principalReady, setPrincipalReady] = useState(Boolean(initial));
   const [members, setMembers] = useState(() => (initial?.integrantes ?? mode.definition.roles.flatMap((role) => Array.from({ length: role.min }, () => ({ ...emptyPerson(), funcion: role.id })))).map((person) => ({ ...person, formKey: crypto.randomUUID() })));
@@ -84,6 +101,8 @@ export function ConfiguredForm({ eventId, mode, operation, presencial, isFull, i
     {!state.ok && <>
       <input type="hidden" name="payload" value={JSON.stringify(payload)} />
       {publicIdentity?.editToken && <input type="hidden" name="editToken" value={publicIdentity.editToken} />}
+      {publicIdentity?.exhibitionId && <input type="hidden" name="exhibitionId" value={publicIdentity.exhibitionId} />}
+      {publicIdentity?.newExhibition && <input type="hidden" name="newExhibition" value="true" />}
       <h3>{publicIdentity ? "Tus datos" : mode.definition.principal}</h3>
       {publicIdentity ? <PersonFields person={publicIdentity.person} setPerson={publicIdentity.setPerson} prefix="principal" errors={state.fields} eventId={eventId} initialReady={publicIdentity.ready} initialMessage={publicIdentity.lookupMessage} includeRegistration onLookup={publicIdentity.onLookup} onReadyChange={publicIdentity.onReadyChange} /> : <PersonFields person={principal} setPerson={setPrincipal} prefix="principal" errors={state.fields} eventId={saveAction ? undefined : eventId} onReadyChange={setPrincipalReady} />}
       {identityReady && <>
@@ -101,7 +120,7 @@ export function ConfiguredForm({ eventId, mode, operation, presencial, isFull, i
       </section>)}
       {presencial && isFull && <label className="confirmation-check"><input name="confirmarExcepcion" type="checkbox" required />Confirmo el alta excepcional por encima del cupo.</label>}
       <p className="privacy-note">Usaremos estos datos para gestionar la inscripción, acreditación y los recursos del evento. {mode.definition.certificate === "grupo" && "Los integrantes compartirán un certificado que se habilitará cuando se acredite la persona responsable."}</p>
-      <button className="button button-primary" disabled={pending}>{pending ? "Guardando…" : saveAction ? "Guardar integrantes y respuestas" : presencial ? "Agregar y acreditar" : publicIdentity?.editToken ? "Guardar cambios en mi inscripción" : "Confirmar inscripción"}</button>
+      <button className="button button-primary" disabled={pending}>{pending ? "Guardando…" : saveAction ? "Guardar integrantes y respuestas" : presencial ? "Agregar y acreditar" : publicIdentity?.newExhibition ? "Confirmar nueva exposición" : publicIdentity?.exhibitionId ? "Guardar cambios en esta exposición" : publicIdentity?.editToken ? "Guardar cambios en mi inscripción" : "Confirmar inscripción"}</button>
       </>}
     </>}
   </form>;

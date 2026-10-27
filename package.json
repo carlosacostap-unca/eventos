@@ -15,6 +15,7 @@
     "schema:event-roles": "tsx scripts/migrate-event-roles.ts",
     "schema:materials": "tsx scripts/setup-materials.ts",
     "schema:modalities": "tsx scripts/migrate-modalities.ts",
+    "schema:multiple-exhibitions": "tsx scripts/migrate-multiple-exhibitions.ts",
     "schema:modalities-check": "tsx scripts/check-modality-batch.ts",
     "schema:public-page": "tsx scripts/migrate-public-event-page.ts",
     "schema:unlimited-capacity": "tsx scripts/migrate-unlimited-capacity.ts",

@@ -40,13 +40,15 @@ export async function registerConfiguredAction(eventId: string, presencial: bool
   const raw = String(data.get("payload") ?? "");
   if (raw.length > 200000) return { message: "El formulario supera el tamaño permitido." };
   const editToken = !presencial ? String(data.get("editToken") ?? "") : "";
-  try { await registerWithModality(eventId, JSON.parse(raw), { presencial, allowOverCapacity: admin?.eventRole === "administrador_evento" && data.get("confirmarExcepcion") === "on", strictCapacity: admin?.eventRole === "acreditador", adminId: admin?.adminId, ...(editToken ? { editToken } : {}) }); }
+  const exhibitionId = !presencial ? String(data.get("exhibitionId") ?? "") : "";
+  const newExhibition = !presencial && data.get("newExhibition") === "true";
+  try { await registerWithModality(eventId, JSON.parse(raw), { presencial, allowOverCapacity: admin?.eventRole === "administrador_evento" && data.get("confirmarExcepcion") === "on", strictCapacity: admin?.eventRole === "acreditador", adminId: admin?.adminId, ...(editToken ? { editToken } : {}), ...(exhibitionId ? { exhibitionId } : {}), ...(newExhibition ? { newExhibition } : {}) }); }
   catch (e) {
     if (e instanceof FormValidationError) return { message: e.message, fields: e.fields };
     return { message: e instanceof DomainError ? e.message : "No pudimos confirmar la inscripción. Intentá nuevamente o consultá con la organización." };
   }
   await refreshEvent(eventId);
-  return { ok: true, message: presencial ? "La inscripción se guardó y la persona principal quedó acreditada." : editToken ? "Tu inscripción fue actualizada. Guardamos tus datos y la modalidad elegida." : "Tu inscripción quedó confirmada. Te esperamos en el evento." };
+  return { ok: true, message: presencial ? "La inscripción se guardó y la persona principal quedó acreditada." : newExhibition ? "Tu nuevo trabajo quedó inscripto. Tus otras exposiciones se conservan." : editToken ? "Tu inscripción fue actualizada. Guardamos tus datos y la modalidad elegida." : "Tu inscripción quedó confirmada. Te esperamos en el evento." };
 }
 
 export async function updateExhibitionAction(eventId: string, groupId: string, _state: ActionState, data: FormData): Promise<ActionState> {

@@ -18,6 +18,17 @@ export type EditableRegistration = {
   integrantes: Array<PersonSubmission & { funcion: string }>;
   linked?: boolean;
   participations?: ExhibitionParticipation[];
+  exhibitions?: EditableExhibition[];
+  canAddExhibition?: boolean;
+};
+
+export type EditableExhibition = {
+  id: string;
+  title: string;
+  version: string;
+  definition: FormDefinition;
+  principal: PersonSubmission;
+  integrantes: Array<PersonSubmission & { funcion: string }>;
 };
 
 export type ExhibitionParticipation = {

@@ -297,6 +297,7 @@ export async function updateRegistration(
     let updated: RegistrationRecord;
     if (extra.respuestas) {
       const groups = await pb.collection("exposiciones").getFullList({ filter: pb.filter("evento = {:eventId} && responsable = {:id}", { eventId, id: registrationId }) });
+      if (groups.length > 1) throw new DomainError("INVALID", "Editá los datos de cada trabajo desde Exposiciones para conservar los demás trabajos.");
       const batch = pb.createBatch();
       batch.collection("inscripciones").update(registrationId, data);
       for (const group of groups) {

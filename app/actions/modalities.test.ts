@@ -36,6 +36,15 @@ it("envía el permiso de edición pública y confirma la actualización", async 
   expect(mocks.admin).not.toHaveBeenCalled();
 });
 
+it("distingue el alta de otro trabajo de la edición de una exposición", async () => {
+  const data = new FormData(); data.set("payload", "{}"); data.set("editToken", "signed"); data.set("newExhibition", "true");
+  expect(await registerConfiguredAction("event", false, {}, data)).toMatchObject({ ok: true, message: expect.stringContaining("nuevo trabajo") });
+  expect(mocks.register).toHaveBeenLastCalledWith("event", {}, expect.objectContaining({ newExhibition: true }));
+  data.delete("newExhibition"); data.set("exhibitionId", "group");
+  await registerConfiguredAction("event", false, {}, data);
+  expect(mocks.register).toHaveBeenLastCalledWith("event", {}, expect.objectContaining({ exhibitionId: "group" }));
+});
+
 it("permite al integrante editar sus datos con su permiso sin crear una exposición", async () => {
   const person = { nombres: "Ana", apellidos: "Pérez", documento: "12345678", email: "ana@example.com" };
   const data = new FormData(); data.set("payload", JSON.stringify(person)); data.set("editToken", "linked-token");

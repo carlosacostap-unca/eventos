@@ -22,8 +22,9 @@ export async function participantCsv(eventId: string, filters: RegistrationFilte
   for (const group of exhibitions) {
     const principal = all.find((p) => p.id === group.responsable)!;
     const version = await modalityVersion(group.version);
-    const subject = await certificateSubject(pb, event, principal);
-    const certs = await pb.collection("certificados").getFullList({ filter: pb.filter("exposicion = {:id}", { id: group.id }) });
+    const shared = version.esquema.certificate === "grupo";
+    const subject = await certificateSubject(pb, event, principal, shared ? group.id : undefined);
+    const certs = await pb.collection("certificados").getFullList({ filter: shared ? pb.filter("exposicion = {:id}", { id: group.id }) : pb.filter('inscripcion = {:id} && exposicion = ""', { id: principal.id }) });
     const cert = certs[0];
     const state = !subject?.eligible ? "No habilitado" : !cert ? "Sin emitir" : cert.huella && cert.huella !== subject.hash ? "Pendiente de regeneración" : "Emitido";
     for (const member of members.filter((m) => m.exposicion === group.id)) {

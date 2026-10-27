@@ -31,7 +31,8 @@ export async function updateExhibition(eventId: string, exhibitionId: string, ra
       batch.collection("integrantes_exposicion").create({ exposicion: exhibitionId, participante: id, funcion: person.funcion, etiqueta: role?.label ?? version.esquema.principal, orden: i, respuestas: person.respuestas });
     });
     batch.collection("exposiciones").update(exhibitionId, { respuestas: input.principal.respuestas });
-    batch.collection("inscripciones").update(principal.id, { respuestas: input.principal.respuestas });
+    const owned = await pb.collection("exposiciones").getFullList<Exhibition>({ filter: pb.filter("evento = {:event} && responsable = {:id}", { event: eventId, id: principal.id }) });
+    if (owned.length === 1) batch.collection("inscripciones").update(principal.id, { respuestas: input.principal.respuestas });
     batch.collection("auditoria").create({ administrador: adminId, accion: "exposicion.editada", entidad: "exposicion", entidad_id: exhibitionId, datos: { evento: eventId, campos: ["integrantes", "respuestas"] } });
     await assertOwned();
     await batch.send();

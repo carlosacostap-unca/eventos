@@ -19,7 +19,7 @@ export function ExhibitionMemberships({ participations }: { participations: Exhi
   </section>;
 }
 
-export function LinkedRegistrationForm({ eventId, registration, person, setPerson, ready, message, onLookup, onReadyChange }: {
+export function LinkedRegistrationForm({ eventId, registration, person, setPerson, ready, message, onLookup, onReadyChange, onAddExhibition }: {
   eventId: string;
   registration: EditableRegistration;
   person: PersonSubmission;
@@ -28,6 +28,7 @@ export function LinkedRegistrationForm({ eventId, registration, person, setPerso
   message: string;
   onLookup: (result: RegistrationPrefillResult) => void;
   onReadyChange: (ready: boolean) => void;
+  onAddExhibition?: () => void;
 }) {
   const [editing, setEditing] = useState(false);
   const [kept, setKept] = useState(false);
@@ -41,6 +42,7 @@ export function LinkedRegistrationForm({ eventId, registration, person, setPerso
     {!state.ok && <PersonFields person={person} setPerson={setPerson} eventId={eventId} prefix="principal" errors={state.fields} initialReady={ready} initialMessage={message} identityReadOnly={!editing} includeRegistration onLookup={onLookup} onReadyChange={onReadyChange} />}
     {ready && <>
       <ExhibitionMemberships participations={registration.participations ?? []} />
+      {onAddExhibition && <button type="button" className="button button-secondary" onClick={(event) => { event.preventDefault(); onAddExhibition(); }}>Inscribir otro trabajo como expositor</button>}
       {!state.ok && <>
         {kept && <p role="status">Tu inscripción sigue confirmada en la misma exposición. No necesitás volver a inscribirte.</p>}
         {editing ? <button key="save" type="submit" className="button button-primary" disabled={pending}>{pending ? "Guardando…" : "Guardar cambios en mis datos"}</button> : <button key="edit" type="button" className="button button-primary" onClick={(event) => { event.preventDefault(); setEditing(true); setKept(false); }}>Modificar mis datos</button>}

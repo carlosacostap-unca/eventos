@@ -119,7 +119,7 @@ export default async function AccreditationPage({
                     </SubmitButton>
                   </form>
                   {canManage && <div className="participant-edit">
-                    <RegistrationEditForm registration={registration} fields={versions.get(registration.version_formulario ?? "")?.esquema.fields} />
+                    <RegistrationEditForm registration={registration} fields={groups.exhibitions.filter((group) => group.responsable === registration.id).length > 1 ? [] : versions.get(registration.version_formulario ?? "")?.esquema.fields} />
                   </div>}
                 </article>
               ))

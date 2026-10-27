@@ -6,7 +6,7 @@ import { DomainError } from "@/lib/domain/errors";
 import { getRegistrationAvailability } from "@/lib/domain/events";
 import type { RegistrationInput, EventRecord } from "@/lib/domain/models";
 import type { EditableRegistration } from "@/lib/domain/registration-prefill";
-import type { Exhibition, ExhibitionMember } from "@/lib/domain/modalities";
+import { exhibitionTitle, SECOND_EXHIBITOR_ROLE, type Modality, type Exhibition, type ExhibitionMember } from "@/lib/domain/modalities";
 import { createServicePocketBase } from "@/lib/pocketbase/client";
 import { signRegistrationEdit, verifyRegistrationEdit } from "@/lib/registrations/public-edit-access";
 import { modalityVersion } from "./modalities";
@@ -16,6 +16,7 @@ export async function registrationEditSnapshot(registration: RegistrationRecord)
   const pb = await createServicePocketBase();
   const groups = registration.modalidad ? await pb.collection("exposiciones").getFullList<Exhibition>({
     filter: pb.filter("evento = {:event} && responsable = {:id}", { event: registration.evento, id: registration.id }),
+    sort: "created,id",
   }) : [];
   const membershipFilters = [pb.filter("participante = {:id}", { id: registration.id }), ...groups.map((g) => pb.filter("exposicion = {:id}", { id: g.id }))];
   const members = registration.modalidad ? await pb.collection("integrantes_exposicion").getFullList<ExhibitionMember>({ filter: membershipFilters.join(" || ") }) : [];
@@ -38,11 +39,17 @@ export async function findEditableRegistration(document: string, eventId: string
   if (!registration) return;
   const snapshot = await registrationEditSnapshot(registration);
   // Los datos de otros eventos nunca se incluyen en la edición.
-  const integrantes: EditableRegistration["integrantes"] = [];
-  for (const link of snapshot.links.filter((m) => m.funcion !== "principal").sort((a, b) => a.orden - b.orden)) {
-    const member = await pb.collection("inscripciones").getOne<RegistrationRecord>(link.participante);
-    if (member.evento !== eventId) continue;
-    integrantes.push({ ...registrationInputSchema.parse(member), funcion: link.funcion, respuestas: link.respuestas ?? {} });
+  const exhibitions: NonNullable<EditableRegistration["exhibitions"]> = [];
+  for (const group of snapshot.groups) {
+    const version = await modalityVersion(group.version);
+    const integrantes: EditableRegistration["integrantes"] = [];
+    for (const link of snapshot.links.filter((m) => m.exposicion === group.id && m.funcion !== "principal").sort((a, b) => a.orden - b.orden)) {
+      const member = await pb.collection("inscripciones").getOne<RegistrationRecord>(link.participante);
+      if (member.evento !== eventId) continue;
+      integrantes.push({ ...registrationInputSchema.parse(member), funcion: link.funcion, respuestas: link.respuestas ?? {} });
+    }
+    const answers = group.respuestas ?? (snapshot.groups.length === 1 ? registration.respuestas : undefined) ?? {};
+    exhibitions.push({ id: group.id, title: exhibitionTitle(version.esquema, answers), version: group.version, definition: version.esquema, principal: { ...registrationInputSchema.parse(registration), respuestas: answers }, integrantes });
   }
   const participations: NonNullable<EditableRegistration["participations"]> = [];
   for (const link of snapshot.otherMemberships) {
@@ -51,14 +58,18 @@ export async function findEditableRegistration(document: string, eventId: string
     const principal = await pb.collection("inscripciones").getOne<RegistrationRecord>(group.responsable);
     if (principal.evento !== eventId) continue;
     const version = await modalityVersion(group.version);
-    const titleField = version.esquema.fields.find((field) => field.id === "titulo_trabajo") ?? version.esquema.fields.find((field) => field.type === "text" && /título/i.test(field.label));
-    participations.push({ title: titleField ? String(group.respuestas?.[titleField.id] ?? "Exposición sin título") : "Exposición", principalName: principal.apellidos + ", " + principal.nombres, role: link.etiqueta });
+    participations.push({ title: exhibitionTitle(version.esquema, group.respuestas), principalName: principal.apellidos + ", " + principal.nombres, role: link.etiqueta });
   }
+  const mode = registration.modalidad ? await pb.collection("modalidades_inscripcion").getOne<Modality>(registration.modalidad) : undefined;
+  const published = mode?.codigo === "expositor" && mode.habilitada ? await modalityVersion(mode.version_publicada) : undefined;
+  const first = exhibitions[0];
   return {
     token: await signRegistrationEdit({ eventId, registrationId: registration.id, document: normalizeDocument(document), revision: snapshot.revision }),
-    modalidad: registration.modalidad ?? "legacy", version: registration.version_formulario ?? "legacy",
-    ...(registration.version_formulario ? { definition: (await modalityVersion(registration.version_formulario)).esquema } : {}),
-    principal: { ...registrationInputSchema.parse(registration), respuestas: registration.respuestas ?? {} }, integrantes,
+    modalidad: registration.modalidad ?? "legacy", version: first?.version ?? registration.version_formulario ?? "legacy",
+    ...(first ? { definition: first.definition } : registration.version_formulario ? { definition: (await modalityVersion(registration.version_formulario)).esquema } : {}),
+    principal: first?.principal ?? { ...registrationInputSchema.parse(registration), respuestas: registration.respuestas ?? {} }, integrantes: first?.integrantes ?? [],
+    exhibitions,
+    canAddExhibition: published?.esquema.certificate === "grupo" && (snapshot.groups.length > 0 || snapshot.otherMemberships.some((link) => link.funcion === SECOND_EXHIBITOR_ROLE)),
     ...(participations.length ? { participations, linked: registration.tipo_alta === "vinculada" && !snapshot.groups.length } : {}),
   };
 }

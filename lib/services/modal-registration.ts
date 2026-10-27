@@ -11,7 +11,7 @@ import { withOperationLock } from "./operation-lock";
 import { verifyRegistrationEdit } from "@/lib/registrations/public-edit-access";
 import { registrationEditSnapshot } from "./public-registration-edit";
 
-export async function registerWithModality(eventId: string, raw: unknown, options: { presencial?: boolean; allowOverCapacity?: boolean; strictCapacity?: boolean; adminId?: string; editToken?: string } = {}): Promise<RegistrationRecord> {
+export async function registerWithModality(eventId: string, raw: unknown, options: { presencial?: boolean; allowOverCapacity?: boolean; strictCapacity?: boolean; adminId?: string; editToken?: string; exhibitionId?: string; newExhibition?: boolean } = {}): Promise<RegistrationRecord> {
   const pb = await createServicePocketBase();
   return withOperationLock(pb, "evento:" + eventId, async (assertOwned) => {
     const event = await pb.collection("eventos").getOne<EventRecord>(eventId);
@@ -23,10 +23,19 @@ export async function registerWithModality(eventId: string, raw: unknown, option
     if (access && options.presencial) throw new DomainError("INVALID", "La edición pública no permite acreditar personas.");
     const current = access ? await pb.collection("inscripciones").getOne<RegistrationRecord>(access.registrationId) : undefined;
     if (current && (current.evento !== eventId || current.documento_normalizado !== access!.document)) throw new DomainError("INVALID", "Volvé a buscar tu DNI en el formulario del evento.");
-    const version = await modalityVersion(current?.modalidad === mode.id && current.version_formulario ? current.version_formulario : mode.version_publicada);
+    if ((options.newExhibition || options.exhibitionId) && !access) throw new DomainError("INVALID", "Buscá tu DNI antes de elegir una exposición.");
+    if (options.newExhibition && options.exhibitionId) throw new DomainError("INVALID", "Elegí editar una exposición o inscribir otro trabajo.");
+    const snapshot = current ? await registrationEditSnapshot(current) : undefined;
+    const previousGroup = options.newExhibition ? undefined : options.exhibitionId ? snapshot?.groups.find((g) => g.id === options.exhibitionId) : snapshot?.groups.length === 1 ? snapshot.groups[0] : undefined;
+    if (options.exhibitionId && !previousGroup) throw new DomainError("INVALID", "La exposición no pertenece a tu inscripción.");
+    if (options.newExhibition && (!current || current.modalidad !== mode.id || mode.codigo !== "expositor" || !(snapshot!.groups.length || snapshot!.otherMemberships.some((m) => m.funcion === SECOND_EXHIBITOR_ROLE)))) throw new DomainError("INVALID", "La inscripción de otro trabajo está disponible para alumnos expositores de esta modalidad.");
+    if (!options.newExhibition && snapshot && snapshot.groups.length > 1 && !previousGroup) throw new DomainError("INVALID", "Elegí la exposición que querés modificar.");
+    if (snapshot && snapshot.groups.length > 1 && current!.modalidad !== mode.id) throw new DomainError("INVALID", "Tenés varias exposiciones. Consultá con la organización para cambiar de modalidad.");
+    const version = await modalityVersion(previousGroup && current?.modalidad === mode.id ? previousGroup.version : !options.newExhibition && current?.modalidad === mode.id && current.version_formulario ? current.version_formulario : mode.version_publicada);
+    if (options.newExhibition && version.esquema.certificate !== "grupo") throw new DomainError("INVALID", "La modalidad debe estar configurada para exposiciones con certificado grupal.");
     if ((raw as Record<string, unknown>)?.version !== version.id) throw new DomainError("INVALID", "El formulario cambió. Actualizá la página antes de inscribirte.");
     const input = parseSubmission(version.esquema, raw);
-    const signature = fingerprint({ input, presencial: !!options.presencial, ...(access ? { editToken: options.editToken } : {}) });
+    const signature = fingerprint({ input, presencial: !!options.presencial, ...(access ? { editToken: options.editToken } : {}), ...(options.exhibitionId ? { exhibitionId: options.exhibitionId } : {}), ...(options.newExhibition ? { newExhibition: true } : {}) });
     const operations = await pb.collection("operaciones_inscripcion").getFullList({ filter: pb.filter("evento = {:eventId} && clave = {:key}", { eventId, key: input.operacion }) });
     if (operations[0]) {
       if (operations[0].huella !== signature) throw new DomainError("INVALID", "La solicitud ya fue utilizada con otros datos.");
@@ -35,10 +44,9 @@ export async function registerWithModality(eventId: string, raw: unknown, option
     const all = await pb.collection("inscripciones").getFullList<RegistrationRecord>({ filter: pb.filter("evento = {:eventId}", { eventId }) });
     const editing = access ? all.find((r) => r.id === access.registrationId && r.documento_normalizado === access.document) : undefined;
     if (access && !editing) throw new DomainError("NOT_FOUND", "La inscripción ya no está disponible. Volvé a buscar tu DNI.");
-    const snapshot = editing ? await registrationEditSnapshot(editing) : undefined;
     if (snapshot && snapshot.revision !== access!.revision) throw new DomainError("INVALID", "La inscripción cambió desde tu consulta. Volvé a buscar tu DNI para recuperar los datos actualizados.");
-    if (editing?.tipo_alta === "vinculada" && snapshot?.otherMemberships.length) throw new DomainError("INVALID", "Ya estás inscripto como integrante de una exposición. Podés modificar tus datos desde la consulta por DNI.");
-    if (snapshot && (snapshot.groups.length > 1 || (editing!.modalidad !== mode.id && snapshot.otherMemberships.length))) throw new DomainError("INVALID", "Tu inscripción está vinculada a otras exposiciones. Consultá con la organización para cambiar la modalidad.");
+    if (!options.newExhibition && editing?.tipo_alta === "vinculada" && snapshot?.otherMemberships.length) throw new DomainError("INVALID", "Ya estás inscripto como integrante de una exposición. Podés modificar tus datos desde la consulta por DNI.");
+    if (snapshot && editing!.modalidad !== mode.id && snapshot.otherMemberships.length) throw new DomainError("INVALID", "Tu inscripción está vinculada a otras exposiciones. Consultá con la organización para cambiar la modalidad.");
     const keepsPlace = editing && editing.tipo_alta !== "vinculada";
     const publicPrincipals = all.filter((r) => r.origen === "publica" && r.tipo_alta !== "vinculada");
     if (options.presencial && options.strictCapacity && isCapacityFull(event, all.filter(r => r.tipo_alta !== "vinculada").length)) {
@@ -66,13 +74,21 @@ export async function registerWithModality(eventId: string, raw: unknown, option
       if (existing && index === 0 && existing.tipo_alta !== "vinculada" && !editsPrincipal) throw new DomainError("DUPLICATE", "Ya estás inscripto en este evento. Buscá tu DNI para actualizar la inscripción.");
       const id = existing?.id ?? recordId();
       ids.push(id);
-      const principalData = { tipo_alta: "principal", numero_cupo_publico: slot, version_formulario: version.id, respuestas: person.respuestas, ...(editsPrincipal ? { modalidad: mode.id, nombres: person.nombres, apellidos: person.apellidos, documento: person.documento, documento_normalizado: document, email: person.email } : {}), ...(options.presencial ? { acreditado: true, acreditado_en: new Date().toISOString(), acreditado_por: options.adminId ?? "", origen: "presencial" } : {}) };
+      const principalData: Record<string, unknown> = { tipo_alta: "principal", numero_cupo_publico: slot, version_formulario: version.id, respuestas: person.respuestas, ...(editsPrincipal ? { modalidad: mode.id, nombres: person.nombres, apellidos: person.apellidos, documento: person.documento, documento_normalizado: document, email: person.email } : {}), ...(options.presencial ? { acreditado: true, acreditado_en: new Date().toISOString(), acreditado_por: options.adminId ?? "", origen: "presencial" } : {}) };
+      if (index === 0 && options.newExhibition && editing?.tipo_alta === "vinculada") principalData.origen = "publica";
       if (!existing) batch.collection("inscripciones").create({ id, evento: eventId, modalidad: mode.id, nombres: person.nombres, apellidos: person.apellidos, documento: person.documento, documento_normalizado: document, email: person.email, origen: options.presencial ? "presencial" : "publica", tipo_alta: "vinculada", numero_cupo_publico: 0, acreditado: false, ...(index === 0 ? principalData : {}) });
-      else if (index === 0) batch.collection("inscripciones").update(id, principalData);
+      else if (index === 0) {
+        if (editing && editing.tipo_alta !== "vinculada" && (options.newExhibition || (snapshot?.groups.length ?? 0) > 1)) {
+          // Cada exposición guarda sus respuestas y versión; la identidad es común.
+          delete principalData.version_formulario;
+          delete principalData.respuestas;
+        }
+        batch.collection("inscripciones").update(id, principalData);
+      }
     }
-    const previousGroup = snapshot?.groups[0];
     const exhibitionId = version.esquema.certificate === "grupo" || input.integrantes.length ? previousGroup?.id ?? recordId() : "";
-    for (const link of snapshot?.links ?? []) batch.collection("integrantes_exposicion").delete(link.id);
+    if (options.newExhibition && !exhibitionId) throw new DomainError("INVALID", "La modalidad debe permitir registrar exposiciones.");
+    for (const link of snapshot?.links.filter((m) => m.exposicion === previousGroup?.id) ?? []) batch.collection("integrantes_exposicion").delete(link.id);
     if (previousGroup && !exhibitionId) batch.collection("exposiciones").delete(previousGroup.id);
     if (exhibitionId) {
       const groupData = { evento: eventId, modalidad: mode.id, version: version.id, responsable: ids[0], respuestas: input.principal.respuestas };
