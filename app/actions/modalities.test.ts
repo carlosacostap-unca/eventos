@@ -28,6 +28,13 @@ it("el acreditador no puede forzar una excepción de cupo", async () => {
   expect(mocks.register).toHaveBeenCalledWith("event", {}, expect.objectContaining({ allowOverCapacity: false, strictCapacity: true }));
 });
 
+it("envía el permiso de edición pública y confirma la actualización", async () => {
+  const data = new FormData(); data.set("payload", "{}"); data.set("editToken", "signed");
+  expect(await registerConfiguredAction("event", false, {}, data)).toMatchObject({ ok: true, message: expect.stringContaining("actualizada") });
+  expect(mocks.register).toHaveBeenCalledWith("event", {}, expect.objectContaining({ editToken: "signed", presencial: false }));
+  expect(mocks.admin).not.toHaveBeenCalled();
+});
+
 it("exige autorización sobre el origen al copiar modalidades", async () => {
   mocks.admin.mockResolvedValueOnce({ adminId: "staff" }).mockRejectedValueOnce(new Error("Origen ajeno"));
   const data = new FormData(); data.set("origen", "other");

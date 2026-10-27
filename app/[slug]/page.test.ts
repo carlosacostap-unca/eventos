@@ -44,10 +44,15 @@ describe("página pública por evento", () => {
     expect(output).toContain("Actividad de prueba"); expect(output).toContain("Inscripción abierta"); expect(output).toContain("Formulario de inscripción");
     expect(mocks.speakers).not.toHaveBeenCalled();
   });
-  it("muestra toda la información de eventos anteriores y mantiene el cierre por cupo", async () => {
+  it("muestra la información y permite consultar una inscripción con el cupo completo", async () => {
     let output = await html();
     for (const text of ["Categoría de prueba", "Duración", "2 horas", "Auditorio de prueba", "Arancelada", "Se entregará", "Ponente de prueba"]) expect(output).toContain(text);
     mocks.count.mockResolvedValue(100); output = await html();
-    expect(output).toContain("El cupo está completo"); expect(output).not.toContain("Formulario de inscripción");
+    expect(output).toContain("El cupo está completo"); expect(output).toContain("Formulario de inscripción");
+    expect(output).toContain("Consultar mi inscripción");
+  });
+  it.each([{ inscripcion_habilitada: false }, { estado: "finalizado" }])("oculta el formulario si el evento está cerrado o finalizado: %j", async (change) => {
+    mocks.event.mockResolvedValue({ ...event, ...change });
+    expect(await html()).not.toContain("Formulario de inscripción");
   });
 });

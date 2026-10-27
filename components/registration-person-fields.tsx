@@ -5,19 +5,24 @@ import { lookupRegistrationPersonAction } from "@/app/actions/registration-prefi
 import type { PersonSubmission } from "@/lib/domain/modalities";
 import { normalizeDocument } from "@/lib/domain/models";
 import { registrationDocumentSchema } from "@/lib/domain/registration-prefill";
+import type { RegistrationPrefillResult } from "@/lib/domain/registration-prefill";
 import { FieldError } from "./form-feedback";
 
-export function PersonFields({ person, setPerson, prefix = "", errors = {}, eventId, onReadyChange }: {
+export function PersonFields({ person, setPerson, prefix = "", errors = {}, eventId, onReadyChange, includeRegistration = false, onLookup, initialReady, initialMessage = "" }: {
   person: PersonSubmission;
   setPerson: Dispatch<SetStateAction<PersonSubmission>>;
   prefix?: string;
   errors?: Record<string, string[] | undefined>;
   eventId?: string;
   onReadyChange?: (ready: boolean) => void;
+  includeRegistration?: boolean;
+  onLookup?: (result: RegistrationPrefillResult) => void;
+  initialReady?: boolean;
+  initialMessage?: string;
 }) {
-  const [ready, setReady] = useState(!eventId || Boolean(person.nombres || person.apellidos || person.email));
+  const [ready, setReady] = useState(initialReady ?? (!eventId || Boolean(person.nombres || person.apellidos || person.email)));
   const [pending, setPending] = useState(false);
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState(initialMessage);
   const request = useRef(0);
   const activeDocument = useRef<string | null>(null);
   const fieldName = (key: string) => prefix ? prefix + "." + key : key;
@@ -34,14 +39,16 @@ export function PersonFields({ person, setPerson, prefix = "", errors = {}, even
     setPending(true);
     setMessage("");
     try {
-      const result = await lookupRegistrationPersonAction(eventId, parsed.data);
+      const result = await lookupRegistrationPersonAction(eventId, parsed.data, includeRegistration);
       if (request.current !== currentRequest) return;
       if (result.person) setPerson((current) => ({ ...current, ...result.person, documento: current.documento }));
+      onLookup?.(result);
       setMessage(result.message);
       setReady(true);
       onReadyChange?.(true);
     } catch {
       if (request.current !== currentRequest) return;
+      onLookup?.({ message: "No pudimos consultar tus datos. Podés completarlos manualmente." });
       setMessage("No pudimos consultar tus datos. Podés completarlos manualmente.");
       setReady(true);
       onReadyChange?.(true);

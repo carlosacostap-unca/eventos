@@ -60,12 +60,13 @@ export async function registerAction(
   if (!event) return { message: "El evento no existe." };
 
   try {
-    await registerPublic(event, parsed.data);
-    revalidatePath("/admin/eventos/" + event.id + "/inscritos");
+    const editToken = String(formData.get("editToken") ?? "");
+    await registerPublic(event, parsed.data, editToken || undefined);
+    for (const suffix of ["", "/inscritos", "/acreditacion", "/exposiciones", "/certificados", "/reportes"]) revalidatePath("/admin/eventos/" + event.id + suffix);
     revalidatePath("/" + slug);
     return {
       ok: true,
-      message: "Tu inscripción quedó confirmada. Te esperamos en el evento.",
+      message: editToken ? "Tu inscripción y tus datos fueron actualizados." : "Tu inscripción quedó confirmada. Te esperamos en el evento.",
     };
   } catch (error) {
     if (error instanceof DomainError) return { message: error.message };

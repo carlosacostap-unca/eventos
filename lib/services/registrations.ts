@@ -19,6 +19,8 @@ import { registerWithModality, eventExhibitions } from "./modal-registration";
 import { withOperationLock } from "./operation-lock";
 import { parseAnswers, type Answers } from "@/lib/domain/modalities";
 import { randomUUID } from "node:crypto";
+import { verifyRegistrationEdit } from "@/lib/registrations/public-edit-access";
+import { registrationEditSnapshot } from "./public-registration-edit";
 
 function toRegistration(record: RecordModel): RegistrationRecord {
   return record as unknown as RegistrationRecord;
@@ -75,16 +77,27 @@ async function usedPublicSlots(eventId: string): Promise<number[]> {
 export async function registerPublic(
   event: EventRecord,
   input: RegistrationInput,
+  editToken?: string,
 ): Promise<RegistrationRecord> {
   const modes = await listModalities(event.id);
   if (modes.length) {
     const mode = modes.find((m) => m.codigo === "asistente" && m.habilitada);
     if (!mode || modes.length > 1) throw new DomainError("INVALID", "Elegí una modalidad en el formulario del evento.");
-    return registerWithModality(event.id, { modalidad: mode.id, version: mode.version_publicada, operacion: randomUUID(), principal: { ...input, respuestas: {} }, integrantes: [] });
+    return registerWithModality(event.id, { modalidad: mode.id, version: mode.version_publicada, operacion: randomUUID(), principal: { ...input, respuestas: {} }, integrantes: [] }, editToken ? { editToken } : {});
   }
   const pb = await createServicePocketBase();
   return withOperationLock(pb, "evento:" + event.id, async (assertOwned) => {
     const normalizedDocument = normalizeDocument(input.documento);
+    if (editToken) {
+      const access = await verifyRegistrationEdit(editToken, event.id, normalizedDocument);
+      const current = toRegistration(await pb.collection("inscripciones").getOne(access.registrationId));
+      if (current.evento !== event.id || current.documento_normalizado !== normalizedDocument || current.modalidad) throw new DomainError("INVALID", "Volvé a buscar tu DNI en el formulario del evento.");
+      if ((await registrationEditSnapshot(current)).revision !== access.revision) throw new DomainError("INVALID", "La inscripción cambió. Volvé a buscar tu DNI para recuperar los datos actualizados.");
+      const freshEvent = await getEventById(event.id);
+      if (!freshEvent || getRegistrationAvailability(freshEvent, 0) !== "disponible") throw new DomainError("CLOSED", "La inscripción no está disponible.");
+      await assertOwned();
+      return toRegistration(await pb.collection("inscripciones").update(current.id, { ...input, documento_normalizado: normalizedDocument }));
+    }
     if (await existingByDocument(event.id, normalizedDocument)) {
       throw new DomainError("DUPLICATE", "Ya existe una inscripción con ese documento.");
     }

@@ -112,6 +112,7 @@ export default async function PublicEventPage({
               </div>}
             </dl>}
             {availability === "disponible" && <a className="button button-primary" href="#inscripcion">Reservar mi lugar <span aria-hidden="true">↓</span></a>}
+            {availability === "completo" && <a className="button button-primary" href="#inscripcion">Consultar mi inscripción <span aria-hidden="true">↓</span></a>}
           </div>
           {speakers.length > 0 && (
             <section className="speaker-section" aria-labelledby="speakers-heading">
@@ -126,15 +127,16 @@ export default async function PublicEventPage({
         </div>
       </section>
       <section className="container registration-section" id="inscripcion">
-        {availability === "disponible" ? (
-          <RegistrationForm slug={slug} eventId={event.id} modes={modes} operation={randomUUID()} offersCertificate={offersAttendanceCertificate(event)} />
+        {availability === "disponible" || availability === "completo" ? (
+          <>
+            {availability === "completo" && <p className="notice">El cupo está completo. Si ya estás inscripto, podés buscar tu DNI y actualizar tu inscripción.</p>}
+            <RegistrationForm slug={slug} eventId={event.id} modes={modes} operation={randomUUID()} offersCertificate={offersAttendanceCertificate(event)} />
+          </>
         ) : (
           <div className="panel closed-panel">
             <p className="eyebrow">Inscripción</p>
             <h2>
-              {availability === "completo"
-                ? "El cupo está completo"
-                : availability === "finalizado"
+              {availability === "finalizado"
                   ? "El evento ya finalizó"
                   : "La inscripción está cerrada"}
             </h2>

@@ -1,9 +1,10 @@
 import { beforeEach, expect, it, vi } from "vitest";
 
-const mocks = vi.hoisted(() => ({ find: vi.fn(), limit: vi.fn(), event: vi.fn() }));
+const mocks = vi.hoisted(() => ({ find: vi.fn(), limit: vi.fn(), event: vi.fn(), editable: vi.fn() }));
 vi.mock("next/headers", () => ({ headers: async () => new Headers({ "x-forwarded-for": "127.0.0.1, 10.0.0.2" }) }));
 vi.mock("@/lib/services/events", () => ({ getEventById: mocks.event }));
 vi.mock("@/lib/services/registration-prefill", () => ({ findRegistrationIdentity: mocks.find, allowRegistrationPrefill: mocks.limit }));
+vi.mock("@/lib/services/public-registration-edit", () => ({ findEditableRegistration: mocks.editable }));
 import { lookupRegistrationPersonAction } from "./registration-prefill";
 
 beforeEach(() => {
@@ -18,6 +19,15 @@ it("recupera datos solo con DNI sin solicitar email", async () => {
   expect((await lookupRegistrationPersonAction("event", "12.345.678")).person).toEqual(person);
   expect(mocks.find).toHaveBeenCalledWith("12.345.678", "event");
   expect(mocks.limit).toHaveBeenCalledWith("127.0.0.1");
+  expect(mocks.editable).not.toHaveBeenCalled();
+});
+
+it("recupera la inscripción del evento solo al consultar a la persona principal", async () => {
+  const registration = { token: "signed", modalidad: "expo", version: "v1", principal: { nombres: "Ana", apellidos: "Pérez", documento: "12345678", email: "ana@example.com", respuestas: { titulo: "Trabajo" } }, integrantes: [] };
+  mocks.editable.mockResolvedValue(registration);
+  expect(await lookupRegistrationPersonAction("event", "12.345.678", true)).toMatchObject({ person: registration.principal, registration });
+  expect(mocks.editable).toHaveBeenCalledWith("12.345.678", "event");
+  expect(mocks.find).not.toHaveBeenCalled();
 });
 
 it.each(["12", ".....", "a".repeat(33)])("rechaza el documento inválido %s sin consultar", async (document) => {
