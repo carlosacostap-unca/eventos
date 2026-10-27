@@ -14,6 +14,16 @@ La configuración selecciona las variantes de tinta negra. En los PNG, el PDF co
 
 La configuración de revisión está en `assets/certificates/eventos/por-que-falla-la-tecnologia.json`. La muestra se genera localmente con `npx tsx scripts/preview-factor-humano-certificate.ts` y queda en `output/pdf/muestra-certificado-factor-humano-tres-firmas.pdf`, con datos ficticios. Este comando no consulta ni modifica la base, ni emite certificados de asistentes.
 
-La propuesta está pendiente de revisión antes de aplicarse al evento publicado. Al guardarse, se deben combinar únicamente sus textos con la configuración vigente de esa modalidad. Los certificados emitidos no se reemplazan por cambiar textos: la regeneración se realiza expresamente cuando corresponda.
+La configuración de asistentes está pendiente de revisión antes de aplicarse al evento publicado. Al guardarse, se deben combinar únicamente sus textos con la configuración vigente de esa modalidad. Los certificados emitidos no se reemplazan por cambiar textos: la regeneración se realiza expresamente cuando corresponda.
 
 El diseño institucional admite una firma central opcional y una selección explícita de imagen por autoridad. Las configuraciones anteriores mantienen dos firmas cuando el nombre central está vacío. Los fondos personalizados conservan su composición propia.
+
+## Certificado de la expositora
+
+La variante `assets/certificates/eventos/por-que-falla-la-tecnologia-expositora.json` identifica a la Lic. Agustina Acuña, disertante `y5y1b7c4smhbp1l` vinculada al evento. Usa la frase «ha participado como expositora de la charla:» y conserva el diseño y las tres autoridades. La configuración de asistentes se mantiene separada.
+
+La muestra se genera con `npx tsx scripts/preview-factor-humano-certificate.ts --expositora` y queda en `output/pdf/muestra-certificado-factor-humano-expositora.pdf`. Lleva una marca de pendiente de emisión; este comando de revisión no genera un código verificable ni crea registros.
+
+El 27 de octubre de 2026 se emitió el certificado real `28265e8847fb0a2`, con código `CERT-28265e8847fb0a2`, asociado a la inscripción `d0fd39e0daa3c2e` y a la modalidad individual Expositora `dded68ef5d96466`. Esta modalidad tiene entrega habilitada y está oculta en la inscripción pública. Los datos de contacto proporcionados por el usuario se guardaron únicamente en la base y en archivos de trabajo ignorados por Git. Se verificaron la validación de la plataforma y la coincidencia exacta del PDF almacenado con el revisado. No se enviaron correos ni se modificó la configuración de asistentes.
+
+El PDF de esa emisión se actualizó para mostrar «Código de validación:» en lugar de «ID», conservando el mismo código, la fecha de emisión y todas sus relaciones. La versión revisada está en `output/pdf/certificado-expositora-agustina-acuna-validacion.pdf`. La consulta de validación incluye también el número de documento de cada participante.

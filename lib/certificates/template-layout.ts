@@ -1,5 +1,6 @@
 import { PDFDocument, PDFTextField, StandardFonts, rgb, type PDFFont, type PDFPage } from "pdf-lib";
 import { renderCertificateText, type CertificateTextSections, type CertificateTextVariables } from "@/lib/domain/certificate-texts";
+import { CERTIFICATE_CODE_LABEL } from "./verification-code";
 
 const fieldNames = ["certificado.cuerpo", "certificado.integrantes", "certificado.fecha"] as const;
 type FieldName = typeof fieldNames[number];
@@ -144,6 +145,6 @@ export async function drawCertificateLayout(input: {
         y -= block.size * 1.25;
       }
     }
-    page.drawText("ID " + input.identifier + (pageCount > 1 ? ` · ${index + 1}/${pageCount}` : ""), { x: 80, y: 14, size: 6, font: roman, color: rgb(0.4, 0.4, 0.4) });
+    page.drawText(CERTIFICATE_CODE_LABEL + " " + input.identifier + (pageCount > 1 ? ` · ${index + 1}/${pageCount}` : ""), { x: 80, y: 14, size: 6, font: roman, color: rgb(0.4, 0.4, 0.4) });
   }
 }

@@ -31,7 +31,8 @@ describe("plantillas PDF con composición propia", () => {
       }
       const title = drawn.mock.calls.find(([text]) => text === "Robótica");
       expect(title?.[1]?.font?.name).toContain("BoldItalic");
-      expect(drawn.mock.calls.filter(([text]) => text !== "ID jornada-alumno").every(([, options]) => (options?.size ?? 0) >= 9)).toBe(true);
+      expect(words).toContain("Código de validación: jornada-alumno");
+      expect(drawn.mock.calls.filter(([text]) => text !== "Código de validación: jornada-alumno").every(([, options]) => (options?.size ?? 0) >= 9)).toBe(true);
     } finally { drawn.mockRestore(); }
   });
   it("continúa grupos extensos en otras páginas conservando todos sus DNI y el área de firmas", async () => {

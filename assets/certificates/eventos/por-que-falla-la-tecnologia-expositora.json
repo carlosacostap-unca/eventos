@@ -1,0 +1,14 @@
+{
+  "eventId": "g3b80v6m7b2147c",
+  "speaker": {
+    "id": "y5y1b7c4smhbp1l",
+    "titulo": "Lic.",
+    "nombres": "Agustina",
+    "apellidos": "Acuña"
+  },
+  "textos_certificado": {
+    "participant": "Lic. Agustina Acuña",
+    "document": "DNI N° {documento}",
+    "participation": "ha participado como expositora de la charla:"
+  }
+}

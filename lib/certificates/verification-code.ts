@@ -1,3 +1,5 @@
+export const CERTIFICATE_CODE_LABEL = "Código de validación:";
+
 export function certificateVerificationCode(certificateId: string) {
   return "CERT-" + certificateId;
 }
@@ -8,7 +10,7 @@ export type CertificateCode =
 
 export function parseCertificateCode(value: unknown): CertificateCode | null {
   if (typeof value !== "string" || value.length > 80) return null;
-  const code = value.trim().replace(/^ID\s+/i, "").toLowerCase();
+  const code = value.trim().replace(/^(?:ID\s+|c[oó]digo\s+de\s+validaci[oó]n\s*:\s*)/i, "").toLowerCase();
   const current = /^cert-([a-z0-9]{15})$/.exec(code);
   if (current) return { kind: "certificate", certificateId: current[1], code: certificateVerificationCode(current[1]) };
   const legacy = /^([a-z0-9]{15})-([a-z0-9]{15})$/.exec(code);

@@ -15,7 +15,7 @@ export type VerifiedCertificate = {
   issuedAt: string;
   modality: string;
   workTitle?: string;
-  participants: Array<{ name: string; role: string }>;
+  participants: Array<{ name: string; document: string; role: string }>;
 };
 export type CertificateVerificationResult = {
   legacy: boolean;
@@ -45,7 +45,7 @@ export async function verifyCertificateCode(value: string): Promise<CertificateV
         pb.collection("inscripciones").getOne<RegistrationRecord>(certificate.inscripcion),
       ]);
       if (event.estado === "borrador" || registration.evento !== event.id || !registration.acreditado) { unavailableCount++; continue; }
-      let participants = [{ name: `${registration.apellidos}, ${registration.nombres}`, role: "Participante" }];
+      let participants = [{ name: `${registration.apellidos}, ${registration.nombres}`, document: registration.documento, role: "Participante" }];
       let modality = "Asistente";
       let workTitle: string | undefined;
       if (certificate.modalidad) {
@@ -55,7 +55,7 @@ export async function verifyCertificateCode(value: string): Promise<CertificateV
           (certificate.exposicion || "") !== (subject.exhibition?.id || "")) { unavailableCount++; continue; }
         const recipients = await pb.collection("destinatarios_certificado").getFullList({ filter: pb.filter("certificado = {:id}", { id: certificate.id }) });
         if (!subject.members.every((m) => recipients.some((r) => r.participante === m.person.id))) { unavailableCount++; continue; }
-        participants = subject.members.map((m) => ({ name: `${m.person.apellidos}, ${m.person.nombres}`, role: m.role }));
+        participants = subject.members.map((m) => ({ name: `${m.person.apellidos}, ${m.person.nombres}`, document: m.person.documento, role: m.role }));
         modality = subject.mode.nombre;
         if (subject.exhibition) workTitle = exhibitionTitle((await modalityVersion(subject.exhibition.version)).esquema, subject.exhibition.respuestas);
       }

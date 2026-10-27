@@ -25,7 +25,7 @@ describe("certificados PDF", () => {
       expect(blackImages).toHaveLength(2);
       expect(blackImages.every((image) => image.dict.has(PDFName.of("SMask")))).toBe(true);
       for (const name of [texts.signatureLeftName, texts.signatureCenterName, texts.signatureRightName]) expect(drawn.mock.calls.some(([text]) => text === name)).toBe(true);
-      const authorityText = drawn.mock.calls.filter(([text, options]) => !text.startsWith("ID ") && (options?.y ?? 999) < 150);
+      const authorityText = drawn.mock.calls.filter(([text, options]) => !text.startsWith("Código de validación:") && (options?.y ?? 999) < 150);
       expect(authorityText.every(([text, options]) => (options?.x ?? 0) >= 68 && options!.x! + options!.font!.widthOfTextAtSize(text, options!.size!) <= 774 && options!.y! >= 78)).toBe(true);
       const institutions = drawn.mock.calls.filter(([text, options]) => text === "Facultad de Tecnología y Ciencias Aplicadas" && options!.y! < 150);
       // El cargo más largo desplaza solo su institución; las otras quedan más cerca de su cargo.
@@ -47,7 +47,7 @@ describe("certificados PDF", () => {
     const drawn = vi.spyOn(PDFPage.prototype, "drawText");
     try {
       for (const certificateId of ["cert00000000001", "cert00000000002"]) await createCertificatePdf({ certificateId, event: { ...certificateDraft.event, textos_certificado: certificateDraft.textos_certificado } as Parameters<typeof createCertificatePdf>[0]["event"], registration: { id: "same-student", nombres: "Ana", apellidos: "Pérez" } });
-      expect(drawn.mock.calls.map(([text]) => text)).toEqual(expect.arrayContaining(["ID CERT-cert00000000001", "ID CERT-cert00000000002"]));
+      expect(drawn.mock.calls.map(([text]) => text)).toEqual(expect.arrayContaining(["Código de validación: CERT-cert00000000001", "Código de validación: CERT-cert00000000002"]));
     } finally { drawn.mockRestore(); }
   });
   it("incluye todos los integrantes de un grupo extenso en un PDF de varias páginas legibles", async () => {

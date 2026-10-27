@@ -13,7 +13,7 @@ export type CertificateVerificationState = {
 
 export async function verifyCertificateAction(_state: CertificateVerificationState, formData: FormData): Promise<CertificateVerificationState> {
   const parsed = parseCertificateCode(formData.get("codigo"));
-  if (!parsed) return { message: "Revisá el código completo que figura junto a ID en el certificado." };
+  if (!parsed) return { message: "Revisá el código completo de validación que figura al pie del certificado." };
   try {
     const requestHeaders = await headers();
     const origin = requestHeaders.get("x-forwarded-for")?.split(",")[0]?.trim() || requestHeaders.get("x-real-ip")?.trim() || "origen-desconocido";

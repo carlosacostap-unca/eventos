@@ -17,12 +17,12 @@ export function CertificateVerificationForm() {
   return <div className="form-stack">
     <div className="certificate-lookup-layout">
       <form action={action} className="panel form-stack certificate-lookup-form">
-        <div><p className="eyebrow">Consulta pública</p><h2>Ingresá el código del certificado</h2><p className="muted">Copiá el código completo que aparece junto a ID, en la parte inferior del certificado.</p></div>
+        <div><p className="eyebrow">Consulta pública</p><h2>Ingresá el código del certificado</h2><p className="muted">Copiá el código de validación completo que figura al pie del certificado.</p></div>
         <label className="field"><span>Código del certificado</span><input name="codigo" required maxLength={80} autoComplete="off" spellCheck={false} placeholder="CERT-… o código anterior" /></label>
         <SubmitButton pendingLabel="Consultando registro…">Validar certificado</SubmitButton>
         {!pending && <FormMessage message={state.message} />}
       </form>
-      <aside className="panel certificate-guide"><h2>Comprobá los datos</h2><p>La consulta muestra los certificados emitidos por la Facultad de Tecnología y Ciencias Aplicadas de la Universidad Nacional de Catamarca.</p><p className="muted">Acepta códigos actuales y anteriores. Compará los nombres, el evento y el trabajo con el documento que recibiste.</p></aside>
+      <aside className="panel certificate-guide"><h2>Comprobá los datos</h2><p>La consulta muestra los certificados emitidos por la Facultad de Tecnología y Ciencias Aplicadas de la Universidad Nacional de Catamarca.</p><p className="muted">Acepta códigos actuales y anteriores. Compará los nombres, números de documento, el evento y el trabajo con el certificado que recibiste.</p></aside>
     </div>
     <div aria-live="polite" aria-busy={pending}>
       {result && <section className="form-stack">
@@ -39,7 +39,7 @@ export function CertificateVerificationForm() {
                 <div><dt>Participación</dt><dd>{certificate.modality}</dd></div>
                 {certificate.workTitle && <div><dt>Trabajo presentado</dt><dd>{certificate.workTitle}</dd></div>}
               </dl>
-              <ul>{certificate.participants.map((participant, index) => <li key={index}><strong>{participant.name}</strong> · {participant.role}</li>)}</ul>
+              <ul>{certificate.participants.map((participant, index) => <li key={index}><strong>{participant.name}</strong> · DNI {participant.document} · {participant.role}</li>)}</ul>
             </article>)}
             {result.unavailableCount > 0 && <p className="muted">Otros certificados asociados a este código necesitan una actualización. Consultá con la Facultad.</p>}
           </>}

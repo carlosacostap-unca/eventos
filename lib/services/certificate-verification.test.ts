@@ -19,18 +19,18 @@ beforeEach(() => {
   mocks.certificates.mockResolvedValue([certificate]);
   mocks.event.mockResolvedValue({ id: eventId, titulo: "Jornada", inicio: "2026-10-19T13:00:00Z", estado: "finalizado" });
   mocks.registration.mockResolvedValue(registration);
-  mocks.subject.mockResolvedValue({ eligible: true, hash: "original", mode: { id: "mode", nombre: "Expositor" }, exhibition: { id: "work1", version: "v1", respuestas: { titulo_trabajo: "Trabajo A" } }, members: [{ person: registration, role: "Alumno expositor" }, { person: { id: "second", nombres: "Luis", apellidos: "Gómez" }, role: "Segundo alumno expositor" }] });
+  mocks.subject.mockResolvedValue({ eligible: true, hash: "original", mode: { id: "mode", nombre: "Expositor" }, exhibition: { id: "work1", version: "v1", respuestas: { titulo_trabajo: "Trabajo A" } }, members: [{ person: registration, role: "Alumno expositor" }, { person: { id: "second", nombres: "Luis", apellidos: "Gómez", documento: "87.654.321" }, role: "Segundo alumno expositor" }] });
   mocks.recipients.mockResolvedValue([{ participante: registrationId }, { participante: "second" }]);
 });
 
-it("recupera el certificado histórico con el código impreso sin reemitir y no expone DNI, correo ni PDF", async () => {
+it("recupera nombre y documento del certificado histórico sin reemitir ni exponer correo o PDF", async () => {
   const result = await verifyCertificateCode(`${eventId}-${registrationId}`);
   expect(result.legacy).toBe(true);
   expect(result.certificates).toHaveLength(1);
   expect(mocks.certificates).toHaveBeenCalledWith({ filter: `evento = "${eventId}" && inscripcion = "${registrationId}"`, sort: "-generado_en" });
   const json = JSON.stringify(result);
-  for (const privateValue of [registration.documento, registration.email, certificate.archivo]) expect(json).not.toContain(privateValue);
-  expect(result.certificates[0].participants).toEqual([{ name: "Pérez, Ana", role: "Participante" }]);
+  for (const privateValue of [registration.email, certificate.archivo]) expect(json).not.toContain(privateValue);
+  expect(result.certificates[0].participants).toEqual([{ name: "Pérez, Ana", document: registration.documento, role: "Participante" }]);
 });
 
 it("un código actual identifica exactamente una emisión aunque la inscripción tenga varios trabajos", async () => {
@@ -43,11 +43,12 @@ it("un código actual identifica exactamente una emisión aunque la inscripción
 
 it("muestra todos los trabajos y sus integrantes para un código antiguo compartido", async () => {
   mocks.certificates.mockResolvedValue([1, 2].map((n) => ({ ...certificate, id: "cert0000000000" + n, modalidad: "mode", exposicion: "work" + n, huella: "original" })));
-  mocks.subject.mockImplementation(async (_pb, _event, _registration, work: string) => ({ eligible: true, hash: "original", mode: { id: "mode", nombre: "Expositor" }, exhibition: { id: work, version: "v1", respuestas: { titulo_trabajo: "Trabajo " + work } }, members: [{ person: registration, role: "Alumno expositor" }, { person: { id: "second", nombres: "Luis", apellidos: "Gómez" }, role: "Segundo alumno expositor" }] }));
+  mocks.subject.mockImplementation(async (_pb, _event, _registration, work: string) => ({ eligible: true, hash: "original", mode: { id: "mode", nombre: "Expositor" }, exhibition: { id: work, version: "v1", respuestas: { titulo_trabajo: "Trabajo " + work } }, members: [{ person: registration, role: "Alumno expositor" }, { person: { id: "second", nombres: "Luis", apellidos: "Gómez", documento: "87.654.321" }, role: "Segundo alumno expositor" }] }));
   const result = await verifyCertificateCode(`${eventId}-${registrationId}`);
   expect(result.certificates.map((c) => c.workTitle)).toEqual(["Trabajo work1", "Trabajo work2"]);
   expect(result.certificates[0].code).not.toBe(result.certificates[1].code);
   expect(result.certificates[0].participants[1].role).toBe("Segundo alumno expositor");
+  expect(result.certificates[0].participants.map(p => p.document)).toEqual([registration.documento, "87.654.321"]);
 });
 
 it.each(["huella", "grupo", "modalidad", "acreditacion", "destinatarios", "archivo", "evento"])("no valida un certificado inconsistente: %s", async (reason) => {

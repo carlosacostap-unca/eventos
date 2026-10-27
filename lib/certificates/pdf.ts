@@ -21,7 +21,7 @@ import {
 } from "@/lib/domain/certificate-texts";
 import type { EventRecord, RegistrationRecord } from "@/lib/domain/models";
 import { drawCertificateLayout, readCertificateLayout, type CertificateLayout } from "./template-layout";
-import { certificateVerificationCode } from "./verification-code";
+import { CERTIFICATE_CODE_LABEL, certificateVerificationCode } from "./verification-code";
 
 const PAGE_WIDTH = 842;
 const PAGE_HEIGHT = 595;
@@ -450,7 +450,7 @@ export async function createCertificatePdf(input: {
     let y = top;
     const finishPage = async () => {
       if (!input.template) await drawSignatures(document, page, serif, texts, variables);
-      page.drawText("ID " + identifier, { x: width * 0.085, y: texts.signatureCenterName && !input.template ? 64 : height * 0.105, size: 6.5 * textScale, font: sans });
+      page.drawText(CERTIFICATE_CODE_LABEL + " " + identifier, { x: width * 0.085, y: texts.signatureCenterName && !input.template ? 64 : height * 0.105, size: 6.5 * textScale, font: sans });
     };
     const nextPage = async () => {
       await finishPage();
@@ -583,7 +583,7 @@ export async function createCertificatePdf(input: {
     lineHeight: locationBlock.size * 1.18,
   });
   if (!input.template) await drawSignatures(document, page, serif, texts, variables);
-  page.drawText("ID " + identifier, {
+  page.drawText(CERTIFICATE_CODE_LABEL + " " + identifier, {
     x: width * 0.085,
     y: texts.signatureCenterName && !input.template ? 64 : height * 0.105,
     size: 6.5 * textScale,
