@@ -24,7 +24,7 @@ export function EventCatalog({ items, admin = false }: { items: CatalogItem[]; a
           <span>{admin ? "Estado del evento" : "Inscripción"}</span>
           <select value={status} onChange={e => setStatus(e.target.value)}>
             <option value="">Todos los eventos</option>
-            {admin ? <><option value="borrador">Borradores</option><option value="publicado">Publicados</option><option value="finalizado">Finalizados</option></> : <><option value="disponible">Inscripción abierta</option><option value="completo">Cupo completo</option><option value="cerrado">Inscripción cerrada</option><option value="finalizado">Finalizados</option></>}
+            {admin ? <><option value="borrador">Borradores</option><option value="publicado">Publicados</option><option value="finalizado">Finalizados</option></> : <><option value="disponible">Inscripción abierta</option><option value="completo">Cupo completo</option><option value="cerrado">Inscripción cerrada</option>{items.some(item => item.status === "finalizado") && <option value="finalizado">Finalizados</option>}</>}
           </select>
         </label>
       </div>

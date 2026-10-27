@@ -2,7 +2,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { EventCatalog } from "@/components/event-catalog";
 
-import { getRegistrationAvailability } from "@/lib/domain/events";
+import { getRegistrationAvailability, hasEventEnded } from "@/lib/domain/events";
+import { getAuthenticatedStaff } from "@/lib/auth/session";
 import { isEventFree, offersAttendanceCertificate } from "@/lib/domain/event-details";
 import { eventTypeName } from "@/lib/domain/event-types";
 import { listEventTypes } from "@/lib/services/event-types";
@@ -28,13 +29,15 @@ const availabilityLabels = {
 } as const;
 
 export default async function Home() {
-  const [events, types] = await Promise.all([listPublishedEvents(), listEventTypes()]);
+  const [events, types, staff] = await Promise.all([listPublishedEvents(), listEventTypes(), getAuthenticatedStaff()]);
+  const now = new Date();
+  const visibleEvents = staff ? events : events.filter(event => !hasEventEnded(event, now));
   const cards = await Promise.all(
-    events.map(async (event) => {
+    visibleEvents.map(async (event) => {
       const count = await countPublicRegistrations(event.id);
       return {
         event,
-        availability: getRegistrationAvailability(event, count),
+        availability: getRegistrationAvailability(event, count, now),
       };
     }),
   );
@@ -69,7 +72,7 @@ export default async function Home() {
         <div className="section-heading"><div><p className="eyebrow">Agenda de actividades</p><h2>Encontrá tu próximo evento</h2></div><p className="muted">Conocé los detalles e inscribite en línea.</p></div>
         {cards.length === 0 ? (
           <div className="empty-state">
-            <h2>No hay eventos publicados todavía</h2>
+            <h2>{staff ? "No hay eventos publicados todavía" : "No hay eventos próximos o en curso"}</h2>
             <p>Volvé pronto para conocer las próximas actividades.</p>
           </div>
         ) : (

@@ -4,6 +4,8 @@ Aplicación de gestión integral de eventos construida con Next.js 16 y PocketBa
 
 Toda la lógica de negocio y el acceso a PocketBase viven en el servidor de Next.js. El navegador usa páginas y Server Actions de Next.js y nunca recibe credenciales de servicio ni usa el SDK de PocketBase.
 
+La agenda de inicio muestra a visitantes anónimos únicamente eventos publicados próximos o en curso. Los eventos se retiran al alcanzar su fecha y hora de finalización, incluso si siguen marcados como publicados. El personal autenticado conserva la agenda anterior y el panel administrativo mantiene su historial. El cierre de inscripción o el cupo completo no ocultan un evento que todavía no terminó.
+
 ## Requisitos
 
 - Node.js 22

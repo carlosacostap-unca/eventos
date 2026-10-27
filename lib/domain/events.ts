@@ -21,12 +21,16 @@ export function publicCapacityLabel(event: EventCapacity): string {
   return publicCapacity(event) === null ? "Sin límite de cupo" : `${event.cupo} lugares públicos`;
 }
 
+export function hasEventEnded(event: Pick<EventRecord, "estado" | "fin">, now = new Date()): boolean {
+  return event.estado === "finalizado" || new Date(event.fin).getTime() <= now.getTime();
+}
+
 export function getRegistrationAvailability(
   event: Pick<EventRecord, "cupo" | "cupo_ilimitado" | "inscripcion_habilitada" | "estado" | "fin">,
   publicRegistrationCount: number,
   now = new Date(),
 ): RegistrationAvailability {
-  if (event.estado === "finalizado" || new Date(event.fin) < now) return "finalizado";
+  if (hasEventEnded(event, now)) return "finalizado";
   if (!event.inscripcion_habilitada || event.estado !== "publicado") return "cerrado";
   if (isCapacityFull(event, publicRegistrationCount)) return "completo";
   return "disponible";

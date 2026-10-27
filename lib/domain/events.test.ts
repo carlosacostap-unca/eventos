@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { getRegistrationAvailability, isCapacityFull, nextPublicSlot, publicCapacity, publicCapacityLabel } from "@/lib/domain/events";
+import { getRegistrationAvailability, hasEventEnded, isCapacityFull, nextPublicSlot, publicCapacity, publicCapacityLabel } from "@/lib/domain/events";
 
 const event = {
   cupo: 2,
@@ -10,6 +10,13 @@ const event = {
 };
 
 describe("disponibilidad de inscripción", () => {
+  it("finaliza exactamente a la hora de cierre y compara correctamente la hora argentina", () => {
+    const now = new Date("2026-10-27T15:00:00Z");
+    expect(hasEventEnded({ ...event, fin: "2026-10-27T12:00:00-03:00" }, now)).toBe(true);
+    expect(hasEventEnded({ ...event, fin: "2026-10-27T12:00:01-03:00" }, now)).toBe(false);
+    expect(hasEventEnded({ ...event, estado: "finalizado" }, now)).toBe(true);
+    expect(getRegistrationAvailability({ ...event, fin: now.toISOString() }, 0, now)).toBe("finalizado");
+  });
   it("permite superar el cupo anterior sin límite y sigue respetando cierre manual y finalización", () => {
     const unlimited = { ...event, cupo_ilimitado: true };
     expect(publicCapacity(unlimited)).toBeNull(); expect(publicCapacityLabel(unlimited)).toBe("Sin límite de cupo");
