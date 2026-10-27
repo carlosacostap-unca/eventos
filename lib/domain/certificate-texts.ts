@@ -3,6 +3,18 @@ import { z } from "zod";
 const certificateTextSection = (label: string, max: number) =>
   z.string().trim().max(max, label + " es demasiado largo");
 
+export const SIGNATURE_IMAGE_OPTIONS = {
+  none: "Sin imagen - espacio para firmar",
+  marcos: "Firma de Marcos Darío Aranda",
+  natalia: "Firma de Natalia Fernández",
+  barrera: "Firma de María Alejandra Barrera",
+  acosta: "Firma de Carlos A. Acosta Pasha",
+  acosta_negro: "Firma de Carlos A. Acosta Pasha (negro)",
+  barrera_negro: "Firma de María Alejandra Barrera (negro)",
+  natalia_negro: "Firma de Natalia Fernández (negro)",
+} as const;
+export const signatureImageSchema = z.enum(["none", "marcos", "natalia", "barrera", "acosta", "acosta_negro", "barrera_negro", "natalia_negro"]);
+
 export const certificateTextInputSchema = z.object({
   institutionPrimary: certificateTextSection("El encabezado principal", 120),
   institutionSecondary: certificateTextSection("El encabezado secundario", 120),
@@ -15,9 +27,15 @@ export const certificateTextInputSchema = z.object({
   signatureLeftName: certificateTextSection("El nombre de la firma izquierda", 120),
   signatureLeftRole: certificateTextSection("El cargo de la firma izquierda", 120),
   signatureLeftInstitution: certificateTextSection("La institución de la firma izquierda", 160),
+  signatureLeftImage: signatureImageSchema.default("marcos"),
+  signatureCenterName: certificateTextSection("El nombre de la firma central", 120).default(""),
+  signatureCenterRole: certificateTextSection("El cargo de la firma central", 120).default(""),
+  signatureCenterInstitution: certificateTextSection("La institución de la firma central", 160).default(""),
+  signatureCenterImage: signatureImageSchema.default("none"),
   signatureRightName: certificateTextSection("El nombre de la firma derecha", 120),
   signatureRightRole: certificateTextSection("El cargo de la firma derecha", 120),
   signatureRightInstitution: certificateTextSection("La institución de la firma derecha", 160),
+  signatureRightImage: signatureImageSchema.default("natalia"),
 });
 
 export type CertificateTextSections = z.infer<typeof certificateTextInputSchema>;
@@ -35,9 +53,15 @@ export const DEFAULT_CERTIFICATE_TEXTS: CertificateTextSections = {
   signatureLeftName: "Ms. Ing. Marcos Darío ARANDA",
   signatureLeftRole: "Secretario de Posgrado",
   signatureLeftInstitution: "Facultad de Tecnología y Ciencias Aplicadas",
+  signatureLeftImage: "marcos",
+  signatureCenterName: "",
+  signatureCenterRole: "",
+  signatureCenterInstitution: "",
+  signatureCenterImage: "none",
   signatureRightName: "Mgter. Lic. Natalia FERNÁNDEZ",
   signatureRightRole: "Decana",
   signatureRightInstitution: "Facultad de Tecnología y Ciencias Aplicadas",
+  signatureRightImage: "natalia",
 };
 
 export const CERTIFICATE_TEXT_KEYS = Object.keys(
@@ -54,7 +78,7 @@ export function resolveCertificateTexts(input: unknown): CertificateTextSections
 
   for (const key of CERTIFICATE_TEXT_KEYS) {
     const parsed = certificateTextInputSchema.shape[key].safeParse(source[key]);
-    if (parsed.success) resolved[key] = parsed.data;
+    if (parsed.success) Object.assign(resolved, { [key]: parsed.data });
   }
 
   return resolved;

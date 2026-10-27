@@ -74,7 +74,7 @@ export default async function PublicEventPage({
               priority
             />
           </Link>
-          <nav className="public-page-nav" aria-label="Navegación del evento"><Link href="/">← Todos los eventos</Link><Link href="/mis-certificados">Mis certificados</Link></nav>
+          <nav className="public-page-nav" aria-label="Navegación del evento"><Link href="/">← Todos los eventos</Link><Link href="/mis-certificados">Mis certificados</Link><Link href="/validar-certificado">Validar certificado</Link></nav>
           <div className="event-hero-copy">
             {availability === "disponible" && <span className="badge badge-disponible">Inscripción abierta</span>}
             {availability !== "disponible" && (

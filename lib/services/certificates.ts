@@ -123,7 +123,8 @@ export async function generateCertificates(
   for (const registration of registrations) {
     const certificate = await findCertificate(registration.id);
     if (!certificate || options.regenerate) {
-      const pdf = await createCertificatePdf({ event, registration, template, eventTypeName });
+      const id = certificate?.id ?? recordId();
+      const pdf = await createCertificatePdf({ event, registration, template, eventTypeName, certificateId: id });
       const form = new FormData();
       form.set("evento", event.id);
       form.set("inscripcion", registration.id);
@@ -141,6 +142,7 @@ export async function generateCertificates(
         await pb.collection("certificados").update(certificate.id, form);
         regenerated += 1;
       } else {
+        form.set("id", id);
         await pb.collection("certificados").create(form);
         created += 1;
       }
@@ -239,11 +241,11 @@ async function generateModalCertificates(event: EventRecord, adminId: string, re
         const existing = await findCertificate(registration.id, subject.exhibition?.id ?? "");
         if (existing && !regenerate) { reused++; continue; }
         const template = subject.mode.plantilla_certificado ? await fetchProtectedFile(subject.mode as unknown as RecordModel, subject.mode.plantilla_certificado) : undefined;
-        const pdf = await createCertificatePdf({ event: { ...event, textos_certificado: subject.mode.textos_certificado }, eventTypeName: await loadEventTypeName(event), registration: subject.registration, template, members: subject.exhibition ? subject.members.map((m) => ({ ...m.person, role: m.role })) : undefined });
+        const id = existing?.id ?? recordId();
+        const pdf = await createCertificatePdf({ certificateId: id, event: { ...event, textos_certificado: subject.mode.textos_certificado }, eventTypeName: await loadEventTypeName(event), registration: subject.registration, template, members: subject.exhibition ? subject.members.map((m) => ({ ...m.person, role: m.role })) : undefined });
         const current = await pb.collection("inscripciones").getOne<RegistrationRecord>(registration.id);
         const finalSubject = await certificateSubject(pb, event, current, subject.exhibition?.id);
         if (!finalSubject?.eligible || finalSubject.hash !== subject.hash) throw new DomainError("INVALID", "Los datos cambiaron durante la emisión. Volvé a generar el lote.");
-        const id = existing?.id ?? recordId();
         const data = { evento: event.id, inscripcion: registration.id, modalidad: subject.mode.id, alcance: subject.exhibition ? "grupo" : "individual", exposicion: subject.exhibition?.id ?? "", huella: subject.hash, version_formulario: subject.registration.version_formulario, generado_en: new Date().toISOString(), archivo: new File([pdf.slice().buffer as ArrayBuffer], "certificado-" + id + ".pdf", { type: "application/pdf" }) };
         const batch = pb.createBatch();
         if (existing) batch.collection("certificados").update(id, data); else batch.collection("certificados").create({ ...data, id });

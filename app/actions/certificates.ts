@@ -17,7 +17,7 @@ import { getEventById, updateCertificateTexts } from "@/lib/services/events";
 
 function certificateTextsFromForm(formData: FormData) {
   return Object.fromEntries(
-    CERTIFICATE_TEXT_KEYS.map((key) => [key, formData.get(key)]),
+    CERTIFICATE_TEXT_KEYS.map((key) => [key, formData.has(key) ? formData.get(key) : undefined]),
   );
 }
 

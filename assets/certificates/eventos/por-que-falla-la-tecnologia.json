@@ -1,0 +1,28 @@
+{
+  "eventId": "g3b80v6m7b2147c",
+  "modalityId": "tjrywk2vdhem0tz",
+  "eventTypeName": "Charla",
+  "event": {
+    "id": "g3b80v6m7b2147c",
+    "titulo": "¿Por qué falla la tecnología?: El factor humano en la transformación digital",
+    "slug": "por-que-falla-la-tecnologia",
+    "inicio": "2026-10-27T20:00:00.000Z",
+    "fin": "2026-10-27T21:00:00.000Z",
+    "lugar": "Auditorio de la Facultad de Tecnología y Ciencias Aplicadas"
+  },
+  "textos_certificado": {
+    "participation": "ha participado como asistente a la charla:",
+    "signatureLeftName": "Mgter. Carlos A. Acosta Pasha",
+    "signatureLeftRole": "Director del Laboratorio de Tecnologías de la Información y las Comunicaciones",
+    "signatureLeftInstitution": "Facultad de Tecnología y Ciencias Aplicadas\nUniversidad Nacional de Catamarca",
+    "signatureLeftImage": "acosta_negro",
+    "signatureCenterName": "Mgter. María Alejandra Barrera",
+    "signatureCenterRole": "Directora del Departamento de Informática",
+    "signatureCenterInstitution": "Facultad de Tecnología y Ciencias Aplicadas\nUniversidad Nacional de Catamarca",
+    "signatureCenterImage": "barrera_negro",
+    "signatureRightName": "Mgter. Natalia Edith Fernández",
+    "signatureRightRole": "Decana",
+    "signatureRightInstitution": "Facultad de Tecnología y Ciencias Aplicadas\nUniversidad Nacional de Catamarca",
+    "signatureRightImage": "natalia_negro"
+  }
+}

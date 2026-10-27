@@ -42,7 +42,7 @@ describe("emisión y regeneración de certificados", () => {
 
   it("reemplaza el archivo conservando el ID y usando los textos actuales", async () => {
     expect(await generateCertificates("event", "admin", { regenerate: true })).toEqual({ created: 0, reused: 0, regenerated: 1, eligible: 1 });
-    expect(mocks.pdf).toHaveBeenCalledWith({ event, registration, template: undefined, eventTypeName: "Evento" });
+    expect(mocks.pdf).toHaveBeenCalledWith({ event, registration, template: undefined, eventTypeName: "Evento", certificateId: "existing" });
     expect(mocks.update).toHaveBeenCalledTimes(1);
     const [id, form] = mocks.update.mock.calls[0];
     expect(id).toBe("existing");
@@ -56,6 +56,9 @@ describe("emisión y regeneración de certificados", () => {
     mocks.find.mockRejectedValue(new ClientResponseError({ status: 404 }));
     expect(await generateCertificates("event", "admin", { regenerate: true })).toEqual({ created: 1, reused: 0, regenerated: 0, eligible: 1 });
     expect(mocks.create).toHaveBeenCalledTimes(1);
+    const form = mocks.create.mock.calls[0][0] as FormData;
+    expect(form.get("id")).toMatch(/^[a-z0-9]{15}$/);
+    expect(mocks.pdf.mock.calls[0][0].certificateId).toBe(form.get("id"));
     expect(mocks.update).not.toHaveBeenCalled();
   });
 

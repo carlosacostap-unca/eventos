@@ -6,7 +6,7 @@ import { saveCertificateTextsAction } from "@/app/actions/certificates";
 import { initialActionState } from "@/app/actions/state";
 import { FieldError, FormMessage } from "@/components/form-feedback";
 import { SubmitButton } from "@/components/submit-button";
-import { resolveCertificateTexts } from "@/lib/domain/certificate-texts";
+import { resolveCertificateTexts, SIGNATURE_IMAGE_OPTIONS } from "@/lib/domain/certificate-texts";
 import type { EventRecord } from "@/lib/domain/models";
 
 export function CertificateTextForm({ event }: { event: EventRecord }) {
@@ -123,17 +123,23 @@ export function CertificateTextForm({ event }: { event: EventRecord }) {
         <fieldset className="certificate-text-group">
           <legend>Autoridades y firmas</legend>
           <p className="muted">
-            Estos textos acompañan las dos firmas del diseño institucional.
-            Las imágenes de las firmas se mantienen; no se agregan sobre fondos personalizados.
+            Configurá dos o tres autoridades en el diseño institucional. Completá
+            el nombre central para habilitar tres firmas. Elegí la imagen de cada
+            persona o dejá un espacio para firmar.
           </p>
           <div className="certificate-text-grid">
             {([
-              { title: "Firma izquierda", fields: [
+              { title: "Firma izquierda", image: "signatureLeftImage", fields: [
                 { key: "signatureLeftName", label: "Nombre y título", max: 120 },
                 { key: "signatureLeftRole", label: "Cargo", max: 120 },
                 { key: "signatureLeftInstitution", label: "Institución", max: 160 },
               ] },
-              { title: "Firma derecha", fields: [
+              { title: "Firma central (opcional)", image: "signatureCenterImage", fields: [
+                { key: "signatureCenterName", label: "Nombre y título", max: 120 },
+                { key: "signatureCenterRole", label: "Cargo", max: 120 },
+                { key: "signatureCenterInstitution", label: "Institución", max: 160 },
+              ] },
+              { title: "Firma derecha", image: "signatureRightImage", fields: [
                 { key: "signatureRightName", label: "Nombre y título", max: 120 },
                 { key: "signatureRightRole", label: "Cargo", max: 120 },
                 { key: "signatureRightInstitution", label: "Institución", max: 160 },
@@ -148,6 +154,7 @@ export function CertificateTextForm({ event }: { event: EventRecord }) {
                     <FieldError errors={state.fields?.[field.key]} />
                   </label>
                 ))}
+                <label className="field"><span>Imagen de firma</span><select name={signature.image} defaultValue={texts[signature.image]}>{Object.entries(SIGNATURE_IMAGE_OPTIONS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select><FieldError errors={state.fields?.[signature.image]} /></label>
               </fieldset>
             ))}
           </div>

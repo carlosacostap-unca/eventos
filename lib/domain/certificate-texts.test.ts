@@ -39,6 +39,16 @@ describe("textos de certificados", () => {
     expect(resolved.signatureLeftName).toBe("Ms. Ing. Marcos Darío ARANDA");
     expect(resolved.signatureRightRole).toBe("Decana");
     expect(resolved.signatureLeftRole).toBe("");
+    expect(resolved.signatureCenterName).toBe("");
+    expect(resolved.signatureLeftImage).toBe("marcos");
+    expect(resolved.signatureRightImage).toBe("natalia");
+  });
+
+  it("permite una tercera autoridad y espacios para firmas sin aceptar archivos arbitrarios", () => {
+    const input = { ...DEFAULT_CERTIFICATE_TEXTS, signatureCenterName: "Mgter. María Alejandra Barrera", signatureLeftImage: "none", signatureCenterImage: "none" };
+    expect(certificateTextInputSchema.safeParse(input).success).toBe(true);
+    expect(resolveCertificateTexts(input)).toMatchObject({ signatureCenterName: input.signatureCenterName, signatureLeftImage: "none" });
+    expect(certificateTextInputSchema.safeParse({ ...input, signatureLeftImage: "../../firma.png" }).success).toBe(false);
   });
   it("conserva los textos predeterminados para eventos sin configuración", () => {
     expect(resolveCertificateTexts(undefined)).toEqual(DEFAULT_CERTIFICATE_TEXTS);

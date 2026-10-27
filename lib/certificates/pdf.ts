@@ -4,6 +4,8 @@ import { join } from "node:path";
 import {
   PDFDocument,
   StandardFonts,
+  PDFName,
+  PDFRawStream,
   rgb,
   type PDFFont,
   type PDFPage,
@@ -19,6 +21,7 @@ import {
 } from "@/lib/domain/certificate-texts";
 import type { EventRecord, RegistrationRecord } from "@/lib/domain/models";
 import { drawCertificateLayout, readCertificateLayout, type CertificateLayout } from "./template-layout";
+import { certificateVerificationCode } from "./verification-code";
 
 const PAGE_WIDTH = 842;
 const PAGE_HEIGHT = 595;
@@ -134,12 +137,12 @@ function fitTextBlock(input: {
   minimumSize: number;
 }) {
   for (let size = input.preferredSize; size >= input.minimumSize; size -= 0.5) {
-    const lines = wrapText(input.text, input.font, size, input.maxWidth);
+    const lines = input.text.split(/\r?\n/).flatMap((line) => wrapText(line, input.font, size, input.maxWidth));
     if (lines.length <= input.maxLines) return { lines, size };
   }
 
   return {
-    lines: wrapText(input.text, input.font, input.minimumSize, input.maxWidth),
+    lines: input.text.split(/\r?\n/).flatMap((line) => wrapText(line, input.font, input.minimumSize, input.maxWidth)),
     size: input.minimumSize,
   };
 }
@@ -229,13 +232,13 @@ async function drawDefaultBackground(input: {
 
   const crestWidth = 55;
   input.page.drawImage(crest, {
-    x: 505,
+    x: 455,
     y: 454,
     width: crestWidth,
     height: (crest.height / crest.width) * crestWidth,
   });
 
-  const headerCenter = 675;
+  const headerCenter = 625;
   const headerSections = [
     {
       text: input.institutionPrimary,
@@ -272,19 +275,50 @@ async function drawSignatures(
   variables: CertificateTextVariables,
 ) {
   const directory = join(process.cwd(), "assets", "certificates");
+  const triple = Boolean(texts.signatureCenterName);
+  const files = { marcos: "firma_marcos.png", natalia: "firma_natalia.png", barrera: "firma_barrera.jpeg", acosta: "firma_acosta.png", acosta_negro: "firma_acosta.png", barrera_negro: "firma_barrera.jpeg", natalia_negro: "firma_natalia.png" };
   const authorities = [
-    { file: "firma_marcos.png", center: 240, name: texts.signatureLeftName, role: texts.signatureLeftRole, institution: texts.signatureLeftInstitution },
-    { file: "firma_natalia.png", center: 602, name: texts.signatureRightName, role: texts.signatureRightRole, institution: texts.signatureRightInstitution },
+    { image: texts.signatureLeftImage, center: triple ? 177 : 240, name: texts.signatureLeftName, role: texts.signatureLeftRole, institution: texts.signatureLeftInstitution },
+    ...(triple ? [{ image: texts.signatureCenterImage, center: 421, name: texts.signatureCenterName, role: texts.signatureCenterRole, institution: texts.signatureCenterInstitution }] : []),
+    { image: texts.signatureRightImage, center: triple ? 665 : 602, name: texts.signatureRightName, role: texts.signatureRightRole, institution: texts.signatureRightInstitution },
   ];
   for (const authority of authorities) {
-    const signature = await document.embedPng(await readFile(join(directory, authority.file)));
-    const size = signature.scaleToFit(130, 110);
-    page.drawImage(signature, {
-      x: authority.center - size.width / 2,
-      y: 101,
-      width: size.width,
-      height: size.height,
-    });
+    if (authority.image !== "none") {
+      const bytes = await readFile(join(directory, files[authority.image]));
+      const black = authority.image.endsWith("_negro");
+      const isBarrera = authority.image === "barrera" || authority.image === "barrera_negro";
+      const compact = isBarrera || authority.image === "acosta" || authority.image === "acosta_negro";
+      const signature = isBarrera ? await document.embedJpg(bytes) : await document.embedPng(bytes);
+      if (black && !isBarrera) {
+        // Map the PNG's RGB channels to black while preserving its original alpha.
+        // Ordinary image decoding avoids luminosity masks and transfer functions
+        // that display differently in PDF viewers. Barrera's JPEG already has black ink.
+        await signature.embed();
+        const imageObject = document.context.lookup(signature.ref);
+        if (!(imageObject instanceof PDFRawStream)) throw new Error("No se pudo preparar la firma del certificado.");
+        imageObject.dict.set(PDFName.of("Decode"), document.context.obj([0, 0, 0, 0, 0, 0]));
+      }
+      const size = signature.scaleToFit(triple ? 140 : 130, compact ? (triple ? 55 : 85) : (triple ? 77 : 110));
+      const box = { x: authority.center - size.width / 2, y: compact ? (triple ? (black ? 158 : 166) : 113) : (triple ? 146 : 101), width: size.width, height: size.height };
+      page.drawImage(signature, box);
+    }
+    if (triple) {
+      const roleLines = fitTextBlock({ text: renderCertificateText(authority.role, variables), font, maxWidth: 218, maxLines: 3, preferredSize: 8.8, minimumSize: 8 }).lines.length;
+      const institutionY = 127 - Math.max(1, roleLines) * 10.5 - 2;
+      page.drawLine({ start: { x: authority.center - 70, y: 162 }, end: { x: authority.center + 70, y: 162 }, thickness: 0.4, color: rgb(0.45, 0.45, 0.45) });
+      const sections = [
+        { text: authority.name, y: 142, preferredSize: 10, minSize: 9, maxLines: 1 },
+        { text: authority.role, y: 127, preferredSize: 8.8, minSize: 8, maxLines: 3 },
+        { text: authority.institution, y: institutionY, preferredSize: 8.2, minSize: 7.5, maxLines: 2 },
+      ];
+      for (const section of sections) {
+        const text = section.text.split(/\r?\n/).map((line) => renderCertificateText(line, variables)).join("\n");
+        if (!text) continue;
+        const block = fitTextBlock({ text, font, maxWidth: 218, maxLines: section.maxLines, preferredSize: section.preferredSize, minimumSize: section.minSize });
+        block.lines.forEach((line, index) => page.drawText(line, { x: authority.center - font.widthOfTextAtSize(line, block.size) / 2, y: section.y - index * 10.5, font, size: block.size, color: rgb(0.06, 0.06, 0.06) }));
+      }
+      continue;
+    }
     [authority.name, authority.role, authority.institution].forEach((template, index) => {
       const text = renderCertificateText(template, variables);
       if (!text) return;
@@ -301,6 +335,7 @@ async function drawSignatures(
 }
 
 export async function createCertificatePdf(input: {
+  certificateId?: string;
   members?: Array<{ nombres: string; apellidos: string; documento: string; role: string }>;
   event: EventRecord;
   eventTypeName?: string;
@@ -384,8 +419,9 @@ export async function createCertificatePdf(input: {
   const scaleX = width / PAGE_WIDTH;
   const scaleY = height / PAGE_HEIGHT;
   const textScale = Math.min(scaleX, scaleY);
+  const identifier = input.certificateId ? certificateVerificationCode(input.certificateId) : input.event.id + "-" + input.registration.id;
   if (templateLayout && templateSource) {
-    await drawCertificateLayout({ document, page, source: templateSource, layout: templateLayout, texts, variables, identifier: input.event.id + "-" + input.registration.id, members: input.members });
+    await drawCertificateLayout({ document, page, source: templateSource, layout: templateLayout, texts, variables, identifier, members: input.members });
     return document.save();
   }
   if (input.members?.length) {
@@ -414,7 +450,7 @@ export async function createCertificatePdf(input: {
     let y = top;
     const finishPage = async () => {
       if (!input.template) await drawSignatures(document, page, serif, texts, variables);
-      page.drawText("ID " + input.event.id + "-" + input.registration.id, { x: width * 0.085, y: height * 0.105, size: 6.5 * textScale, font: sans });
+      page.drawText("ID " + identifier, { x: width * 0.085, y: texts.signatureCenterName && !input.template ? 64 : height * 0.105, size: 6.5 * textScale, font: sans });
     };
     const nextPage = async () => {
       await finishPage();
@@ -541,15 +577,15 @@ export async function createCertificatePdf(input: {
   drawCenteredBlock({
     page,
     lines: locationBlock.lines,
-    centerY: height * (input.template ? 0.18 : 0.34),
+    centerY: height * (input.template ? 0.18 : texts.signatureCenterName ? 0.38 : 0.34),
     font: serif,
     size: locationBlock.size,
     lineHeight: locationBlock.size * 1.18,
   });
   if (!input.template) await drawSignatures(document, page, serif, texts, variables);
-  page.drawText("ID " + input.event.id + "-" + input.registration.id, {
+  page.drawText("ID " + identifier, {
     x: width * 0.085,
-    y: height * 0.105,
+    y: texts.signatureCenterName && !input.template ? 64 : height * 0.105,
     size: 6.5 * textScale,
     font: sans,
     color: rgb(0.42, 0.42, 0.42),

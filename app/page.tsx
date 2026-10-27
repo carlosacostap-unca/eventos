@@ -54,9 +54,9 @@ export default async function Home() {
             />
             <div><strong>Eventos UNCA</strong><small>Facultad de Tecnología y Ciencias Aplicadas</small></div>
           </div>
-          <Link className="button button-ghost-light" href="/mis-certificados">
+          <div className="actions-row"><Link className="button button-ghost-light" href="/validar-certificado">Validar certificado</Link><Link className="button button-ghost-light" href="/mis-certificados">
             Mis certificados
-          </Link>
+          </Link></div>
         </div>
         <div className="container agenda-intro">
           <p className="eyebrow">Aprender · Compartir · Conectar</p>
@@ -120,7 +120,7 @@ export default async function Home() {
           }))} />
         )}
       </section>
-      <footer className="site-footer container"><div><strong>Eventos UNCA</strong><p>Facultad de Tecnología y Ciencias Aplicadas</p></div><Link href="/mis-certificados">Mis certificados</Link><Link href="/iniciar-sesion">Acceso administrativo</Link></footer>
+      <footer className="site-footer container"><div><strong>Eventos UNCA</strong><p>Facultad de Tecnología y Ciencias Aplicadas</p></div><Link href="/mis-certificados">Mis certificados</Link><Link href="/validar-certificado">Validar certificado</Link><Link href="/iniciar-sesion">Acceso administrativo</Link></footer>
     </main>
   );
 }

@@ -11,6 +11,7 @@ const reservedPublicSlugs = new Set([
   "api",
   "eventos",
   "mis-certificados",
+  "validar-certificado",
   "iniciar-sesion",
   "icon",
   "favicon",

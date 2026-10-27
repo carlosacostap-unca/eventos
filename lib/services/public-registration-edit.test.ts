@@ -382,6 +382,8 @@ it("emite un certificado por trabajo y mantiene separados títulos, destinatario
   const firstGroup = db.exposiciones.find((group) => (group.respuestas as { titulo_trabajo: string }).titulo_trabajo === "Mi investigación")!;
   const firstCert = db.certificados.find((certificate) => certificate.exposicion === firstGroup.id)!;
   const secondCert = db.certificados.find((certificate) => certificate.exposicion !== firstGroup.id)!;
+  expect(firstCert.id).not.toBe(secondCert.id);
+  expect(mocks.pdf.mock.calls.map(([input]) => input.certificateId).sort()).toEqual(db.certificados.map((certificate) => certificate.id).sort());
   expect(mocks.pdf.mock.calls.map(([input]) => input.registration.respuestas.titulo_trabajo).sort()).toEqual(["Mi investigación", "Segundo trabajo"]);
   const pb = mocks.client as PocketBase;
   const event = db.eventos[0] as unknown as EventRecord;

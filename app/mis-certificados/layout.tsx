@@ -25,7 +25,7 @@ export default function MyCertificatesLayout({ children }: { children: ReactNode
               priority
             />
           </Link>
-          <nav className="public-page-nav" aria-label="Navegación"><Link href="/">← Volver a la agenda</Link></nav>
+          <nav className="public-page-nav" aria-label="Navegación"><Link href="/">← Volver a la agenda</Link><Link href="/validar-certificado">Validar certificado</Link></nav>
           <div className="certificate-lookup-copy">
             <p className="eyebrow">Facultad de Tecnología y Ciencias Aplicadas</p>
             <h1>Mis certificados y materiales</h1>
