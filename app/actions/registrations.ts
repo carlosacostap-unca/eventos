@@ -42,6 +42,7 @@ export async function updateRegistrationAction(
   }
   revalidatePath("/admin/eventos/" + eventId);
   revalidatePath("/admin/eventos/" + eventId + "/acreditacion");
+  revalidatePath("/admin/eventos/" + eventId + "/acreditacion/listado");
   revalidatePath("/admin/eventos/" + eventId + "/reportes");
   revalidatePath("/admin/eventos/" + eventId + "/certificados");
   revalidatePath("/admin/eventos/" + eventId + "/inscritos");
@@ -62,7 +63,7 @@ export async function registerAction(
   try {
     const editToken = String(formData.get("editToken") ?? "");
     await registerPublic(event, parsed.data, editToken || undefined);
-    for (const suffix of ["", "/inscritos", "/acreditacion", "/exposiciones", "/certificados", "/reportes"]) revalidatePath("/admin/eventos/" + event.id + suffix);
+    for (const suffix of ["", "/inscritos", "/acreditacion", "/acreditacion/listado", "/exposiciones", "/certificados", "/reportes"]) revalidatePath("/admin/eventos/" + event.id + suffix);
     revalidatePath("/" + slug);
     return {
       ok: true,
@@ -83,6 +84,7 @@ export async function toggleAttendanceAction(formData: FormData) {
   await setAttendance(registrationId, accredited, admin.adminId, eventId);
   revalidatePath("/admin/eventos/" + eventId);
   revalidatePath("/admin/eventos/" + eventId + "/acreditacion");
+  revalidatePath("/admin/eventos/" + eventId + "/acreditacion/listado");
   revalidatePath("/admin/eventos/" + eventId + "/reportes");
 }
 
@@ -105,6 +107,7 @@ export async function createWalkInAction(
     );
     revalidatePath("/admin/eventos/" + eventId);
     revalidatePath("/admin/eventos/" + eventId + "/acreditacion");
+    revalidatePath("/admin/eventos/" + eventId + "/acreditacion/listado");
     revalidatePath("/admin/eventos/" + eventId + "/inscritos");
     return { ok: true, message: "La persona fue agregada y acreditada." };
   } catch (error) {

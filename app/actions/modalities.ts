@@ -13,7 +13,7 @@ import { registrationInputSchema } from "@/lib/domain/models";
 import { updatePublicLinkedRegistration } from "@/lib/services/public-registration-edit";
 
 async function refreshEvent(eventId: string) {
-  for (const suffix of ["", "/inscritos", "/modalidades", "/acreditacion", "/exposiciones", "/certificados", "/reportes"]) revalidatePath("/admin/eventos/" + eventId + suffix);
+  for (const suffix of ["", "/inscritos", "/modalidades", "/acreditacion", "/acreditacion/listado", "/exposiciones", "/certificados", "/reportes"]) revalidatePath("/admin/eventos/" + eventId + suffix);
   const event = await getEventById(eventId);
   if (event) revalidatePath("/" + event.slug);
 }

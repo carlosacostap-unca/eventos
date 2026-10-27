@@ -10,6 +10,7 @@ Las cuentas existentes con `role=admin` conservan la administración general. La
 | Configurar evento, modalidades y disertantes | Todos | Asignados | No |
 | Certificados, materiales, reportes y exportaciones | Todos | Asignados | No |
 | Corregir datos de inscripciones existentes | Todos | Asignados | No |
+| Revisar y corregir datos personales al acreditar por DNI | Todos | Asignados | Asignados |
 | Buscar inscriptos y marcar/desmarcar asistencia | Todos | Asignados | Asignados |
 | Inscribir y acreditar personas nuevas con cupo | Todos | Asignados | Asignados |
 | Confirmar una excepción administrativa de cupo | Sí | Sí | No |
@@ -44,7 +45,15 @@ El respaldo previo a la primera aplicación es `pre_roles_por_evento_20261023115
 4. Elegir la persona y su rol en ese evento. Guardar la asignación.
 5. Para cambiar el rol, guardar el nuevo rol de esa persona; para revocar, usar **Quitar acceso a este evento**.
 
-Los administradores de evento reciben las secciones administrativas de sus eventos. La pestaña **Inscritos**, inmediatamente después de **Resumen**, muestra únicamente apellido y nombre de las personas inscritas, en orden alfabético. Los acreditadores ingresan directamente a acreditación, pueden registrar llegadas e inscribir personas nuevas, y no reciben controles de edición de inscripciones, emisión de certificados ni administración general.
+Los administradores de evento reciben las secciones administrativas de sus eventos. La pestaña **Inscritos**, inmediatamente después de **Resumen**, muestra únicamente apellido y nombre de las personas inscritas, en orden alfabético. Los acreditadores ingresan directamente a acreditación, pueden registrar llegadas, corregir los datos personales durante esa confirmación e inscribir personas nuevas. La edición general de inscripciones, las respuestas de trabajos, la emisión de certificados y la administración general conservan sus permisos anteriores.
+
+### Acreditación rápida por DNI
+
+El botón **Acreditar por DNI** del resumen abre `/admin/eventos/[id]/acreditacion`. La búsqueda exacta por DNI normalizado consulta únicamente ese evento; admite puntos y espacios. Primero muestra los datos personales para revisar, luego permite corregirlos y confirmar la asistencia en una sola actualización. Si la persona ya estaba acreditada, se informa y se conserva la fecha y el operador originales. Las correcciones no cambian modalidad, trabajos, integrantes ni cupos.
+
+Cuando no hay coincidencia se ofrece el alta presencial con el DNI precargado, las modalidades y los campos configurados del evento. Confirmar el alta también acredita a la persona principal. Los cupos y las excepciones administrativas mantienen su política vigente: no se liberan lugares de personas ausentes automáticamente. Una falla de conexión requiere reintentar la búsqueda y nunca se interpreta como DNI inexistente.
+
+**Pasar la tablet · Autoservicio** oculta la navegación y mantiene el mismo flujo bajo la sesión del equipo, para entregar temporalmente el dispositivo. No constituye una sesión pública ni un bloqueo del dispositivo. Al terminar se muestra una confirmación y se limpia la pantalla a los 8 segundos, o de inmediato con **Acreditar a otra persona**. Después de 90 segundos sin actividad también se limpia; no se interrumpen solicitudes pendientes. El listado operativo anterior queda en `/admin/eventos/[id]/acreditacion/listado`.
 
 El acreditador no puede confirmar excepciones de cupo. Para sus altas se cuentan inscripciones principales públicas y presenciales; los integrantes vinculados mantienen la política vigente de cupo por inscripción principal. Los eventos con cupo ilimitado permiten nuevas altas. El control se repite dentro del bloqueo por evento para impedir que dos altas presenciales obtengan el último lugar. La inscripción pública conserva su política de cupo público existente.
 

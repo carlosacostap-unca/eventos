@@ -19,6 +19,7 @@ import { createEvent, listEvents } from "@/lib/services/events";
 import { listModalities } from "@/lib/services/modalities";
 import { createWalkIn, countOccupiedPlaces, registerPublic } from "@/lib/services/registrations";
 import { createWalkInAction, toggleAttendanceAction, updateRegistrationAction } from "@/app/actions/registrations";
+import { lookupAccreditationAction, confirmAccreditationAction } from "@/app/actions/accreditation";
 import { registerConfiguredAction, saveModalityAction } from "@/app/actions/modalities";
 import { createEventAction } from "@/app/actions/events";
 import { saveAssignmentAction } from "@/app/actions/staff";
@@ -146,6 +147,31 @@ describe.skipIf(!enabled)("roles por evento contra PocketBase local aislado", ()
     const material = await uploadMaterial(eventB.id, "Archivo de prueba", new File(["sintetico"], "material.pdf", { type: "application/pdf" }), general);
     expect(await getResourceAccess("materiales_evento", material.id)).toBeNull();
     expect((await downloadMaterial(new Request("http://localhost/"), { params: Promise.resolve({ id: material.id }) })).status).toBe(401);
+  });
+
+  it("el acreditador busca por DNI, corrige y confirma sin cambiar modalidad ni duplicar llegada", async () => {
+    const e = await event("Acreditación rápida", 1);
+    await saveAssignment(e.id, { usuario: operator, rol: "acreditador" });
+    const data = person(71);
+    const registration = await registerPublic(e, data);
+    await session(operator);
+    const lookup = await lookupAccreditationAction(e.id, data.documento.slice(0, 2) + "." + data.documento.slice(2));
+    expect(lookup.person).toMatchObject({ id: registration.id, acreditado: false });
+    expect(lookup.person).not.toHaveProperty("respuestas");
+    expect((await confirmAccreditationAction(e.id, registration.id, {}, form({ ...data, nombres: "Nombre corregido" }))).ok).toBe(true);
+    const saved = await pb.collection("inscripciones").getOne(registration.id);
+    expect(saved).toMatchObject({ nombres: "Nombre corregido", modalidad: registration.modalidad, numero_cupo_publico: registration.numero_cupo_publico, acreditado: true, acreditado_por: operator });
+    expect((await confirmAccreditationAction(e.id, registration.id, {}, form({ ...data, nombres: "Nombre corregido" }))).ok).toBe(true);
+    expect((await pb.collection("inscripciones").getOne(registration.id)).acreditado_en).toBe(saved.acreditado_en);
+    expect((await lookupAccreditationAction(eventB.id, data.documento)).person).toBeUndefined();
+    expect((await confirmAccreditationAction(eventB.id, registration.id, {}, form(data))).ok).not.toBe(true);
+    const audits = await pb.collection("auditoria").getFullList({ filter: pb.filter('entidad_id = {:id} && accion = "asistencia.acreditada"', { id: registration.id }) });
+    expect(audits).toHaveLength(1);
+    await session(general);
+    await revokeAssignment(e.id, (await pb.collection("asignaciones_evento").getFirstListItem(pb.filter("evento = {:id}", { id: e.id }))).id);
+    await session(operator);
+    await expect(lookupAccreditationAction(e.id, data.documento)).rejects.toThrow("NOT_FOUND");
+    await expect(confirmAccreditationAction(e.id, registration.id, {}, form(data))).rejects.toThrow("NOT_FOUND");
   });
 
   it.each([false, true])("protege el último lugar presencial y la excepción manipulada; heredado=%s", async legacy => {

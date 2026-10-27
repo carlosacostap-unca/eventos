@@ -84,7 +84,7 @@ function WalkInModalRegistrationForm({ eventId, modes, operation, isFull }: { ev
     <ConfiguredForm key={selected} eventId={eventId} mode={mode} operation={operation + "-" + selected} presencial={true} isFull={isFull} />
   </div>;
 }
-export function ConfiguredForm({ eventId, mode, operation, presencial, isFull, initial, saveAction, publicIdentity, modeSelector }: { eventId: string; mode: PublicModality; operation: string; presencial: boolean; isFull: boolean; initial?: { principal: PersonSubmission; integrantes: Array<PersonSubmission & { funcion: string }> }; saveAction?: (state: ActionState, data: FormData) => Promise<ActionState>; publicIdentity?: { person: PersonSubmission; setPerson: Dispatch<SetStateAction<PersonSubmission>>; ready: boolean; lookupMessage: string; onLookup: (result: RegistrationPrefillResult) => void; onReadyChange: (ready: boolean) => void; editToken?: string; exhibitionId?: string; newExhibition?: boolean }; modeSelector?: React.ReactNode }) {
+export function ConfiguredForm({ eventId, mode, operation, presencial, isFull, initial, saveAction, publicIdentity, modeSelector, submitLabel }: { eventId: string; mode: PublicModality; operation: string; presencial: boolean; isFull: boolean; initial?: { principal: PersonSubmission; integrantes: Array<PersonSubmission & { funcion: string }> }; saveAction?: (state: ActionState, data: FormData) => Promise<ActionState>; publicIdentity?: { person: PersonSubmission; setPerson: Dispatch<SetStateAction<PersonSubmission>>; ready: boolean; lookupMessage: string; onLookup: (result: RegistrationPrefillResult) => void; onReadyChange: (ready: boolean) => void; editToken?: string; exhibitionId?: string; newExhibition?: boolean }; modeSelector?: React.ReactNode; submitLabel?: string }) {
   const [principal, setPrincipal] = useState(() => initial?.principal ?? emptyPerson());
   const [principalReady, setPrincipalReady] = useState(Boolean(initial));
   const [members, setMembers] = useState(() => (initial?.integrantes ?? mode.definition.roles.flatMap((role) => Array.from({ length: role.min }, () => ({ ...emptyPerson(), funcion: role.id })))).map((person) => ({ ...person, formKey: crypto.randomUUID() })));
@@ -98,13 +98,13 @@ export function ConfiguredForm({ eventId, mode, operation, presencial, isFull, i
   }}>
     <FormMessage message={state.message} success={state.ok} />
     <FieldError errors={state.fields?.formulario} />
-    {!state.ok && <>
+    {!state.ok && <fieldset className="form-stack quick-fields" disabled={pending}>
       <input type="hidden" name="payload" value={JSON.stringify(payload)} />
       {publicIdentity?.editToken && <input type="hidden" name="editToken" value={publicIdentity.editToken} />}
       {publicIdentity?.exhibitionId && <input type="hidden" name="exhibitionId" value={publicIdentity.exhibitionId} />}
       {publicIdentity?.newExhibition && <input type="hidden" name="newExhibition" value="true" />}
       <h3>{publicIdentity ? "Tus datos" : mode.definition.principal}</h3>
-      {publicIdentity ? <PersonFields person={publicIdentity.person} setPerson={publicIdentity.setPerson} prefix="principal" errors={state.fields} eventId={eventId} initialReady={publicIdentity.ready} initialMessage={publicIdentity.lookupMessage} includeRegistration onLookup={publicIdentity.onLookup} onReadyChange={publicIdentity.onReadyChange} /> : <PersonFields person={principal} setPerson={setPrincipal} prefix="principal" errors={state.fields} eventId={saveAction ? undefined : eventId} onReadyChange={setPrincipalReady} />}
+      {publicIdentity ? <PersonFields person={publicIdentity.person} setPerson={publicIdentity.setPerson} prefix="principal" errors={state.fields} eventId={eventId} initialReady={publicIdentity.ready} initialMessage={publicIdentity.lookupMessage} includeRegistration onLookup={publicIdentity.onLookup} onReadyChange={publicIdentity.onReadyChange} /> : <PersonFields person={principal} setPerson={setPrincipal} prefix="principal" errors={state.fields} eventId={saveAction ? undefined : eventId} onReadyChange={setPrincipalReady} disableAutofill={presencial} />}
       {identityReady && <>
       {modeSelector}
       <ConfiguredFields fields={mode.definition.fields} values={principal.respuestas} onChange={(respuestas) => setPrincipal({ ...principal, respuestas })} prefix="principal.respuestas" errors={state.fields} />
@@ -112,7 +112,7 @@ export function ConfiguredForm({ eventId, mode, operation, presencial, isFull, i
         <h3>{role.label} {role.min > 0 ? "(obligatorio)" : "(opcional)"}</h3>
         <FieldError errors={state.fields?.["grupo." + role.id]} />
         {members.map((p, i) => p.funcion !== role.id ? null : <fieldset className="form-stack" key={p.formKey}><legend>{role.label} {role.max > 1 ? members.slice(0, i + 1).filter((m) => m.funcion === role.id).length : ""}</legend>
-          <PersonFields person={p} setPerson={(update) => setMembers((current) => current.map((m) => m.formKey === p.formKey ? { ...m, ...(typeof update === "function" ? update(m) : update), funcion: role.id } : m))} prefix={`integrantes.${i}`} errors={state.fields} eventId={saveAction ? undefined : eventId} />
+          <PersonFields person={p} setPerson={(update) => setMembers((current) => current.map((m) => m.formKey === p.formKey ? { ...m, ...(typeof update === "function" ? update(m) : update), funcion: role.id } : m))} prefix={`integrantes.${i}`} errors={state.fields} eventId={saveAction ? undefined : eventId} disableAutofill={presencial} />
           <ConfiguredFields fields={role.fields} values={p.respuestas} onChange={(value) => answers(i, value)} prefix={`integrantes.${i}.respuestas`} errors={state.fields} />
           {members.filter((m) => m.funcion === role.id).length > role.min && <button className="button button-secondary" type="button" onClick={() => setMembers((current) => current.filter((m) => m.formKey !== p.formKey))}>Quitar {role.label.toLowerCase()}</button>}
         </fieldset>)}
@@ -120,8 +120,8 @@ export function ConfiguredForm({ eventId, mode, operation, presencial, isFull, i
       </section>)}
       {presencial && isFull && <label className="confirmation-check"><input name="confirmarExcepcion" type="checkbox" required />Confirmo el alta excepcional por encima del cupo.</label>}
       <p className="privacy-note">Usaremos estos datos para gestionar la inscripción, acreditación y los recursos del evento. {mode.definition.certificate === "grupo" && "Los integrantes compartirán un certificado que se habilitará cuando se acredite la persona responsable."}</p>
-      <button className="button button-primary" disabled={pending}>{pending ? "Guardando…" : saveAction ? "Guardar integrantes y respuestas" : presencial ? "Agregar y acreditar" : publicIdentity?.newExhibition ? "Confirmar nueva exposición" : publicIdentity?.exhibitionId ? "Guardar cambios en esta exposición" : publicIdentity?.editToken ? "Guardar cambios en mi inscripción" : "Confirmar inscripción"}</button>
+      <button className="button button-primary" disabled={pending}>{pending ? "Guardando…" : submitLabel ?? (saveAction ? "Guardar integrantes y respuestas" : presencial ? "Agregar y acreditar" : publicIdentity?.newExhibition ? "Confirmar nueva exposición" : publicIdentity?.exhibitionId ? "Guardar cambios en esta exposición" : publicIdentity?.editToken ? "Guardar cambios en mi inscripción" : "Confirmar inscripción")}</button>
       </>}
-    </>}
+    </fieldset>}
   </form>;
 }

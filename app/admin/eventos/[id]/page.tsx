@@ -49,9 +49,11 @@ export default async function EventDashboardPage({
           <p>{eventTypeName(event.tipo_evento, types)} · {event.lugar}</p>
           <p>{isEventFree(event) ? "Gratuito" : "Arancelado"} · {certificateEnabled ? "Con certificado" : "Sin certificado"}</p>
         </div>
+        <div className="actions-row"><Link className="button button-primary" href={"/admin/eventos/" + id + "/acreditacion"}>Acreditar por DNI</Link>
         <Link className="button button-secondary" href={"/" + event.slug}>
           Ver página pública
         </Link>
+        </div>
       </div>
       <EventAdminNav event={event} />
 
