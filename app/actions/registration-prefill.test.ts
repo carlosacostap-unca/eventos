@@ -30,6 +30,13 @@ it("recupera la inscripción del evento solo al consultar a la persona principal
   expect(mocks.find).not.toHaveBeenCalled();
 });
 
+it("informa al segundo alumno que ya está inscripto en una exposición", async () => {
+  const registration = { token: "signed", modalidad: "expo", version: "legacy", linked: true, principal: { nombres: "Segunda", apellidos: "Alumna", documento: "33333333", email: "segunda@example.com", respuestas: {} }, integrantes: [], participations: [{ title: "Trabajo", principalName: "Ana Pérez", role: "Segundo alumno expositor" }] };
+  mocks.editable.mockResolvedValue(registration);
+  expect(await lookupRegistrationPersonAction("event", "33333333", true)).toMatchObject({ registration, message: expect.stringContaining("segundo alumno expositor") });
+  expect(mocks.find).not.toHaveBeenCalled();
+});
+
 it.each(["12", ".....", "a".repeat(33)])("rechaza el documento inválido %s sin consultar", async (document) => {
   expect((await lookupRegistrationPersonAction("event", document)).person).toBeUndefined();
   expect(mocks.limit).not.toHaveBeenCalled();

@@ -19,7 +19,7 @@ export async function lookupRegistrationPersonAction(eventId: string, document: 
     }
     if (includeRegistration) {
       const registration = await findEditableRegistration(parsed.data, eventId);
-      if (registration) return { registration, person: registration.principal, message: "Ya estás inscripto en este evento. Podés actualizar tus datos y cambiar la modalidad de inscripción." };
+      if (registration) return { registration, person: registration.principal, message: registration.linked ? "Ya estás inscripto como " + registration.participations![0].role.toLowerCase() + " en una exposición de este evento. Podés modificar tus datos o dejar tu inscripción como está." : "Ya estás inscripto en este evento. Podés actualizar tus datos y cambiar la modalidad de inscripción." };
     }
     const person = await findRegistrationIdentity(parsed.data, eventId);
     return person

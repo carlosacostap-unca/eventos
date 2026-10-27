@@ -2,7 +2,7 @@ import "server-only";
 import { ClientResponseError, type RecordModel } from "pocketbase";
 import { z } from "zod";
 import { createServicePocketBase } from "@/lib/pocketbase/client";
-import { attendeeDefinition, formSchema, type FormVersion, type Modality, type PublicModality } from "@/lib/domain/modalities";
+import { attendeeDefinition, formSchema, withOptionalSecondExhibitor, SECOND_EXHIBITOR_ROLE, type FormVersion, type Modality, type PublicModality } from "@/lib/domain/modalities";
 import { recordId } from "@/lib/domain/fingerprints";
 import { DomainError } from "@/lib/domain/errors";
 import type { EventRecord } from "@/lib/domain/models";
@@ -19,7 +19,12 @@ export async function listModalities(eventId: string): Promise<Modality[]> {
 export async function modalityVersion(id: string): Promise<FormVersion> {
   const pb = await createServicePocketBase();
   const record = await pb.collection("versiones_modalidad").getOne<FormVersion>(id);
-  return { ...record, esquema: formSchema.parse(record.esquema) };
+  let definition = formSchema.parse(record.esquema);
+  if (definition.certificate === "grupo" && !definition.roles.some((role) => role.id === SECOND_EXHIBITOR_ROLE)) {
+    const mode = await pb.collection("modalidades_inscripcion").getOne<Modality>(record.modalidad);
+    if (mode.codigo === "expositor") definition = withOptionalSecondExhibitor(definition);
+  }
+  return { ...record, esquema: definition };
 }
 export async function publicModalities(event: EventRecord): Promise<PublicModality[]> {
   const modes = await listModalities(event.id);

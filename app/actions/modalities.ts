@@ -9,6 +9,8 @@ import { FormValidationError } from "@/lib/domain/modalities";
 import { z } from "zod";
 import { updateExhibition } from "@/lib/services/exhibition-edit";
 import { getEventById } from "@/lib/services/events";
+import { registrationInputSchema } from "@/lib/domain/models";
+import { updatePublicLinkedRegistration } from "@/lib/services/public-registration-edit";
 
 async function refreshEvent(eventId: string) {
   for (const suffix of ["", "/inscritos", "/modalidades", "/acreditacion", "/exposiciones", "/certificados", "/reportes"]) revalidatePath("/admin/eventos/" + eventId + suffix);
@@ -53,4 +55,18 @@ export async function updateExhibitionAction(eventId: string, groupId: string, _
   catch (e) { if (e instanceof FormValidationError) return { message: e.message, fields: e.fields }; return { message: e instanceof DomainError ? e.message : "No se pudo guardar la exposición." }; }
   await refreshEvent(eventId);
   return { ok: true, message: "Integrantes y respuestas guardados. Los certificados afectados requieren regeneración." };
+}
+
+export async function updateLinkedRegistrationAction(eventId: string, _state: ActionState, data: FormData): Promise<ActionState> {
+  try {
+    const raw = String(data.get("payload") ?? "");
+    if (raw.length > 10000) return { message: "El formulario supera el tamaño permitido." };
+    const parsed = registrationInputSchema.safeParse(JSON.parse(raw));
+    if (!parsed.success) return { fields: Object.fromEntries(Object.entries(parsed.error.flatten().fieldErrors).map(([key, errors]) => ["principal." + key, errors])) };
+    await updatePublicLinkedRegistration(eventId, parsed.data, String(data.get("editToken") ?? ""));
+  } catch (error) {
+    return { message: error instanceof DomainError ? error.message : "No pudimos guardar tus datos. Intentá nuevamente." };
+  }
+  await refreshEvent(eventId);
+  return { ok: true, message: "Tus datos fueron actualizados. Seguís inscripto en la misma exposición." };
 }

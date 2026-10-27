@@ -5,7 +5,7 @@ La configuración está en **Evento → Modalidades y formularios**. Cada evento
 ## Configurar una jornada
 
 1. Mantener Asistente con apellido, nombre, DNI y email. Usar certificado individual condicionado a acreditación propia.
-2. Agregar Expositor con dirección. La configuración inicial pide los mismos cuatro datos para el alumno, el título del trabajo obligatorio, un director obligatorio y un codirector opcional. El título lo completa el alumno una sola vez por exposición. El teléfono es un campo adicional disponible, no un requisito predeterminado de esta jornada.
+2. Agregar Expositor con dirección. La configuración inicial pide los mismos cuatro datos para el alumno, el título del trabajo obligatorio, un segundo alumno expositor opcional, un director obligatorio y un codirector opcional. El título lo completa el alumno una sola vez por exposición. El teléfono es un campo adicional disponible, no un requisito predeterminado de esta jornada.
 3. Agregar y ordenar los campos particulares. Se admiten texto corto/largo, número con límites, fecha, email, teléfono, selección simple/múltiple y casilla. Las secciones agrupan campos y los grupos definen funciones, mínimos y máximos de personas.
 4. Elegir para Expositor un PDF compartido condicionado a acreditación de la persona principal. Todos sus integrantes son destinatarios del mismo documento, con sus nombres, DNI y funciones.
 5. Guardar la configuración y comprobar la vista previa PDF. Cada modalidad tiene su entrega, plantilla y textos. Se puede cargar un fondo PDF, PNG o JPG de hasta 10 MB o volver al fondo institucional.
@@ -19,6 +19,16 @@ Una persona tiene un único registro y una modalidad por DNI normalizado dentro 
 El cupo público se aplica a solicitudes principales: un asistente o un alumno expositor reserva un lugar. Los integrantes vinculados no reservan lugares adicionales. Los reportes separan esas reservas del total de personas que podrían concurrir. No hay cupos separados por modalidad en esta entrega. En Configuración se puede marcar **Sin límite de cupo**; en ese caso no hay cierre ni confirmación presencial por exceso de cantidad, y se mantienen el cierre manual y la finalización del evento.
 
 La acreditación confirma presencia individual; no cambia la modalidad ni acredita a otros integrantes. En alta presencial solo se acredita a la persona principal atendida y se mantiene la confirmación administrativa cuando se supera el cupo. Las personas vinculadas ya existentes se buscan en la lista para acreditarlas.
+
+### Segundo alumno expositor opcional
+
+El formulario ofrece **Agregar segundo alumno expositor**. Se admite como máximo uno, con nombres, apellidos, DNI y email obligatorios al agregarlo, y un DNI distinto de los demás integrantes. Comparte la exposición, el título, la dirección y el certificado grupal; conserva su propio registro y acreditación. Su incorporación no crea otra exposición ni otra reserva principal.
+
+Al consultar su DNI, el segundo alumno ve que ya está inscripto como **Segundo alumno expositor**, junto con el trabajo y el alumno responsable. Puede elegir **Modificar mis datos** y guardar sus correcciones, o **Dejar mi inscripción como está** sin realizar cambios. La corrección conserva la modalidad, el vínculo, el cupo y la acreditación. Si el responsable modificó o retiró su vínculo mientras editaba, debe consultar el DNI nuevamente. Los integrantes vinculados editan su propia identidad; la edición de trabajo, dirección e integrantes corresponde al responsable o a la organización.
+
+En **Acreditación**, tanto el administrador como el acreditador ven su función y pueden buscarlo por DNI, filtrar por **Segundo alumno expositor** y acreditarlo individualmente. La acreditación del segundo alumno no acredita al responsable ni a otros integrantes. Los reportes por exposición y el certificado grupal incluyen su nombre y función.
+
+Las versiones ya publicadas de la modalidad con código `expositor` y certificado grupal incorporan esta función opcional al leerse, dentro de los límites de cinco funciones y veinte integrantes. Si una configuración ya agotó esos límites, la organización debe liberar espacio desde Modalidades y formularios. No se modifican las versiones almacenadas ni se agregan registros hasta que alguien guarda una inscripción. Se mantienen los campos obligatorios originales; no se necesita una migración de base. Las modalidades personalizadas conservan sus funciones configuradas.
 
 En **Acreditación** se corrigen identidad y respuestas principales; en **Exposiciones** se corrigen integrantes y respuestas de cada vínculo. Las correcciones administrativas se auditan. La persona principal también puede buscar su DNI en el formulario público y actualizar su inscripción, incluida la modalidad. Los conflictos de identidad de integrantes compartidos se resuelven con la organización.
 

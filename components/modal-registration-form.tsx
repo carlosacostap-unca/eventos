@@ -8,6 +8,7 @@ import { initialActionState } from "@/app/actions/state";
 import type { ActionState } from "@/app/actions/state";
 import { PersonFields } from "./registration-person-fields";
 import type { EditableRegistration, RegistrationPrefillResult } from "@/lib/domain/registration-prefill";
+import { ExhibitionMemberships, LinkedRegistrationForm } from "./linked-registration-form";
 
 const emptyPerson = (): PersonSubmission => ({ nombres: "", apellidos: "", documento: "", email: "", respuestas: {} });
 export function ModalRegistrationForm({ eventId, modes, operation, presencial = false, isFull = false }: { eventId: string; modes: PublicModality[]; operation: string; presencial?: boolean; isFull?: boolean }) {
@@ -31,7 +32,11 @@ function PublicModalRegistrationForm({ eventId, modes, operation }: { eventId: s
     if (result.registration && modes.some((m) => m.id === result.registration!.modalidad)) setSelected(result.registration.modalidad);
     setLookupVersion((value) => value + 1);
   }
-  const sameMode = registration?.modalidad === selected;
+  function identityReady(value: boolean) {
+    setReady(value);
+    if (!value) setLookupMessage("");
+  }
+  const sameMode = ready && registration?.modalidad === selected;
   const allowedAnswers = (value: Answers, ids: string[]) => Object.fromEntries(Object.entries(value).filter(([id]) => ids.includes(id)));
   const initial = {
     principal: { ...person, respuestas: sameMode ? allowedAnswers(registration.principal.respuestas, mode.definition.fields.map((f) => f.id)) : {} },
@@ -42,10 +47,13 @@ function PublicModalRegistrationForm({ eventId, modes, operation }: { eventId: s
   };
   return <div className="panel form-stack">
     <h2>Inscribite o actualizá tu inscripción</h2>
-    <p className="muted">Primero ingresá tu DNI. Si ya estás inscripto en este evento, podrás revisar tus datos y cambiar la modalidad.</p>
-    <ConfiguredForm key={selected + "-" + lookupVersion} eventId={eventId} mode={mode} operation={operation + "-" + selected + "-" + lookupVersion} presencial={false} isFull={false} initial={initial}
-      publicIdentity={{ person, setPerson, ready, lookupMessage, onLookup: lookedUp, onReadyChange: (value) => { setReady(value); if (!value) { setRegistration(undefined); setLookupMessage(""); } }, editToken: registration?.token }}
-      modeSelector={ready && modes.length > 1 ? <label className="field"><span>Modalidad de inscripción</span><select value={selected} onChange={(e) => setSelected(e.target.value)}>{modes.map((m) => <option key={m.id} value={m.id}>{m.nombre}</option>)}</select></label> : undefined} />
+    <p className="muted">{registration?.linked ? "Consultá tu exposición y revisá tus datos de inscripción." : "Primero ingresá tu DNI. Si ya estás inscripto en este evento, podrás revisar tus datos y cambiar la modalidad."}</p>
+    {registration?.linked ? <LinkedRegistrationForm key={lookupVersion} eventId={eventId} registration={registration} person={person} setPerson={setPerson} ready={ready} message={lookupMessage} onLookup={lookedUp} onReadyChange={identityReady} /> : <ConfiguredForm key={selected + "-" + lookupVersion} eventId={eventId} mode={mode} operation={operation + "-" + selected + "-" + lookupVersion} presencial={false} isFull={false} initial={initial}
+      publicIdentity={{ person, setPerson, ready, lookupMessage, onLookup: lookedUp, onReadyChange: identityReady, editToken: ready ? registration?.token : undefined }}
+      modeSelector={ready ? <>
+        {registration?.participations?.length ? <ExhibitionMemberships participations={registration.participations} /> : null}
+        {modes.length > 1 && <label className="field"><span>Modalidad de inscripción</span><select value={selected} onChange={(e) => setSelected(e.target.value)}>{modes.map((m) => <option key={m.id} value={m.id}>{m.nombre}</option>)}</select></label>}
+      </> : undefined} />}
   </div>;
 }
 

@@ -1,12 +1,13 @@
 import { beforeEach, expect, it, vi } from "vitest";
-const mocks = vi.hoisted(() => ({ admin: vi.fn(), save: vi.fn(), copy: vi.fn(), register: vi.fn(), edit: vi.fn() }));
+const mocks = vi.hoisted(() => ({ admin: vi.fn(), save: vi.fn(), copy: vi.fn(), register: vi.fn(), edit: vi.fn(), linked: vi.fn() }));
 vi.mock("@/lib/auth/event-access", () => ({ requireEventAccess: mocks.admin }));
 vi.mock("@/lib/services/modalities", () => ({ saveModality: mocks.save, copyModalities: mocks.copy }));
 vi.mock("@/lib/services/modal-registration", () => ({ registerWithModality: mocks.register }));
 vi.mock("@/lib/services/exhibition-edit", () => ({ updateExhibition: mocks.edit }));
 vi.mock("@/lib/services/events", () => ({ getEventById: async () => ({ slug: "jornada" }) }));
+vi.mock("@/lib/services/public-registration-edit", () => ({ updatePublicLinkedRegistration: mocks.linked }));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
-import { copyModalitiesAction, saveModalityAction, registerConfiguredAction, updateExhibitionAction } from "./modalities";
+import { copyModalitiesAction, saveModalityAction, registerConfiguredAction, updateExhibitionAction, updateLinkedRegistrationAction } from "./modalities";
 beforeEach(() => { vi.resetAllMocks(); mocks.admin.mockRejectedValue(new Error("Sin sesión")); });
 it("exige sesión dentro de cada mutación administrativa", async () => {
   await expect(saveModalityAction("event", {}, new FormData())).rejects.toThrow("Sin sesión");
@@ -33,6 +34,18 @@ it("envía el permiso de edición pública y confirma la actualización", async 
   expect(await registerConfiguredAction("event", false, {}, data)).toMatchObject({ ok: true, message: expect.stringContaining("actualizada") });
   expect(mocks.register).toHaveBeenCalledWith("event", {}, expect.objectContaining({ editToken: "signed", presencial: false }));
   expect(mocks.admin).not.toHaveBeenCalled();
+});
+
+it("permite al integrante editar sus datos con su permiso sin crear una exposición", async () => {
+  const person = { nombres: "Ana", apellidos: "Pérez", documento: "12345678", email: "ana@example.com" };
+  const data = new FormData(); data.set("payload", JSON.stringify(person)); data.set("editToken", "linked-token");
+  expect(await updateLinkedRegistrationAction("event", {}, data)).toMatchObject({ ok: true });
+  expect(mocks.linked).toHaveBeenCalledWith("event", person, "linked-token");
+  expect(mocks.register).not.toHaveBeenCalled();
+  expect(mocks.admin).not.toHaveBeenCalled();
+  data.set("payload", JSON.stringify({ ...person, email: "invalid" }));
+  expect((await updateLinkedRegistrationAction("event", {}, data)).fields?.["principal.email"]).toBeDefined();
+  expect(mocks.linked).toHaveBeenCalledTimes(1);
 });
 
 it("exige autorización sobre el origen al copiar modalidades", async () => {

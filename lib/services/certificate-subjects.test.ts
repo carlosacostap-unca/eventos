@@ -5,12 +5,23 @@ import { exhibitorDefinition } from "@/lib/domain/modalities";
 vi.mock("server-only", () => ({}));
 vi.mock("./modalities", () => ({ modalityVersion: async () => ({ modalidad: "mode", esquema: exhibitorDefinition }) }));
 import { certificateSubject } from "./certificate-subjects";
-function fixture(studentPresent: boolean, directorPresent: boolean, codirectorPresent: boolean, delivery = true) {
-  const people = [studentPresent, directorPresent, codirectorPresent].map((acreditado, i) => ({ id: String(i), evento: "event", modalidad: "mode", tipo_alta: i === 0 ? "principal" : "vinculada", nombres: "Nombre" + i, apellidos: "Apellido", documento: "1234567" + i, acreditado, version_formulario: "version" })) as RegistrationRecord[];
-  const pb = { filter: () => "filter", collection: (name: string) => ({ getOne: async (id: string) => name === "modalidades_inscripcion" ? { id: "mode", evento: "event", entrega: delivery } : people.find((p) => p.id === id), getFullList: async () => name === "exposiciones" ? [{ id: "group", modalidad: "mode" }] : people.map((p, i) => ({ participante: p.id, funcion: i === 0 ? "principal" : i === 1 ? "director" : "codirector", etiqueta: "Función" + i })) }) } as unknown as PocketBase;
+function fixture(studentPresent: boolean, directorPresent: boolean, codirectorPresent: boolean, delivery = true, secondPresent?: boolean) {
+  const attendance = [studentPresent, directorPresent, codirectorPresent, ...(secondPresent === undefined ? [] : [secondPresent])];
+  const people = attendance.map((acreditado, i) => ({ id: String(i), evento: "event", modalidad: "mode", tipo_alta: i === 0 ? "principal" : "vinculada", nombres: "Nombre" + i, apellidos: "Apellido", documento: "1234567" + i, acreditado, version_formulario: "version" })) as RegistrationRecord[];
+  const pb = { filter: () => "filter", collection: (name: string) => ({ getOne: async (id: string) => name === "modalidades_inscripcion" ? { id: "mode", evento: "event", entrega: delivery } : people.find((p) => p.id === id), getFullList: async () => name === "exposiciones" ? [{ id: "group", modalidad: "mode" }] : people.map((p, i) => ({ participante: p.id, funcion: i === 0 ? "principal" : i === 1 ? "director" : i === 2 ? "codirector" : "segundo_expositor", etiqueta: i === 3 ? "Segundo alumno expositor" : "Función" + i })) }) } as unknown as PocketBase;
   return { pb, people, event: { id: "event" } as EventRecord };
 }
 describe("regla del certificado compartido", () => {
+  it("incluye al segundo alumno en el certificado del grupo y pide regenerarlo al corregir su nombre", async () => {
+    const { pb, people, event } = fixture(true, false, false, true, false);
+    const subject = await certificateSubject(pb, event, people[0]);
+    expect(subject?.members).toHaveLength(4);
+    expect(subject?.members[3]).toMatchObject({ person: { id: "3" }, role: "Segundo alumno expositor", functionId: "segundo_expositor" });
+    expect(subject?.eligible).toBe(true);
+    expect(await certificateSubject(pb, event, people[3])).toBeNull();
+    people[3].nombres = "Nombre corregido";
+    expect((await certificateSubject(pb, event, people[0]))?.hash).not.toBe(subject?.hash);
+  });
   it("cambiar el título del trabajo invalida el PDF emitido y los formularios vacíos conservan su huella anterior", async () => {
     const { pb, people, event } = fixture(true, false, false);
     const original = await certificateSubject(pb, event, people[0]);

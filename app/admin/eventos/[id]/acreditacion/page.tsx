@@ -97,7 +97,7 @@ export default async function AccreditationPage({
                         : "Inscripción pública"}
                     </small>
                     <small><strong>{modes.find((m) => m.id === registration.modalidad)?.nombre ?? "Asistente"}</strong>{registration.tipo_alta === "vinculada" ? " · Integrante vinculado" : ""}</small>
-                    {canManage && groups.members.filter((m) => m.participante === registration.id).map((m) => <small key={m.id}>{m.etiqueta} · <Link className="text-link" href={`/admin/eventos/${id}/exposiciones#${m.exposicion}`}>Ver exposición</Link></small>)}
+                    {groups.members.filter((m) => m.participante === registration.id).map((m) => <small key={m.id}>{m.etiqueta}{canManage && <> · <Link className="text-link" href={`/admin/eventos/${id}/exposiciones#${m.exposicion}`}>Ver exposición</Link></>}</small>)}
                   </div>
                   <form action={toggleAttendanceAction}>
                     <input type="hidden" name="registrationId" value={registration.id} />

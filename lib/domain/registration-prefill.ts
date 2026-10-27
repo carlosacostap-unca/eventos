@@ -16,4 +16,12 @@ export type EditableRegistration = {
   definition?: FormDefinition;
   principal: PersonSubmission;
   integrantes: Array<PersonSubmission & { funcion: string }>;
+  linked?: boolean;
+  participations?: ExhibitionParticipation[];
+};
+
+export type ExhibitionParticipation = {
+  title: string;
+  principalName: string;
+  role: string;
 };

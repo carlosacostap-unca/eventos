@@ -4,7 +4,7 @@ import { createServicePocketBase } from "@/lib/pocketbase/client";
 import { DomainError } from "@/lib/domain/errors";
 import { fingerprint, recordId } from "@/lib/domain/fingerprints";
 import { normalizeDocument, type EventRecord, type RegistrationRecord } from "@/lib/domain/models";
-import { coherentIdentity, parseSubmission, type Modality, type Exhibition, type ExhibitionMember } from "@/lib/domain/modalities";
+import { coherentIdentity, parseSubmission, SECOND_EXHIBITOR_ROLE, type Modality, type Exhibition, type ExhibitionMember } from "@/lib/domain/modalities";
 import { getRegistrationAvailability, isCapacityFull, nextPublicSlot, publicCapacity } from "@/lib/domain/events";
 import { modalityVersion } from "./modalities";
 import { withOperationLock } from "./operation-lock";
@@ -37,6 +37,7 @@ export async function registerWithModality(eventId: string, raw: unknown, option
     if (access && !editing) throw new DomainError("NOT_FOUND", "La inscripción ya no está disponible. Volvé a buscar tu DNI.");
     const snapshot = editing ? await registrationEditSnapshot(editing) : undefined;
     if (snapshot && snapshot.revision !== access!.revision) throw new DomainError("INVALID", "La inscripción cambió desde tu consulta. Volvé a buscar tu DNI para recuperar los datos actualizados.");
+    if (editing?.tipo_alta === "vinculada" && snapshot?.otherMemberships.length) throw new DomainError("INVALID", "Ya estás inscripto como integrante de una exposición. Podés modificar tus datos desde la consulta por DNI.");
     if (snapshot && (snapshot.groups.length > 1 || (editing!.modalidad !== mode.id && snapshot.otherMemberships.length))) throw new DomainError("INVALID", "Tu inscripción está vinculada a otras exposiciones. Consultá con la organización para cambiar la modalidad.");
     const keepsPlace = editing && editing.tipo_alta !== "vinculada";
     const publicPrincipals = all.filter((r) => r.origen === "publica" && r.tipo_alta !== "vinculada");
@@ -56,6 +57,10 @@ export async function registerWithModality(eventId: string, raw: unknown, option
     for (const [index, person] of people.entries()) {
       const document = normalizeDocument(person.documento);
       const existing = all.find((r) => r.documento_normalizado === document);
+      if (index === 0 && existing?.tipo_alta === "vinculada" && !editing) {
+        const memberships = await pb.collection("integrantes_exposicion").getFullList({ filter: pb.filter("participante = {:id} && funcion = {:role}", { id: existing.id, role: SECOND_EXHIBITOR_ROLE }) });
+        if (memberships.length) throw new DomainError("DUPLICATE", "Ya estás inscripto como segundo alumno expositor. Buscá tu DNI para consultar tu exposición y modificar tus datos.");
+      }
       const editsPrincipal = index === 0 && existing?.id === editing?.id && Boolean(editing);
       if (existing && !editsPrincipal && (existing.modalidad !== mode.id || !coherentIdentity(existing, person))) throw new DomainError("DUPLICATE", "Un DNI ya está registrado en otra modalidad o con datos diferentes. Consultá con la organización.");
       if (existing && index === 0 && existing.tipo_alta !== "vinculada" && !editsPrincipal) throw new DomainError("DUPLICATE", "Ya estás inscripto en este evento. Buscá tu DNI para actualizar la inscripción.");

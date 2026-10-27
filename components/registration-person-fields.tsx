@@ -8,7 +8,7 @@ import { registrationDocumentSchema } from "@/lib/domain/registration-prefill";
 import type { RegistrationPrefillResult } from "@/lib/domain/registration-prefill";
 import { FieldError } from "./form-feedback";
 
-export function PersonFields({ person, setPerson, prefix = "", errors = {}, eventId, onReadyChange, includeRegistration = false, onLookup, initialReady, initialMessage = "" }: {
+export function PersonFields({ person, setPerson, prefix = "", errors = {}, eventId, onReadyChange, includeRegistration = false, onLookup, initialReady, initialMessage = "", identityReadOnly = false }: {
   person: PersonSubmission;
   setPerson: Dispatch<SetStateAction<PersonSubmission>>;
   prefix?: string;
@@ -19,6 +19,7 @@ export function PersonFields({ person, setPerson, prefix = "", errors = {}, even
   onLookup?: (result: RegistrationPrefillResult) => void;
   initialReady?: boolean;
   initialMessage?: string;
+  identityReadOnly?: boolean;
 }) {
   const [ready, setReady] = useState(initialReady ?? (!eventId || Boolean(person.nombres || person.apellidos || person.email)));
   const [pending, setPending] = useState(false);
@@ -80,6 +81,6 @@ export function PersonFields({ person, setPerson, prefix = "", errors = {}, even
       {eventId && !ready && <div className="field"><span>Ingresá el DNI para recuperar tus datos.</span><button type="button" className="button button-secondary" onClick={() => void lookup()} disabled={pending}>{pending ? "Buscando…" : "Buscar datos"}</button></div>}
     </div>
     {message && <p className="muted" role="status" aria-live="polite">{message}</p>}
-    {ready && <div className="form-grid">{([["apellidos", "Apellidos", "family-name"], ["nombres", "Nombres", "given-name"], ["email", "Email", "email"]] as const).map(([key, label, autoComplete]) => <label className="field" key={key}><span>{label} *</span><input name={fieldName(key)} required type={key === "email" ? "email" : "text"} autoComplete={autoComplete} maxLength={key === "email" ? 254 : 120} value={person[key]} onChange={(event) => setPerson({ ...person, [key]: event.target.value })} /><FieldError errors={errors[fieldName(key)]} /></label>)}</div>}
+    {ready && <div className="form-grid">{([["apellidos", "Apellidos", "family-name"], ["nombres", "Nombres", "given-name"], ["email", "Email", "email"]] as const).map(([key, label, autoComplete]) => <label className="field" key={key}><span>{label} *</span><input name={fieldName(key)} required readOnly={identityReadOnly} type={key === "email" ? "email" : "text"} autoComplete={autoComplete} maxLength={key === "email" ? 254 : 120} value={person[key]} onChange={(event) => setPerson({ ...person, [key]: event.target.value })} /><FieldError errors={errors[fieldName(key)]} /></label>)}</div>}
   </div>;
 }

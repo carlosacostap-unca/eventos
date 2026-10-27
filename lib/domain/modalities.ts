@@ -40,7 +40,18 @@ export type ExhibitionMember = { id: string; exposicion: string; participante: s
 export type PersonSubmission = RegistrationInput & { respuestas: Answers };
 export type GroupSubmission = { modalidad: string; version: string; operacion: string; principal: PersonSubmission; integrantes: Array<PersonSubmission & { funcion: string }> };
 export const attendeeDefinition: FormDefinition = { fields: [], roles: [], principal: "Participante", certificate: "individual" };
+export const SECOND_EXHIBITOR_ROLE = "segundo_expositor";
+export const secondExhibitorRole: FormDefinition["roles"][number] = { id: SECOND_EXHIBITOR_ROLE, label: "Segundo alumno expositor", min: 0, max: 1, fields: [] };
+// Extensión opcional compatible con las versiones de Expositor ya publicadas.
+// No agrega campos obligatorios ni modifica los registros almacenados.
+export function withOptionalSecondExhibitor(definition: FormDefinition): FormDefinition {
+  if (definition.roles.some((role) => role.id === SECOND_EXHIBITOR_ROLE)) return definition;
+  const extended = formSchema.safeParse({ ...definition, roles: [secondExhibitorRole, ...definition.roles] });
+  // Una configuración personalizada que agotó sus límites sigue funcionando.
+  return extended.success ? extended.data : definition;
+}
 export const exhibitorDefinition: FormDefinition = { fields: [{ id: "titulo_trabajo", label: "Título del trabajo", type: "text", required: true, options: [], section: "Trabajo a exponer", help: "Ingresá el título completo del trabajo que vas a exponer." }], principal: "Alumno expositor", certificate: "grupo", roles: [
+  secondExhibitorRole,
   { id: "director", label: "Director", min: 1, max: 1, fields: [] },
   { id: "codirector", label: "Codirector", min: 0, max: 1, fields: [] },
 ] };
