@@ -4,7 +4,17 @@ La modalidad con código `expositor` permite adjuntar opcionalmente un PDF o Pow
 
 En la página pública del evento, **Subir o reemplazar mi presentación** abre `/<slug>/presentaciones`. La consulta por DNI recupera exclusivamente los trabajos del alumno responsable o del segundo alumno expositor en ese evento. Los directores, codirectores y asistentes no pueden subir archivos de esos trabajos. Se utiliza la consulta limitada por origen y el permiso firmado de 30 minutos ya empleado para editar inscripciones. No se incorporan cuentas nuevas ni se comparte el archivo públicamente.
 
-La entrega separada está disponible mientras el evento conserve estado `publicado`, aun si sus inscripciones están cerradas o no hay cupo. No inscribe personas, cambia integrantes ni acredita asistencia. Al cambiar de estado el evento se bloquean las entregas públicas. No se agrega una fecha límite adicional.
+La entrega separada está disponible mientras el evento conserve estado `publicado` y no haya vencido su plazo de presentaciones, aun si las inscripciones están cerradas o no hay cupo. No inscribe personas, cambia integrantes ni acredita asistencia. Al cambiar de estado el evento se bloquean las entregas públicas.
+
+## Cierres independientes
+
+En **Modalidades y formularios**, cada modalidad permite configurar **Inscripciones hasta**; Expositor también permite **Entrega y reemplazo de presentaciones hasta**. Ambos horarios son de Argentina e incluyen todo el último minuto elegido. Sin fecha, se mantiene el comportamiento anterior. Copiar modalidades no traslada fechas absolutas del evento de origen.
+
+El servidor valida los plazos tanto al recibir como inmediatamente antes de guardar. Después del cierre de inscripción no se admiten nuevas inscripciones, trabajos adicionales ni altas presenciales de esa modalidad a través del formulario de registro, aunque se conserve abierto un formulario anterior. La entrega separada por DNI sigue funcionando hasta su propio cierre. Los archivos guardados pueden consultarse y descargarse administrativamente después de ambos plazos.
+
+En bases existentes, ejecutar `npm run schema:modality-deadlines` para revisar el plan y `npm run schema:modality-deadlines -- --apply` para agregar las dos fechas opcionales a `modalidades_inscripcion`. La migración conserva los demás campos, reglas, índices y registros. Los plazos se aplican automáticamente por fecha en la versión de la aplicación que incorpora esta validación; no requieren un cierre manual del evento ni deshabilitar la modalidad para impedir la entrega posterior.
+
+El 27 de octubre de 2026 se aplicó esta migración y se configuró únicamente **Expositor** de las XII Jornadas: inscripción hasta el **28/10/2026 a las 23:59** y entrega o reemplazo de archivos hasta el **02/11/2026 a las 23:59**, hora de Argentina. Los valores UTC incluyen el último milisegundo del minuto: `2026-10-29T02:59:59.999Z` y `2026-11-03T02:59:59.999Z`. Se conservaron las 392 inscripciones, 29 exposiciones, 186 certificados y todos los datos ajenos a esos dos plazos. El respaldo previo es `pre_plazos_jornada_20261027193032.zip` (3.326.504 bytes), guardado en PocketBase y en `output/production-migration/pre_plazos_jornada_20261027193032/`, fuera de Git, junto con `verificacion.json`.
 
 El formulario informa el nombre de la versión actual y permite reemplazarla. Una revisión del contenido detecta si otro alumno reemplazó el archivo desde la consulta y requiere volver a buscar el DNI; reenviar exactamente el mismo contenido y nombre es idempotente. Una subida inválida o una transacción fallida conserva la versión anterior. Las ediciones de respuestas e integrantes sin archivo conservan la entrega. Reemplazarla no invalida los certificados.
 

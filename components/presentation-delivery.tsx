@@ -6,6 +6,7 @@ import type { ActionState } from "@/app/actions/state";
 import type { PresentationInfo } from "@/lib/domain/presentations";
 import { PresentationFileInput } from "./presentation-file-input";
 import { FormMessage } from "./form-feedback";
+import { formatDeadline } from "@/lib/domain/modality-deadlines";
 
 export function PresentationDelivery({ eventId }: { eventId: string }) {
   const [state, action, pending] = useActionState(lookupPresentationsAction.bind(null, eventId), {} as PresentationLookup);
@@ -32,7 +33,8 @@ function DeliveryForm({ eventId, work, document, token }: { eventId: string; wor
   }, {} as ActionState & { presentation?: PresentationInfo });
   return <form action={action} className="panel form-stack" aria-label={"Entregar presentación de " + work.title}>
     <h2>{work.title}</h2>
-    <fieldset className="form-stack quick-fields" disabled={pending}>
+    {work.closesAt && <p className={work.closed ? "notice notice-warning" : "muted"}>{work.closed ? "El plazo de entrega y reemplazo terminó el " : "Podés entregar o reemplazar archivos hasta el "}{formatDeadline(work.closesAt)}, hora de Argentina.</p>}
+    <fieldset className="form-stack quick-fields" disabled={pending || work.closed}>
       <input name="documento" type="hidden" value={document} /><input name="token" type="hidden" value={token} /><input name="revision" type="hidden" value={current?.revision ?? work.revision} />
       <PresentationFileInput file={file} current={current} error={error} onChange={(next, problem) => { setFile(next); setError(problem ?? undefined); }} />
       <button className="button button-primary" disabled={pending || !file || !!error}>{pending ? "Subiendo presentación…" : current ? "Reemplazar presentación final" : "Entregar presentación final"}</button>

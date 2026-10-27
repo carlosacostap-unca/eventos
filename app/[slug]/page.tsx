@@ -14,6 +14,7 @@ import { listEventTypes } from "@/lib/services/event-types";
 import { getEventBySlug } from "@/lib/services/events";
 import { countPublicRegistrations } from "@/lib/services/registrations";
 import { resolvePublicEventPage } from "@/lib/domain/public-event-page";
+import { formatDeadline } from "@/lib/domain/modality-deadlines";
 
 export const dynamic = "force-dynamic";
 
@@ -127,7 +128,12 @@ export default async function PublicEventPage({
         </div>
       </section>
       <section className="container registration-section" id="inscripcion">
-        {modes.some((mode) => mode.codigo === "expositor") && <div className="panel form-stack presentation-callout"><h2>Presentación final de los trabajos</h2><p>Si ya te inscribiste como alumno expositor, podés entregar o reemplazar tu PDF o PowerPoint sin volver a inscribirte.</p><Link className="button button-secondary" href={`/${slug}/presentaciones`}>Subir o reemplazar mi presentación</Link></div>}
+        {modes.some((mode) => mode.codigo === "expositor") && <div id="presentaciones" className="panel form-stack presentation-callout"><h2>Presentación final de los trabajos</h2><p>Si ya te inscribiste como alumno expositor, podés entregar o reemplazar tu PDF o PowerPoint sin volver a inscribirte.</p>
+          {modes.filter((mode) => mode.codigo === "expositor").map((mode) => <div key={mode.id}>
+            {mode.inscripcion_hasta && <p>Inscripción de expositores hasta el {formatDeadline(mode.inscripcion_hasta)}, hora de Argentina.</p>}
+            {mode.presentaciones_hasta && <p>Entrega y reemplazo de presentaciones hasta el {formatDeadline(mode.presentaciones_hasta)}, hora de Argentina.</p>}
+          </div>)}
+          <Link className="button button-secondary" href={`/${slug}/presentaciones`}>Subir o reemplazar mi presentación</Link></div>}
         {availability === "disponible" || availability === "completo" ? (
           <>
             {availability === "completo" && <p className="notice">El cupo está completo. Si ya estás inscripto, podés buscar tu DNI y actualizar tu inscripción.</p>}

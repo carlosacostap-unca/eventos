@@ -11,15 +11,16 @@ import type { EditableRegistration, RegistrationPrefillResult } from "@/lib/doma
 import { ExhibitionMemberships, LinkedRegistrationForm } from "./linked-registration-form";
 import { PresentationFileInput } from "./presentation-file-input";
 import type { PresentationInfo } from "@/lib/domain/presentations";
+import { formatDeadline } from "@/lib/domain/modality-deadlines";
 
 const emptyPerson = (): PersonSubmission => ({ nombres: "", apellidos: "", documento: "", email: "", respuestas: {} });
 export function ModalRegistrationForm({ eventId, modes, operation, presencial = false, isFull = false }: { eventId: string; modes: PublicModality[]; operation: string; presencial?: boolean; isFull?: boolean }) {
   if (!presencial) return <PublicModalRegistrationForm eventId={eventId} modes={modes} operation={operation} />;
-  return <WalkInModalRegistrationForm eventId={eventId} modes={modes} operation={operation} isFull={isFull} />;
+  return <WalkInModalRegistrationForm eventId={eventId} modes={modes.filter((mode) => !mode.registrationClosed)} operation={operation} isFull={isFull} />;
 }
 
 function PublicModalRegistrationForm({ eventId, modes, operation }: { eventId: string; modes: PublicModality[]; operation: string }) {
-  const [selected, setSelected] = useState(modes[0]?.id ?? "");
+  const [selected, setSelected] = useState(modes.find((mode) => !mode.registrationClosed)?.id ?? modes[0]?.id ?? "");
   const [person, setPerson] = useState(emptyPerson);
   const [ready, setReady] = useState(false);
   const [registration, setRegistration] = useState<EditableRegistration>();
@@ -32,6 +33,11 @@ function PublicModalRegistrationForm({ eventId, modes, operation }: { eventId: s
   const savedDefinition = chosenExhibition?.definition ?? registration?.definition;
   const mode = publishedMode && !addingWork && registration?.modalidad === selected && savedDefinition ? { ...publishedMode, version: chosenExhibition?.version ?? registration!.version, definition: savedDefinition } : publishedMode;
   if (!mode) return <div className="panel">No hay modalidades de inscripción disponibles.</div>;
+  if (mode.registrationClosed) return <div className="panel form-stack"><h2>La inscripción de {mode.nombre} ya cerró</h2>
+    {mode.inscripcion_hasta && <p>El plazo terminó el {formatDeadline(mode.inscripcion_hasta)}, hora de Argentina.</p>}
+    {mode.codigo === "expositor" && <><p>Si ya registraste tu trabajo, podés entregar o reemplazar la presentación dentro del plazo de archivos.</p><a className="button button-secondary" href="#presentaciones">Ir a la entrega de presentaciones</a></>}
+    {modes.some((item) => !item.registrationClosed) && <button type="button" className="button button-secondary" onClick={() => { setSelected(modes.find((item) => !item.registrationClosed)!.id); setPerson(emptyPerson()); setReady(false); setRegistration(undefined); setExhibitionChoice(""); setLookupMessage(""); setLookupVersion((value) => value + 1); }}>Consultar otra inscripción</button>}
+  </div>;
   function lookedUp(result: RegistrationPrefillResult) {
     setRegistration(result.registration);
     setLookupMessage(result.message);
@@ -71,7 +77,7 @@ function PublicModalRegistrationForm({ eventId, modes, operation }: { eventId: s
           {addingWork && <p role="status">Nuevo trabajo: completá los datos de esta exposición y sus integrantes.</p>}
           {addingWork && registration.linked && <button type="button" className="button button-secondary" onClick={(event) => { event.preventDefault(); setExhibitionChoice(""); }}>Volver a mi inscripción</button>}
         </>}
-        {!addingWork && modes.length > 1 && (registration?.exhibitions?.length ?? 0) <= 1 && <label className="field"><span>Modalidad de inscripción</span><select value={selected} onChange={(e) => setSelected(e.target.value)}>{modes.map((m) => <option key={m.id} value={m.id}>{m.nombre}</option>)}</select></label>}
+        {!addingWork && modes.length > 1 && (registration?.exhibitions?.length ?? 0) <= 1 && <label className="field"><span>Modalidad de inscripción</span><select value={selected} onChange={(e) => setSelected(e.target.value)}>{modes.map((m) => <option key={m.id} value={m.id} disabled={m.registrationClosed}>{m.nombre}{m.registrationClosed ? " · Inscripción cerrada" : ""}</option>)}</select></label>}
       </> : undefined} />}
   </div>;
 }

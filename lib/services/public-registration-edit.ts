@@ -12,6 +12,7 @@ import { signRegistrationEdit, verifyRegistrationEdit } from "@/lib/registration
 import { modalityVersion } from "./modalities";
 import { withOperationLock } from "./operation-lock";
 import { presentationInfo } from "@/lib/domain/presentations";
+import { deadlinePassed } from "@/lib/domain/modality-deadlines";
 
 // Una entrega de archivo no modifica la identidad ni las respuestas de inscripción.
 function groupRevision({ id, evento, modalidad, version, responsable, respuestas }: Exhibition) {
@@ -67,7 +68,7 @@ export async function findEditableRegistration(document: string, eventId: string
     participations.push({ title: exhibitionTitle(version.esquema, group.respuestas), principalName: principal.apellidos + ", " + principal.nombres, role: link.etiqueta });
   }
   const mode = registration.modalidad ? await pb.collection("modalidades_inscripcion").getOne<Modality>(registration.modalidad) : undefined;
-  const published = mode?.codigo === "expositor" && mode.habilitada ? await modalityVersion(mode.version_publicada) : undefined;
+  const published = mode?.codigo === "expositor" && mode.habilitada && !deadlinePassed(mode.inscripcion_hasta) ? await modalityVersion(mode.version_publicada) : undefined;
   const first = exhibitions[0];
   return {
     token: await signRegistrationEdit({ eventId, registrationId: registration.id, document: normalizeDocument(document), revision: snapshot.revision }),

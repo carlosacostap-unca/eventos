@@ -7,6 +7,8 @@ import { DEFAULT_CERTIFICATE_TEXTS, SIGNATURE_IMAGE_OPTIONS, type CertificateTex
 import { FormMessage } from "./form-feedback";
 import { ConfiguredFields } from "./configured-fields";
 import type { Answers } from "@/lib/domain/modalities";
+import { parseArgentinaDeadline } from "@/lib/domain/modality-deadlines";
+import { toArgentinaDateTimeLocal } from "@/lib/domain/dates";
 
 const typeLabels = { text: "Texto corto", textarea: "Texto largo", number: "Número", date: "Fecha", email: "Email", tel: "Teléfono", select: "Selección única", multiselect: "Selección múltiple", checkbox: "Casilla de verificación" };
 const textLabels: Record<keyof CertificateTextSections, string> = { institutionPrimary: "Encabezado principal", institutionSecondary: "Encabezado secundario", introduction: "Introducción", participant: "Participante", document: "Documento", participation: "Participación", event: "Evento", locationAndDate: "Lugar y fecha", signatureLeftName: "Firma izquierda: nombre", signatureLeftRole: "Firma izquierda: cargo", signatureLeftInstitution: "Firma izquierda: institución", signatureLeftImage: "Firma izquierda: imagen", signatureCenterName: "Firma central: nombre (opcional)", signatureCenterRole: "Firma central: cargo", signatureCenterInstitution: "Firma central: institución", signatureCenterImage: "Firma central: imagen", signatureRightName: "Firma derecha: nombre", signatureRightRole: "Firma derecha: cargo", signatureRightInstitution: "Firma derecha: institución", signatureRightImage: "Firma derecha: imagen" };
@@ -33,16 +35,22 @@ export function ModalityEditor({ eventId, mode, definition }: { eventId: string;
   const [order, setOrder] = useState(mode?.orden ?? 0);
   const [enabled, setEnabled] = useState(mode?.habilitada ?? true);
   const [delivery, setDelivery] = useState(mode?.entrega ?? true);
+  const [registrationUntil, setRegistrationUntil] = useState(toArgentinaDateTimeLocal(mode?.inscripcion_hasta));
+  const [presentationsUntil, setPresentationsUntil] = useState(toArgentinaDateTimeLocal(mode?.presentaciones_hasta));
   const [clearTemplate, setClearTemplate] = useState(false);
   const [texts, setTexts] = useState<Partial<CertificateTextSections>>(mode?.textos_certificado ?? {});
   const [preview, setPreview] = useState<Answers>({});
   const [state, action, pending] = useActionState(saveModalityAction.bind(null, eventId), initialActionState);
   return <form action={action} className="form-stack modality-editor">
-    <input name="payload" type="hidden" value={JSON.stringify({ id: mode?.id, nombre: name, codigo: code, orden: order, habilitada: enabled, entrega: delivery, definition: form, textos: texts, clearTemplate })} />
+    <input name="payload" type="hidden" value={JSON.stringify({ id: mode?.id, nombre: name, codigo: code, orden: order, habilitada: enabled, entrega: delivery, definition: form, textos: texts, clearTemplate, inscripcion_hasta: parseArgentinaDeadline(registrationUntil), presentaciones_hasta: parseArgentinaDeadline(presentationsUntil) })} />
     <FormMessage message={state.message} success={state.ok} />
     {!mode && <label className="field"><span>Comenzar desde una configuración</span><select onChange={(e) => { const group = e.target.value === "expositor"; const custom = e.target.value === "personalizada"; setForm(group ? exhibitorDefinition : attendeeDefinition); setName(group ? "Expositor" : custom ? "Nueva modalidad" : "Asistente"); setCode(group ? "expositor" : custom ? "modalidad_" + crypto.randomUUID().slice(0, 8) : "asistente"); setTexts(group ? { introduction: "La Facultad certifica que los siguientes integrantes", participation: "han participado como expositores de la actividad de tipo {tipoEvento} de {horas} horas:" } : {}); }}><option value="asistente">Asistente</option><option value="expositor">Expositor con dirección</option><option value="personalizada">Modalidad personalizada</option></select></label>}
     <div className="form-grid"><label className="field"><span>Nombre de la modalidad</span><input value={name} onChange={(e) => setName(e.target.value)} required /></label><label className="field"><span>Orden en el formulario</span><input type="number" min={0} max={1000} value={order} onChange={(e) => setOrder(Number(e.target.value))} /></label><label className="field"><span>Nombre de la persona principal</span><input value={form.principal} onChange={(e) => setForm({ ...form, principal: e.target.value })} required /></label></div>
     <label><input type="checkbox" checked={enabled} onChange={(e) => setEnabled(e.target.checked)} /> Disponible para nuevas inscripciones</label>
+    <fieldset className="form-stack"><legend>Plazos de esta modalidad</legend><p className="muted">Horario de Argentina. El minuto indicado queda incluido. Dejá la fecha vacía para no agregar un cierre automático.</p><div className="form-grid">
+      <label className="field"><span>Inscripciones hasta</span><input type="datetime-local" value={registrationUntil} onChange={(event) => setRegistrationUntil(event.target.value)} /></label>
+      {code === "expositor" && <label className="field"><span>Entrega y reemplazo de presentaciones hasta</span><input type="datetime-local" value={presentationsUntil} onChange={(event) => setPresentationsUntil(event.target.value)} /></label>}
+    </div><p className="muted">Cerrar las inscripciones no cierra la entrega de archivos ni afecta la consulta de presentaciones desde Exposiciones.</p></fieldset>
     <p className="muted">Cada persona completa siempre apellidos, nombres, DNI y email. Podés agregar los datos particulares de esta modalidad.</p>
     <FieldsEditor fields={form.fields} setFields={(fields) => setForm({ ...form, fields })} />
     <h3>Integrantes vinculados</h3>

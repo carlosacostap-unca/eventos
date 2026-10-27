@@ -36,9 +36,9 @@ export function exhibitionTitle(definition: FormDefinition, answers: Answers = {
   const field = definition.fields.find((f) => f.id === "titulo_trabajo") ?? definition.fields.find((f) => /título|titulo/i.test(f.label));
   return field && answers[field.id] ? String(answers[field.id]) : "Exposición sin título";
 }
-export type Modality = { id: string; evento: string; codigo: string; nombre: string; orden: number; habilitada: boolean; version_publicada: string; entrega: boolean; plantilla_certificado?: string; textos_certificado?: Partial<CertificateTextSections>; legacy?: boolean; };
+export type Modality = { id: string; evento: string; codigo: string; nombre: string; orden: number; habilitada: boolean; version_publicada: string; entrega: boolean; plantilla_certificado?: string; textos_certificado?: Partial<CertificateTextSections>; legacy?: boolean; } & import("./modality-deadlines").ModalityDeadlines;
 export type FormVersion = { id: string; modalidad: string; numero: number; esquema: FormDefinition };
-export type PublicModality = { id: string; codigo?: string; nombre: string; orden: number; version: string; definition: FormDefinition; entrega: boolean };
+export type PublicModality = { id: string; codigo?: string; nombre: string; orden: number; version: string; definition: FormDefinition; entrega: boolean; registrationClosed?: boolean } & import("./modality-deadlines").ModalityDeadlines;
 export type Exhibition = { id: string; evento: string; modalidad: string; version: string; responsable: string; respuestas?: Answers } & import("./presentations").PresentationFields;
 export type ExhibitionMember = { id: string; exposicion: string; participante: string; funcion: string; etiqueta: string; orden: number; respuestas?: Answers };
 export type PersonSubmission = RegistrationInput & { respuestas: Answers };

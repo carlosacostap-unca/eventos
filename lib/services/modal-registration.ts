@@ -11,6 +11,12 @@ import { withOperationLock } from "./operation-lock";
 import { verifyRegistrationEdit } from "@/lib/registrations/public-edit-access";
 import { registrationEditSnapshot } from "./public-registration-edit";
 import { preparePresentation } from "./presentation-files";
+import { deadlinePassed } from "@/lib/domain/modality-deadlines";
+
+function assertDeadlines(mode: Modality, hasPresentation: boolean) {
+  if (deadlinePassed(mode.inscripcion_hasta)) throw new DomainError("CLOSED", "La inscripción de esta modalidad ya cerró. Si ya inscribiste tu trabajo, usá la sección de presentaciones para entregar el archivo dentro de su plazo.");
+  if (hasPresentation && deadlinePassed(mode.presentaciones_hasta)) throw new DomainError("CLOSED", "El plazo para entregar o reemplazar presentaciones ya terminó.");
+}
 
 export async function registerWithModality(eventId: string, raw: unknown, options: { presencial?: boolean; allowOverCapacity?: boolean; strictCapacity?: boolean; adminId?: string; editToken?: string; exhibitionId?: string; newExhibition?: boolean; presentation?: File; presentationRevision?: string } = {}): Promise<RegistrationRecord> {
   const presentation = options.presentation ? await preparePresentation(options.presentation) : undefined;
@@ -44,6 +50,7 @@ export async function registerWithModality(eventId: string, raw: unknown, option
       if (operations[0].huella !== signature) throw new DomainError("INVALID", "La solicitud ya fue utilizada con otros datos.");
       return pb.collection("inscripciones").getOne<RegistrationRecord>(operations[0].participante);
     }
+    assertDeadlines(mode, !!presentation);
     if (presentation && previousGroup && (previousGroup.presentacion_huella || previousGroup.presentacion_final || "") !== (options.presentationRevision ?? "")) throw new DomainError("INVALID", "La presentación cambió desde tu consulta. Volvé a buscar tu DNI antes de reemplazarla.");
     const all = await pb.collection("inscripciones").getFullList<RegistrationRecord>({ filter: pb.filter("evento = {:eventId}", { eventId }) });
     const editing = access ? all.find((r) => r.id === access.registrationId && r.documento_normalizado === access.document) : undefined;
@@ -107,6 +114,7 @@ export async function registerWithModality(eventId: string, raw: unknown, option
     batch.collection("operaciones_inscripcion").create({ evento: eventId, clave: input.operacion, huella: signature, participante: ids[0], exposicion: exhibitionId });
     if (options.adminId) batch.collection("auditoria").create({ administrador: options.adminId, accion: "inscripcion.presencial", entidad: "inscripcion", entidad_id: ids[0], datos: { evento: eventId, modalidad: mode.id } });
     await assertOwned();
+    assertDeadlines(mode, !!presentation);
     try { await batch.send(); }
     catch (error) { if (error instanceof ClientResponseError && [400, 403, 404].includes(error.status)) throw new DomainError("INVALID", "No se pudo confirmar la inscripción completa. Verificá los datos o consultá con la organización."); throw error; }
     return pb.collection("inscripciones").getOne<RegistrationRecord>(ids[0]);

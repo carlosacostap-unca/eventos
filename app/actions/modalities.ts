@@ -15,7 +15,7 @@ import { updatePublicLinkedRegistration } from "@/lib/services/public-registrati
 async function refreshEvent(eventId: string) {
   for (const suffix of ["", "/inscritos", "/modalidades", "/acreditacion", "/acreditacion/listado", "/exposiciones", "/certificados", "/reportes"]) revalidatePath("/admin/eventos/" + eventId + suffix);
   const event = await getEventById(eventId);
-  if (event) revalidatePath("/" + event.slug);
+  if (event) { revalidatePath("/" + event.slug); revalidatePath("/" + event.slug + "/presentaciones"); }
 }
 
 export async function saveModalityAction(eventId: string, _state: ActionState, data: FormData): Promise<ActionState> {

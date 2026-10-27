@@ -1,0 +1,61 @@
+import { randomUUID } from "node:crypto";
+import PocketBase from "pocketbase";
+import { PDFDocument } from "pdf-lib";
+import { describe, expect, it, vi } from "vitest";
+vi.mock("server-only", () => ({}));
+import { createEvent } from "@/lib/services/events";
+import { listModalities, publicModalities, saveModality } from "@/lib/services/modalities";
+import { registerWithModality, eventExhibitions } from "@/lib/services/modal-registration";
+import { findPresentationWorks, getPresentationDownload, uploadExhibitionPresentation } from "@/lib/services/presentations";
+import { parseArgentinaDeadline } from "@/lib/domain/modality-deadlines";
+import { exhibitorDefinition } from "@/lib/domain/modalities";
+import { migrateModalityDeadlines } from "@/scripts/migrate-modality-deadlines";
+
+const person = (documento: string) => ({ documento, nombres: "Alumno", apellidos: "Prueba", email: `persona${documento}@example.com`, respuestas: {} });
+describe.skipIf(process.env.RUN_DEADLINES_INTEGRATION !== "1")("plazos independientes contra PocketBase local aislado", () => {
+  it("cierra las altas el 28, permite entregas hasta el último milisegundo del 2 y conserva descargas", async () => {
+    if (process.env.POCKETBASE_URL !== "http://127.0.0.1:8099" || process.env.POCKETBASE_ADMIN_PASSWORD !== "TestOnly-Roles-2026!") throw new Error("Solo base local con credenciales sintéticas.");
+    const admin = new PocketBase(process.env.POCKETBASE_URL); admin.autoCancellation(false);
+    await admin.collection("_superusers").authWithPassword("test-admin@example.com", "TestOnly-Roles-2026!");
+    await migrateModalityDeadlines(admin, true);
+    expect((await migrateModalityDeadlines(admin, true)).camposAgregados).toEqual([]);
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-10-28T15:00:00-03:00"));
+    const event = await createEvent({ titulo: "Plazos de jornada sintética", descripcion: "Verificación local de cierres separados.", slug: "plazos-" + randomUUID().slice(0, 8), tipoEvento: "", lugar: "Facultad", inicio: new Date("2026-11-04T11:30:00Z"), fin: new Date("2026-11-04T16:00:00Z"), cupo: 100, costo: "gratuito", certificadoAsistencia: "si", inscripcionHabilitada: true, estado: "publicado" });
+    try {
+      const modeId = await saveModality(event.id, { codigo: "expositor", nombre: "Expositor", orden: 1, habilitada: true, entrega: true, definition: exhibitorDefinition, textos: {}, inscripcion_hasta: parseArgentinaDeadline("2026-10-28T23:59"), presentaciones_hasta: parseArgentinaDeadline("2026-11-02T23:59") }, "");
+      const modes = await listModalities(event.id);
+      const mode = modes.find((item) => item.id === modeId)!;
+      const attendee = modes.find((item) => item.codigo === "asistente")!;
+      const input = { modalidad: mode.id, version: mode.version_publicada, operacion: randomUUID(), principal: { ...person("90100101"), respuestas: { titulo_trabajo: "Trabajo con plazos" } }, integrantes: [{ ...person("90100102"), funcion: "director" }] };
+      const student = await registerWithModality(event.id, input);
+      const group = (await eventExhibitions(event.id)).exhibitions[0];
+      vi.setSystemTime(new Date("2026-10-28T23:59:59.999-03:00"));
+      expect((await registerWithModality(event.id, { ...input, operacion: randomUUID(), principal: { ...input.principal, documento: "90100103" } })).id).toBeTruthy();
+      vi.setSystemTime(new Date("2026-10-29T00:00:00-03:00"));
+      const denied = { ...input, operacion: randomUUID(), principal: { ...input.principal, documento: "90100104" } };
+      await expect(registerWithModality(event.id, denied)).rejects.toMatchObject({ code: "CLOSED" });
+      await expect(registerWithModality(event.id, denied, { presencial: true, allowOverCapacity: true })).rejects.toMatchObject({ code: "CLOSED" });
+      expect((await registerWithModality(event.id, input)).id).toBe(student.id);
+      expect((await registerWithModality(event.id, { modalidad: attendee.id, version: attendee.version_publicada, operacion: randomUUID(), principal: person("90100105"), integrantes: [] })).id).toBeTruthy();
+      const publicModes = await publicModalities(event);
+      expect(publicModes.find((item) => item.codigo === "expositor")?.registrationClosed).toBe(true);
+      expect(publicModes.find((item) => item.codigo === "asistente")?.registrationClosed).toBe(false);
+      const document = await PDFDocument.create(); document.addPage().drawText("Presentacion sintetica");
+      const file = new File([(await document.save()).slice().buffer as ArrayBuffer], "presentacion.pdf", { type: "application/pdf" });
+      const between = await findPresentationWorks(event.id, input.principal.documento);
+      expect(between.works[0].closed).toBe(false);
+      const firstUpload = await uploadExhibitionPresentation(event.id, group.id, input.principal.documento, between.token, "", file);
+      vi.setSystemTime(new Date("2026-11-02T23:59:59.999-03:00"));
+      const delivery = await findPresentationWorks(event.id, input.principal.documento);
+      expect(delivery.works[0].closed).toBe(false);
+      const final = await uploadExhibitionPresentation(event.id, group.id, input.principal.documento, delivery.token, firstUpload.revision, new File([await file.arrayBuffer()], "version-final.pdf", { type: "application/pdf" }));
+      expect(final.filename).toBe("version-final.pdf");
+      vi.setSystemTime(new Date("2026-11-03T00:00:00-03:00"));
+      await expect(uploadExhibitionPresentation(event.id, group.id, input.principal.documento, delivery.token, final.revision, file)).rejects.toMatchObject({ code: "CLOSED" });
+      expect((await findPresentationWorks(event.id, input.principal.documento)).works[0]).toMatchObject({ closed: true, presentation: { filename: "version-final.pdf" } });
+      expect((await getPresentationDownload(group.id, event.id)).filename).toBe("version-final.pdf");
+      expect((await admin.collection("exposiciones").getOne(group.id)).presentacion_nombre).toBe("version-final.pdf");
+    } finally { vi.useRealTimers(); await admin.collection("eventos").delete(event.id); }
+  }, 120000);
+});

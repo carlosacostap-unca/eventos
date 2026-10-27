@@ -17,6 +17,7 @@
     "schema:modalities": "tsx scripts/migrate-modalities.ts",
     "schema:multiple-exhibitions": "tsx scripts/migrate-multiple-exhibitions.ts",
     "schema:presentations": "tsx scripts/migrate-presentations.ts",
+    "schema:modality-deadlines": "tsx scripts/migrate-modality-deadlines.ts",
     "schema:modalities-check": "tsx scripts/check-modality-batch.ts",
     "schema:public-page": "tsx scripts/migrate-public-event-page.ts",
     "schema:unlimited-capacity": "tsx scripts/migrate-unlimited-capacity.ts",

@@ -30,6 +30,8 @@ Para modalidades y formularios configurables, consultar [la guía de configuraci
 
 Para recibir presentaciones finales en PDF o PowerPoint por trabajo, consultar [la guía de entregas y migración](docs/presentaciones-finales.md). En una base existente, revisar `npm run schema:presentations` y aplicar los campos opcionales con `npm run schema:presentations -- --apply` antes del despliegue.
 
+Los cierres de inscripción y de entrega de presentaciones se configuran por separado desde Modalidades y formularios, con horario de Argentina e incluyendo el último minuto indicado. En bases existentes, `npm run schema:modality-deadlines -- --apply` agrega las dos fechas opcionales sin modificar registros. Desplegar la versión que valida esos plazos para que el cierre automático se aplique también a formularios abiertos anteriormente.
+
 El comando siguiente importa las colecciones, campos, reglas e índices y sincroniza la cuenta técnica y el administrador del panel con el email y la contraseña indicados:
 
     npm run schema:apply

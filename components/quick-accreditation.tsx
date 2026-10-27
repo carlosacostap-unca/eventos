@@ -138,7 +138,8 @@ function ReviewPerson({ eventId, person, onDone, onBusy }: FlowProps & { person:
   </form>;
 }
 
-function NewPerson({ eventId, document, modes, isFull, canManage, onDone, onBusy, busy }: Props & FlowProps & { document: string; busy: boolean }) {
+function NewPerson({ eventId, document, modes: allModes, isFull, canManage, onDone, onBusy, busy }: Props & FlowProps & { document: string; busy: boolean }) {
+  const modes = allModes.filter((mode) => !mode.registrationClosed);
   const [selected, setSelected] = useState(() => modes.find((mode) => mode.definition.roles.length === 0)?.id ?? modes[0]?.id ?? "");
   const [operation] = useState(() => crypto.randomUUID());
   const mode = modes.find((item) => item.id === selected);
