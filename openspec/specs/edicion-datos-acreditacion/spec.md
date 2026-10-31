@@ -7,15 +7,15 @@ Permitir al personal administrativo corregir datos de inscripción durante la ac
 ## Requirements
 
 ### Requirement: Edición de identidad durante la acreditación
-El sistema SHALL permitir al administrador general y al administrador de evento asignado editar apellidos, nombres, documento y email desde la lista de acreditación del evento autorizado. El acreditador SHALL carecer de permiso para editar inscripciones existentes.
+El sistema SHALL permitir al administrador general y al administrador de evento asignado editar apellidos, nombres, documento, email y respuestas configuradas desde la lista de acreditación de cualquier evento, incluyendo alumnos, directores y codirectores. El acreditador SHALL carecer de permiso para editar inscripciones existentes. La corrección MUST conservar modalidad, vínculos, origen, asistencia y cupo, respetar la versión de formulario aplicable y registrar el actor y los campos modificados. La edición de identidad MUST actuar sobre el participante único del evento y reflejarse en todas sus exposiciones.
 
 #### Scenario: Corrección de una inscripción
-- **WHEN** un administrador autorizado guarda datos válidos de una inscripción pública o presencial del evento
-- **THEN** el sistema actualiza los datos personales y el documento normalizado, conservando asistencia, origen y cupo
+- **WHEN** un administrador autorizado guarda datos válidos de una inscripción pública, presencial o vinculada del evento
+- **THEN** el sistema actualiza los datos personales y el documento normalizado, conservando asistencia, origen, modalidad, vínculos y cupo
 - **AND** registra el actor y los campos modificados en auditoría
 
 #### Scenario: Datos inválidos o documento duplicado
-- **WHEN** la corrección contiene datos inválidos o un documento normalizado utilizado por otra inscripción del mismo evento
+- **WHEN** la corrección contiene datos inválidos o un documento normalizado utilizado por otro participante del mismo evento, de cualquier modalidad
 - **THEN** el sistema rechaza el guardado y muestra el error
 - **AND** el formulario conserva los valores escritos para corregirlos
 
@@ -33,4 +33,13 @@ El sistema SHALL permitir al administrador general y al administrador de evento 
 
 #### Scenario: Actualización de las vistas
 - **WHEN** se guardan correctamente los datos
-- **THEN** el sistema revalida acreditación, resumen, reportes y listado administrativo de certificados
+- **THEN** el sistema revalida acreditación, resumen, reportes, exposiciones y listado administrativo de certificados
+
+#### Scenario: Director compartido con certificados emitidos
+- **WHEN** se corrigen los datos de un director vinculado a varias exposiciones
+- **THEN** los datos corregidos se reflejan en todas ellas y los certificados compartidos afectados se señalan como pendientes de regeneración
+- **AND** la corrección no cambia la acreditación de ninguno de los alumnos
+
+#### Scenario: Corrección de respuestas de una versión anterior
+- **WHEN** se edita una inscripción cuyo formulario es anterior al vigente
+- **THEN** se validan y conservan sus campos según la versión utilizada sin exigirle automáticamente campos agregados después

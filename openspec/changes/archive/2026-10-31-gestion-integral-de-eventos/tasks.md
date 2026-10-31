@@ -59,4 +59,6 @@
 - [x] 8.2 Revisar caché, mensajes de error y respuestas para evitar exposición de credenciales, tokens o datos personales; verificar con pruebas de rutas públicas y privadas.
 - [x] 8.3 Actualizar la documentación local y de Dokploy para la consulta pública, límites, secretos y recuperación, retirando la configuración del procesador de correo; verificar las instrucciones en un entorno limpio.
 - [x] 8.4 Ejecutar lint, pruebas y build de producción, corregir fallos y verificar que todos finalicen correctamente con Node 22.
-- [ ] 8.5 Desplegar primero con inscripciones deshabilitadas, ejecutar una prueba de humo contra PocketBase y el portal de certificados, y verificar el primer evento de prueba antes de habilitar acceso público.
+- [x] 8.5 Desplegar primero con inscripciones deshabilitadas, ejecutar una prueba de humo contra PocketBase y el portal de certificados, y verificar el primer evento de prueba antes de habilitar acceso público.
+
+Verificación de cierre de la tarea 8.5: el 31 de octubre de 2026 el usuario confirmó que el despliegue y la verificación en producción ya se realizaron y que el resultado fue satisfactorio. Esta constancia se basa en su confirmación; no implica una nueva ejecución del despliegue durante el archivado.
