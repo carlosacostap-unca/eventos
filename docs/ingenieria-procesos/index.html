@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Vista de ingeniería de procesos de Eventos UNCA: documentación navegable y diagramas BPMN 2.0.">
+  <title>Ingeniería de procesos · Eventos UNCA</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="vendor/diagram-js.css">
+  <link rel="stylesheet" href="vendor/bpmn-js.css">
+  <link rel="stylesheet" href="visor.css">
+  <script defer src="vendor/bpmn-viewer.min.js"></script>
+  <script defer src="procesos.js"></script>
+  <script defer src="visor.js"></script>
+</head>
+<body>
+  <a class="skip" href="#contenido">Ir al proceso</a>
+  <aside class="sidebar" aria-label="Documentación">
+    <a class="brand" href="#preparacion"><span class="brand-icon" aria-hidden="true">U</span><span>EVENTOS UNCA<small>Biblioteca del sistema</small></span></a>
+    <div class="perspective"><span class="eyebrow">PERSPECTIVA 01</span><strong>Ingeniería<br> de procesos</strong><p>Comprender recorridos,<br>decisiones y responsables.</p></div>
+    <label class="search-label" for="buscar">Buscar un proceso</label>
+    <input id="buscar" type="search" placeholder="Nombre o tema…" autocomplete="off">
+    <nav id="procesos" aria-label="Procesos del sistema"></nav>
+    <p id="sin-resultados" hidden>No hay procesos coincidentes.</p>
+    <div class="sidebar-footer"><a href="README.md" target="_blank" rel="noopener">Guía de lectura y alcance ↗</a><a href="../arquitectura/eventos.html" target="_blank" rel="noopener">Ver arquitectura técnica ↗</a><span>Modelos descriptivos · BPMN 2.0</span></div>
+  </aside>
+  <main id="contenido" tabindex="-1">
+    <header class="topbar"><span>Documentación <span aria-hidden="true">/</span> Ingeniería de procesos</span><div><span class="status"><i></i>Consulta local</span><button id="tema" class="quiet" type="button" aria-pressed="false">Tema oscuro</button></div></header>
+    <section class="hero" aria-labelledby="titulo"><div class="eyebrow"><span id="codigo"></span><span class="line"></span><span id="categoria"></span></div><h1 id="titulo">Ingeniería de procesos</h1><p id="resumen">Cargando documentación…</p><div class="chips"><span id="actores"></span><span id="cantidad"></span><span>Revisión: 31 oct 2026</span></div></section>
+    <section class="process-context" aria-label="Límites del proceso"><div><span class="eyebrow">DISPARADOR</span><p id="disparador"></p></div><span class="context-arrow" aria-hidden="true">→</span><div><span class="eyebrow">RESULTADO</span><p id="resultado"></p></div></section>
+    <section class="diagram-card" id="panel-diagrama" aria-labelledby="titulo-diagrama">
+      <div class="diagram-toolbar"><div><h2 id="titulo-diagrama">Recorrido BPMN</h2><span>Seleccioná una actividad para conocer su alcance.</span></div><div class="tools" aria-label="Herramientas del diagrama"><button id="alejar" type="button" aria-label="Alejar diagrama">−</button><button id="ajustar" type="button">Ajustar</button><button id="acercar" type="button" aria-label="Acercar diagrama">+</button><button id="ampliar" type="button">Ampliar</button><details class="exports"><summary>Exportar</summary><div><button id="bpmn" type="button">BPMN editable</button><button id="svg" type="button">Imagen SVG</button><button id="png" type="button">Imagen PNG</button></div></details></div></div>
+      <p id="estado" role="status">Preparando diagrama…</p>
+      <div id="canvas" role="region" aria-label="Diagrama BPMN del proceso seleccionado"></div>
+      <div class="legend" aria-label="Leyenda BPMN"><span><i class="symbol start"></i>Inicio / fin</span><span><i class="symbol task"></i>Tarea humana</span><span><i class="symbol service"></i>Tarea del sistema</span><span><i class="symbol gateway"></i>Decisión exclusiva</span><small>Arrastrá para recorrer · Usá + y − para ampliar</small></div>
+    </section>
+    <section class="reading-grid" aria-label="Análisis del proceso"><article class="detail-card"><span class="eyebrow">ELEMENTO SELECCIONADO</span><h2 id="elemento-titulo">El proceso completo</h2><p id="elemento-detalle"></p><span class="tag" id="elemento-tipo">Modelo descriptivo</span></article><article class="analysis-card"><span class="eyebrow">MIRADA DE PROCESOS</span><h2>Preguntas para el análisis</h2><ul id="analisis"></ul></article></section>
+    <section class="knowledge"><div class="tablist" role="tablist" aria-label="Detalle documental"><button role="tab" id="tab-reglas" aria-controls="reglas" aria-selected="true" tabindex="0">Reglas y excepciones</button><button role="tab" id="tab-actividades" aria-controls="actividades" aria-selected="false" tabindex="-1">Actividades</button><button role="tab" id="tab-evidencia" aria-controls="evidencia" aria-selected="false" tabindex="-1">Fuentes y trazabilidad</button></div><div id="reglas" role="tabpanel" aria-labelledby="tab-reglas"><ol id="lista-reglas"></ol></div><div id="actividades" role="tabpanel" aria-labelledby="tab-actividades" hidden><p class="muted">Recorrido accesible en texto. Seleccionar un elemento también lo destaca en el diagrama.</p><div id="lista-actividades"></div></div><div id="evidencia" role="tabpanel" aria-labelledby="tab-evidencia" hidden><p class="muted">El código y las pruebas se enlazan a la revisión documentada. Las especificaciones describen contratos; los modelos también consideran evoluciones posteriores presentes en el código.</p><div class="evidence-grid"><section><h3>Implementación</h3><ul id="fuentes"></ul></section><section><h3>Especificaciones y guías</h3><ul id="especificaciones"></ul></section><section><h3>Pruebas relacionadas</h3><ul id="pruebas"></ul></section></div></div></section>
+    <nav class="pager" aria-label="Continuar la lectura"><a id="anterior" href="#preparacion"></a><a id="siguiente" href="#inscripcion"></a></nav>
+    <footer class="page-footer"><p>Documentación del comportamiento implementado. No ejecuta procesos ni consulta datos de producción. Las oportunidades de medición son propuestas de análisis.</p><p>Base de revisión: <a id="revision" href="#"></a> · <a href="README.md">Alcance y mantenimiento</a> · <a href="https://www.omg.org/spec/BPMN/2.0.2" target="_blank" rel="noopener">Estándar BPMN</a></p></footer>
+  </main>
+  <noscript>Esta vista necesita JavaScript. Los diagramas editables se encuentran en la carpeta bpmn y el alcance está documentado en README.md.</noscript>
+</body>
+</html>

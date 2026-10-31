@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="inscripcion_definiciones" targetNamespace="https://eventos.unca.edu.ar/documentacion/procesos" exporter="Eventos UNCA · documentación de procesos" exporterVersion="1">
+  <bpmn:process id="inscripcion_proceso" name="Inscribir personas y exposiciones" isExecutable="false">
+    <bpmn:documentation>Una solicitud pública confirma a la persona principal, sus integrantes y el trabajo sin altas parciales. Modelo descriptivo revisado el 2026-10-31 sobre 3c7cd6698bdf98ab5ba9ad27157cdfbfd049a45e.</bpmn:documentation>
+    <bpmn:laneSet id="inscripcion_carriles"><bpmn:lane id="inscripcion_carril_0" name="Participante"><bpmn:flowNodeRef>inscripcion_inicio</bpmn:flowNodeRef><bpmn:flowNodeRef>inscripcion_completar</bpmn:flowNodeRef><bpmn:flowNodeRef>inscripcion_revision</bpmn:flowNodeRef><bpmn:flowNodeRef>inscripcion_fin</bpmn:flowNodeRef></bpmn:lane>
+<bpmn:lane id="inscripcion_carril_1" name="Sistema Eventos UNCA"><bpmn:flowNodeRef>inscripcion_validar</bpmn:flowNodeRef><bpmn:flowNodeRef>inscripcion_admisible</bpmn:flowNodeRef><bpmn:flowNodeRef>inscripcion_rechazar</bpmn:flowNodeRef><bpmn:flowNodeRef>inscripcion_confirmar</bpmn:flowNodeRef><bpmn:flowNodeRef>inscripcion_persistida</bpmn:flowNodeRef><bpmn:flowNodeRef>inscripcion_fallo</bpmn:flowNodeRef></bpmn:lane></bpmn:laneSet>
+    <bpmn:startEvent id="inscripcion_inicio" name="Solicitud de inscripción">
+    <bpmn:documentation>La persona elige el evento y, si corresponde, la modalidad.</bpmn:documentation>
+
+    <bpmn:outgoing>inscripcion_flujo_0</bpmn:outgoing>
+  </bpmn:startEvent>
+<bpmn:userTask id="inscripcion_completar" name="Consultar DNI y completar formulario">
+    <bpmn:documentation>Completar identidad editable, respuestas del trabajo e integrantes requeridos. El archivo de presentación es opcional.</bpmn:documentation>
+    <bpmn:incoming>inscripcion_flujo_0</bpmn:incoming><bpmn:incoming>inscripcion_flujo_6</bpmn:incoming>
+    <bpmn:outgoing>inscripcion_flujo_1</bpmn:outgoing>
+  </bpmn:userTask>
+<bpmn:serviceTask id="inscripcion_validar" name="Validar solicitud y disponibilidad">
+    <bpmn:documentation>Comprobar permisos de edición si corresponde, versión, DNI, grupos, modalidad, fechas y reserva principal bajo bloqueo del evento.</bpmn:documentation>
+    <bpmn:incoming>inscripcion_flujo_1</bpmn:incoming>
+    <bpmn:outgoing>inscripcion_flujo_2</bpmn:outgoing>
+  </bpmn:serviceTask>
+<bpmn:exclusiveGateway id="inscripcion_admisible" name="¿Solicitud admisible?" gatewayDirection="Diverging">
+    <bpmn:documentation>La solicitud puede continuar solo si cumple todas las reglas del evento y la modalidad.</bpmn:documentation>
+    <bpmn:incoming>inscripcion_flujo_2</bpmn:incoming>
+    <bpmn:outgoing>inscripcion_flujo_3</bpmn:outgoing><bpmn:outgoing>inscripcion_flujo_4</bpmn:outgoing>
+  </bpmn:exclusiveGateway>
+<bpmn:serviceTask id="inscripcion_rechazar" name="Informar el motivo">
+    <bpmn:documentation>Mostrar errores por campo o mensajes de cupo, cierre, duplicado o versión, sin escrituras parciales.</bpmn:documentation>
+    <bpmn:incoming>inscripcion_flujo_4</bpmn:incoming>
+    <bpmn:outgoing>inscripcion_flujo_5</bpmn:outgoing>
+  </bpmn:serviceTask>
+<bpmn:userTask id="inscripcion_revision" name="Revisar o actualizar datos">
+    <bpmn:documentation>Corregir datos cuando sea posible. Ante cupo completo o plazo vencido no se confirma una nueva alta.</bpmn:documentation>
+    <bpmn:incoming>inscripcion_flujo_5</bpmn:incoming>
+    <bpmn:outgoing>inscripcion_flujo_6</bpmn:outgoing>
+  </bpmn:userTask>
+<bpmn:serviceTask id="inscripcion_confirmar" name="Confirmar la operación completa">
+    <bpmn:documentation>Crear o reutilizar participantes compatibles y guardar exposición, vínculos y operación idempotente en un único batch.</bpmn:documentation>
+    <bpmn:incoming>inscripcion_flujo_3</bpmn:incoming>
+    <bpmn:outgoing>inscripcion_flujo_7</bpmn:outgoing>
+  </bpmn:serviceTask>
+<bpmn:exclusiveGateway id="inscripcion_persistida" name="¿Operación confirmada?" gatewayDirection="Diverging">
+    <bpmn:documentation>Distinguir persistencia exitosa de un fallo de la transacción.</bpmn:documentation>
+    <bpmn:incoming>inscripcion_flujo_7</bpmn:incoming>
+    <bpmn:outgoing>inscripcion_flujo_8</bpmn:outgoing><bpmn:outgoing>inscripcion_flujo_9</bpmn:outgoing>
+  </bpmn:exclusiveGateway>
+<bpmn:endEvent id="inscripcion_fallo" name="Sin alta parcial">
+    <bpmn:documentation>Un fallo conserva la consistencia; se puede volver a intentar la solicitud.</bpmn:documentation>
+    <bpmn:incoming>inscripcion_flujo_9</bpmn:incoming>
+
+  </bpmn:endEvent>
+<bpmn:endEvent id="inscripcion_fin" name="Inscripción confirmada">
+    <bpmn:documentation>Mostrar confirmación. Registrar públicamente no acredita asistencia.</bpmn:documentation>
+    <bpmn:incoming>inscripcion_flujo_8</bpmn:incoming>
+
+  </bpmn:endEvent>
+    <bpmn:sequenceFlow id="inscripcion_flujo_0" sourceRef="inscripcion_inicio" targetRef="inscripcion_completar"></bpmn:sequenceFlow>
+<bpmn:sequenceFlow id="inscripcion_flujo_1" sourceRef="inscripcion_completar" targetRef="inscripcion_validar"></bpmn:sequenceFlow>
+<bpmn:sequenceFlow id="inscripcion_flujo_2" sourceRef="inscripcion_validar" targetRef="inscripcion_admisible"></bpmn:sequenceFlow>
+<bpmn:sequenceFlow id="inscripcion_flujo_3" sourceRef="inscripcion_admisible" targetRef="inscripcion_confirmar" name="Sí"><bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" language="text/plain">Sí</bpmn:conditionExpression></bpmn:sequenceFlow>
+<bpmn:sequenceFlow id="inscripcion_flujo_4" sourceRef="inscripcion_admisible" targetRef="inscripcion_rechazar" name="No"><bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" language="text/plain">No</bpmn:conditionExpression></bpmn:sequenceFlow>
+<bpmn:sequenceFlow id="inscripcion_flujo_5" sourceRef="inscripcion_rechazar" targetRef="inscripcion_revision"></bpmn:sequenceFlow>
+<bpmn:sequenceFlow id="inscripcion_flujo_6" sourceRef="inscripcion_revision" targetRef="inscripcion_completar" name="Corregir si corresponde"></bpmn:sequenceFlow>
+<bpmn:sequenceFlow id="inscripcion_flujo_7" sourceRef="inscripcion_confirmar" targetRef="inscripcion_persistida"></bpmn:sequenceFlow>
+<bpmn:sequenceFlow id="inscripcion_flujo_8" sourceRef="inscripcion_persistida" targetRef="inscripcion_fin" name="Sí"><bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" language="text/plain">Sí</bpmn:conditionExpression></bpmn:sequenceFlow>
+<bpmn:sequenceFlow id="inscripcion_flujo_9" sourceRef="inscripcion_persistida" targetRef="inscripcion_fallo" name="No"><bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" language="text/plain">No</bpmn:conditionExpression></bpmn:sequenceFlow>
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="inscripcion_diagrama"><bpmndi:BPMNPlane id="inscripcion_plano" bpmnElement="inscripcion_proceso"><bpmndi:BPMNShape id="inscripcion_carril_di_0" bpmnElement="inscripcion_carril_0" isHorizontal="true"><dc:Bounds x="40" y="80" width="1248" height="280"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="inscripcion_carril_di_1" bpmnElement="inscripcion_carril_1" isHorizontal="true"><dc:Bounds x="40" y="360" width="1248" height="280"/></bpmndi:BPMNShape><bpmndi:BPMNShape id="inscripcion_inicio_di" bpmnElement="inscripcion_inicio"><dc:Bounds x="174" y="162" width="36" height="36"/><bpmndi:BPMNLabel><dc:Bounds x="122" y="208" width="140" height="40"/></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="inscripcion_completar_di" bpmnElement="inscripcion_completar"><dc:Bounds x="315" y="140" width="144" height="80"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="inscripcion_validar_di" bpmnElement="inscripcion_validar"><dc:Bounds x="510" y="420" width="144" height="80"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="inscripcion_admisible_di" bpmnElement="inscripcion_admisible" isMarkerVisible="true"><dc:Bounds x="751" y="434" width="52" height="52"/><bpmndi:BPMNLabel><dc:Bounds x="603" y="372" width="140" height="40"/></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="inscripcion_rechazar_di" bpmnElement="inscripcion_rechazar"><dc:Bounds x="705" y="530" width="144" height="80"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="inscripcion_revision_di" bpmnElement="inscripcion_revision"><dc:Bounds x="705" y="140" width="144" height="80"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="inscripcion_confirmar_di" bpmnElement="inscripcion_confirmar"><dc:Bounds x="900" y="420" width="144" height="80"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="inscripcion_persistida_di" bpmnElement="inscripcion_persistida" isMarkerVisible="true"><dc:Bounds x="1141" y="434" width="52" height="52"/><bpmndi:BPMNLabel><dc:Bounds x="993" y="372" width="140" height="40"/></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="inscripcion_fallo_di" bpmnElement="inscripcion_fallo"><dc:Bounds x="1149" y="552" width="36" height="36"/><bpmndi:BPMNLabel><dc:Bounds x="1097" y="598" width="140" height="40"/></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="inscripcion_fin_di" bpmnElement="inscripcion_fin"><dc:Bounds x="1149" y="162" width="36" height="36"/><bpmndi:BPMNLabel><dc:Bounds x="1097" y="110" width="140" height="40"/></bpmndi:BPMNLabel></bpmndi:BPMNShape><bpmndi:BPMNEdge id="inscripcion_flujo_0_di" bpmnElement="inscripcion_flujo_0"><di:waypoint x="210" y="180"/><di:waypoint x="315" y="180"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="inscripcion_flujo_1_di" bpmnElement="inscripcion_flujo_1"><di:waypoint x="459" y="180"/><di:waypoint x="484.5" y="180"/><di:waypoint x="484.5" y="460"/><di:waypoint x="510" y="460"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="inscripcion_flujo_2_di" bpmnElement="inscripcion_flujo_2"><di:waypoint x="654" y="460"/><di:waypoint x="751" y="460"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="inscripcion_flujo_3_di" bpmnElement="inscripcion_flujo_3"><di:waypoint x="803" y="460"/><di:waypoint x="900" y="460"/><bpmndi:BPMNLabel><dc:Bounds x="811.5" y="430" width="80" height="30"/></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="inscripcion_flujo_4_di" bpmnElement="inscripcion_flujo_4"><di:waypoint x="777" y="486"/><di:waypoint x="777" y="530"/><bpmndi:BPMNLabel><dc:Bounds x="786" y="494" width="80" height="30"/></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="inscripcion_flujo_5_di" bpmnElement="inscripcion_flujo_5"><di:waypoint x="849" y="570"/><di:waypoint x="885" y="570"/><di:waypoint x="885" y="180"/><di:waypoint x="849" y="180"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="inscripcion_flujo_6_di" bpmnElement="inscripcion_flujo_6"><di:waypoint x="777" y="140"/><di:waypoint x="777" y="90"/><di:waypoint x="387" y="90"/><di:waypoint x="387" y="140"/><bpmndi:BPMNLabel><dc:Bounds x="542" y="60" width="80" height="30"/></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="inscripcion_flujo_7_di" bpmnElement="inscripcion_flujo_7"><di:waypoint x="1044" y="460"/><di:waypoint x="1141" y="460"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="inscripcion_flujo_8_di" bpmnElement="inscripcion_flujo_8"><di:waypoint x="1167" y="434"/><di:waypoint x="1167" y="198"/><bpmndi:BPMNLabel><dc:Bounds x="1176" y="302" width="80" height="30"/></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="inscripcion_flujo_9_di" bpmnElement="inscripcion_flujo_9"><di:waypoint x="1167" y="486"/><di:waypoint x="1167" y="552"/><bpmndi:BPMNLabel><dc:Bounds x="1176" y="505" width="80" height="30"/></bpmndi:BPMNLabel></bpmndi:BPMNEdge></bpmndi:BPMNPlane></bpmndi:BPMNDiagram>
+</bpmn:definitions>

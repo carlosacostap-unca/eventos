@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="reportes_definiciones" targetNamespace="https://eventos.unca.edu.ar/documentacion/procesos" exporter="Eventos UNCA · documentación de procesos" exporterVersion="1">
+  <bpmn:process id="reportes_proceso" name="Analizar resultados y exportar reportes" isExecutable="false">
+    <bpmn:documentation>La organización consulta métricas y exporta personas o vínculos manteniendo la unidad de análisis. Modelo descriptivo revisado el 2026-10-31 sobre 3c7cd6698bdf98ab5ba9ad27157cdfbfd049a45e.</bpmn:documentation>
+    <bpmn:laneSet id="reportes_carriles"><bpmn:lane id="reportes_carril_0" name="Organización"><bpmn:flowNodeRef>reportes_inicio</bpmn:flowNodeRef><bpmn:flowNodeRef>reportes_filtrar</bpmn:flowNodeRef><bpmn:flowNodeRef>reportes_exportar</bpmn:flowNodeRef><bpmn:flowNodeRef>reportes_fin</bpmn:flowNodeRef></bpmn:lane>
+<bpmn:lane id="reportes_carril_1" name="Sistema Eventos UNCA"><bpmn:flowNodeRef>reportes_autorizar</bpmn:flowNodeRef><bpmn:flowNodeRef>reportes_permitido</bpmn:flowNodeRef><bpmn:flowNodeRef>reportes_denegar</bpmn:flowNodeRef><bpmn:flowNodeRef>reportes_calcular</bpmn:flowNodeRef><bpmn:flowNodeRef>reportes_csv</bpmn:flowNodeRef></bpmn:lane></bpmn:laneSet>
+    <bpmn:startEvent id="reportes_inicio" name="Necesidad de análisis">
+    <bpmn:documentation>El administrador abre Reportes dentro del evento autorizado.</bpmn:documentation>
+
+    <bpmn:outgoing>reportes_flujo_0</bpmn:outgoing>
+  </bpmn:startEvent>
+<bpmn:userTask id="reportes_filtrar" name="Elegir filtros y unidad">
+    <bpmn:documentation>Seleccionar búsqueda, origen, presencia, modalidad y función; distinguir personas de vínculos.</bpmn:documentation>
+    <bpmn:incoming>reportes_flujo_0</bpmn:incoming>
+    <bpmn:outgoing>reportes_flujo_1</bpmn:outgoing>
+  </bpmn:userTask>
+<bpmn:serviceTask id="reportes_autorizar" name="Verificar acceso al evento">
+    <bpmn:documentation>Validar sesión y asignación actual. No conceder acceso por conocer el ID del evento.</bpmn:documentation>
+    <bpmn:incoming>reportes_flujo_1</bpmn:incoming>
+    <bpmn:outgoing>reportes_flujo_2</bpmn:outgoing>
+  </bpmn:serviceTask>
+<bpmn:exclusiveGateway id="reportes_permitido" name="¿Acceso administrativo?" gatewayDirection="Diverging">
+    <bpmn:documentation>El administrador general y el asignado pueden consultar; el acreditador no.</bpmn:documentation>
+    <bpmn:incoming>reportes_flujo_2</bpmn:incoming>
+    <bpmn:outgoing>reportes_flujo_3</bpmn:outgoing><bpmn:outgoing>reportes_flujo_4</bpmn:outgoing>
+  </bpmn:exclusiveGateway>
+<bpmn:endEvent id="reportes_denegar" name="Acceso rechazado">
+    <bpmn:documentation>No devolver estadísticas ni datos personales del evento.</bpmn:documentation>
+    <bpmn:incoming>reportes_flujo_3</bpmn:incoming>
+
+  </bpmn:endEvent>
+<bpmn:serviceTask id="reportes_calcular" name="Calcular y mostrar resultados">
+    <bpmn:documentation>Calcular métricas con estados vigentes y personas únicas, manteniendo las unidades explícitas.</bpmn:documentation>
+    <bpmn:incoming>reportes_flujo_4</bpmn:incoming>
+    <bpmn:outgoing>reportes_flujo_5</bpmn:outgoing>
+  </bpmn:serviceTask>
+<bpmn:exclusiveGateway id="reportes_exportar" name="¿Solicita CSV?" gatewayDirection="Diverging">
+    <bpmn:documentation>La consulta puede terminar en el tablero o continuar con una exportación.</bpmn:documentation>
+    <bpmn:incoming>reportes_flujo_5</bpmn:incoming>
+    <bpmn:outgoing>reportes_flujo_6</bpmn:outgoing><bpmn:outgoing>reportes_flujo_7</bpmn:outgoing>
+  </bpmn:exclusiveGateway>
+<bpmn:serviceTask id="reportes_csv" name="Auditar y componer CSV">
+    <bpmn:documentation>Volver a autorizar en la descarga, conservar filtros y producir CSV de personas o vínculos con escape seguro.</bpmn:documentation>
+    <bpmn:incoming>reportes_flujo_7</bpmn:incoming>
+    <bpmn:outgoing>reportes_flujo_8</bpmn:outgoing>
+  </bpmn:serviceTask>
+<bpmn:endEvent id="reportes_fin" name="Análisis disponible">
+    <bpmn:documentation>La consulta o descarga no altera inscripciones, asistencia ni certificados.</bpmn:documentation>
+    <bpmn:incoming>reportes_flujo_6</bpmn:incoming><bpmn:incoming>reportes_flujo_8</bpmn:incoming>
+
+  </bpmn:endEvent>
+    <bpmn:sequenceFlow id="reportes_flujo_0" sourceRef="reportes_inicio" targetRef="reportes_filtrar"></bpmn:sequenceFlow>
+<bpmn:sequenceFlow id="reportes_flujo_1" sourceRef="reportes_filtrar" targetRef="reportes_autorizar"></bpmn:sequenceFlow>
+<bpmn:sequenceFlow id="reportes_flujo_2" sourceRef="reportes_autorizar" targetRef="reportes_permitido"></bpmn:sequenceFlow>
+<bpmn:sequenceFlow id="reportes_flujo_3" sourceRef="reportes_permitido" targetRef="reportes_denegar" name="No"><bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" language="text/plain">No</bpmn:conditionExpression></bpmn:sequenceFlow>
+<bpmn:sequenceFlow id="reportes_flujo_4" sourceRef="reportes_permitido" targetRef="reportes_calcular" name="Sí"><bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" language="text/plain">Sí</bpmn:conditionExpression></bpmn:sequenceFlow>
+<bpmn:sequenceFlow id="reportes_flujo_5" sourceRef="reportes_calcular" targetRef="reportes_exportar"></bpmn:sequenceFlow>
+<bpmn:sequenceFlow id="reportes_flujo_6" sourceRef="reportes_exportar" targetRef="reportes_fin" name="No"><bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" language="text/plain">No</bpmn:conditionExpression></bpmn:sequenceFlow>
+<bpmn:sequenceFlow id="reportes_flujo_7" sourceRef="reportes_exportar" targetRef="reportes_csv" name="Sí"><bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" language="text/plain">Sí</bpmn:conditionExpression></bpmn:sequenceFlow>
+<bpmn:sequenceFlow id="reportes_flujo_8" sourceRef="reportes_csv" targetRef="reportes_fin"></bpmn:sequenceFlow>
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="reportes_diagrama"><bpmndi:BPMNPlane id="reportes_plano" bpmnElement="reportes_proceso"><bpmndi:BPMNShape id="reportes_carril_di_0" bpmnElement="reportes_carril_0" isHorizontal="true"><dc:Bounds x="40" y="80" width="1294" height="280"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="reportes_carril_di_1" bpmnElement="reportes_carril_1" isHorizontal="true"><dc:Bounds x="40" y="360" width="1294" height="280"/></bpmndi:BPMNShape><bpmndi:BPMNShape id="reportes_inicio_di" bpmnElement="reportes_inicio"><dc:Bounds x="174" y="162" width="36" height="36"/><bpmndi:BPMNLabel><dc:Bounds x="122" y="208" width="140" height="40"/></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="reportes_filtrar_di" bpmnElement="reportes_filtrar"><dc:Bounds x="315" y="140" width="144" height="80"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="reportes_autorizar_di" bpmnElement="reportes_autorizar"><dc:Bounds x="510" y="420" width="144" height="80"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="reportes_permitido_di" bpmnElement="reportes_permitido" isMarkerVisible="true"><dc:Bounds x="751" y="434" width="52" height="52"/><bpmndi:BPMNLabel><dc:Bounds x="603" y="372" width="140" height="40"/></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="reportes_denegar_di" bpmnElement="reportes_denegar"><dc:Bounds x="759" y="552" width="36" height="36"/><bpmndi:BPMNLabel><dc:Bounds x="707" y="598" width="140" height="40"/></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="reportes_calcular_di" bpmnElement="reportes_calcular"><dc:Bounds x="900" y="420" width="144" height="80"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="reportes_exportar_di" bpmnElement="reportes_exportar" isMarkerVisible="true"><dc:Bounds x="946" y="154" width="52" height="52"/><bpmndi:BPMNLabel><dc:Bounds x="798" y="92" width="140" height="40"/></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="reportes_csv_di" bpmnElement="reportes_csv"><dc:Bounds x="1095" y="420" width="144" height="80"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="reportes_fin_di" bpmnElement="reportes_fin"><dc:Bounds x="1149" y="162" width="36" height="36"/><bpmndi:BPMNLabel><dc:Bounds x="1097" y="110" width="140" height="40"/></bpmndi:BPMNLabel></bpmndi:BPMNShape><bpmndi:BPMNEdge id="reportes_flujo_0_di" bpmnElement="reportes_flujo_0"><di:waypoint x="210" y="180"/><di:waypoint x="315" y="180"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="reportes_flujo_1_di" bpmnElement="reportes_flujo_1"><di:waypoint x="459" y="180"/><di:waypoint x="484.5" y="180"/><di:waypoint x="484.5" y="460"/><di:waypoint x="510" y="460"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="reportes_flujo_2_di" bpmnElement="reportes_flujo_2"><di:waypoint x="654" y="460"/><di:waypoint x="751" y="460"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="reportes_flujo_3_di" bpmnElement="reportes_flujo_3"><di:waypoint x="777" y="486"/><di:waypoint x="777" y="552"/><bpmndi:BPMNLabel><dc:Bounds x="786" y="505" width="80" height="30"/></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="reportes_flujo_4_di" bpmnElement="reportes_flujo_4"><di:waypoint x="803" y="460"/><di:waypoint x="900" y="460"/><bpmndi:BPMNLabel><dc:Bounds x="811.5" y="430" width="80" height="30"/></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="reportes_flujo_5_di" bpmnElement="reportes_flujo_5"><di:waypoint x="972" y="420"/><di:waypoint x="972" y="206"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="reportes_flujo_6_di" bpmnElement="reportes_flujo_6"><di:waypoint x="998" y="180"/><di:waypoint x="1149" y="180"/><bpmndi:BPMNLabel><dc:Bounds x="1033.5" y="150" width="80" height="30"/></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="reportes_flujo_7_di" bpmnElement="reportes_flujo_7"><di:waypoint x="998" y="180"/><di:waypoint x="1046.5" y="180"/><di:waypoint x="1046.5" y="460"/><di:waypoint x="1095" y="460"/><bpmndi:BPMNLabel><dc:Bounds x="1055.5" y="306" width="80" height="30"/></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="reportes_flujo_8_di" bpmnElement="reportes_flujo_8"><di:waypoint x="1167" y="420"/><di:waypoint x="1167" y="198"/></bpmndi:BPMNEdge></bpmndi:BPMNPlane></bpmndi:BPMNDiagram>
+</bpmn:definitions>

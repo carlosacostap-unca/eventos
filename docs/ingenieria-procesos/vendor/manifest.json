@@ -1,0 +1,25 @@
+{
+  "package": "bpmn-js",
+  "version": "18.31.0",
+  "source": "https://registry.npmjs.org/bpmn-js/-/bpmn-js-18.31.0.tgz",
+  "packageIntegrity": "sha512-tGc6spNXC81858FXhk0NI9+CjfsPYDmKWSyiq0u2Rhk9J8l+DJtzZK1CYj4fqcek026PQDEwwUQwsr2Opfec/w==",
+  "license": "LICENSE.bpmn-js",
+  "files": [
+    {
+      "file": "bpmn-viewer.min.js",
+      "sha256": "b4ddd67b107f4293d95c19ecb1b2d54b68b2f913c95144d6e4b4b6d12cea5c3f"
+    },
+    {
+      "file": "bpmn-js.css",
+      "sha256": "a1add5dca479c779a54adda507f26796f4d61a5ae15f6cc14a1b017ff65b4015"
+    },
+    {
+      "file": "diagram-js.css",
+      "sha256": "73f990dcd6cd2ed696aa63a3c73822a97f0ea69a221d76ebe6cf24b01111df21"
+    },
+    {
+      "file": "LICENSE.bpmn-js",
+      "sha256": "5788cf8bd61481776cee1c943595525499a1355c045e9244f92e6c8092c06770"
+    }
+  ]
+}

@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="preparacion_definiciones" targetNamespace="https://eventos.unca.edu.ar/documentacion/procesos" exporter="Eventos UNCA · documentación de procesos" exporterVersion="1">
+  <bpmn:process id="preparacion_proceso" name="Preparar y publicar un evento" isExecutable="false">
+    <bpmn:documentation>La organización configura el evento y habilita su inscripción pública de forma explícita. Modelo descriptivo revisado el 2026-10-31 sobre 3c7cd6698bdf98ab5ba9ad27157cdfbfd049a45e.</bpmn:documentation>
+    <bpmn:laneSet id="preparacion_carriles"><bpmn:lane id="preparacion_carril_0" name="Organización"><bpmn:flowNodeRef>preparacion_inicio</bpmn:flowNodeRef><bpmn:flowNodeRef>preparacion_configurar</bpmn:flowNodeRef><bpmn:flowNodeRef>preparacion_modalidades</bpmn:flowNodeRef><bpmn:flowNodeRef>preparacion_corregir</bpmn:flowNodeRef><bpmn:flowNodeRef>preparacion_publicar</bpmn:flowNodeRef><bpmn:flowNodeRef>preparacion_fin</bpmn:flowNodeRef></bpmn:lane>
+<bpmn:lane id="preparacion_carril_1" name="Sistema Eventos UNCA"><bpmn:flowNodeRef>preparacion_validar</bpmn:flowNodeRef><bpmn:flowNodeRef>preparacion_valida</bpmn:flowNodeRef><bpmn:flowNodeRef>preparacion_guardar</bpmn:flowNodeRef></bpmn:lane></bpmn:laneSet>
+    <bpmn:startEvent id="preparacion_inicio" name="Necesidad de evento">
+    <bpmn:documentation>La organización define la actividad que necesita publicar.</bpmn:documentation>
+
+    <bpmn:outgoing>preparacion_flujo_0</bpmn:outgoing>
+  </bpmn:startEvent>
+<bpmn:userTask id="preparacion_configurar" name="Configurar datos y cupo">
+    <bpmn:documentation>Administrador general: crear. Administrador de evento asignado: gestionar su evento existente.</bpmn:documentation>
+    <bpmn:incoming>preparacion_flujo_0</bpmn:incoming>
+    <bpmn:outgoing>preparacion_flujo_1</bpmn:outgoing>
+  </bpmn:userTask>
+<bpmn:userTask id="preparacion_modalidades" name="Definir modalidades y plazos">
+    <bpmn:documentation>Configurar identidad mínima, campos, integrantes, política de certificados y fechas independientes.</bpmn:documentation>
+    <bpmn:incoming>preparacion_flujo_1</bpmn:incoming>
+    <bpmn:outgoing>preparacion_flujo_2</bpmn:outgoing>
+  </bpmn:userTask>
+<bpmn:serviceTask id="preparacion_validar" name="Validar configuración">
+    <bpmn:documentation>Validar campos, cardinalidades, permisos e identidad del evento antes de guardar.</bpmn:documentation>
+    <bpmn:incoming>preparacion_flujo_2</bpmn:incoming><bpmn:incoming>preparacion_flujo_6</bpmn:incoming>
+    <bpmn:outgoing>preparacion_flujo_3</bpmn:outgoing>
+  </bpmn:serviceTask>
+<bpmn:exclusiveGateway id="preparacion_valida" name="¿Configuración válida?" gatewayDirection="Diverging">
+    <bpmn:documentation>Los datos inválidos se informan para su corrección.</bpmn:documentation>
+    <bpmn:incoming>preparacion_flujo_3</bpmn:incoming>
+    <bpmn:outgoing>preparacion_flujo_4</bpmn:outgoing><bpmn:outgoing>preparacion_flujo_5</bpmn:outgoing>
+  </bpmn:exclusiveGateway>
+<bpmn:userTask id="preparacion_corregir" name="Corregir configuración">
+    <bpmn:documentation>Revisar los errores señalados y volver a validar.</bpmn:documentation>
+    <bpmn:incoming>preparacion_flujo_5</bpmn:incoming>
+    <bpmn:outgoing>preparacion_flujo_6</bpmn:outgoing>
+  </bpmn:userTask>
+<bpmn:serviceTask id="preparacion_guardar" name="Guardar y auditar">
+    <bpmn:documentation>Persistir cambios; los formularios utilizados conservan sus versiones.</bpmn:documentation>
+    <bpmn:incoming>preparacion_flujo_4</bpmn:incoming>
+    <bpmn:outgoing>preparacion_flujo_7</bpmn:outgoing>
+  </bpmn:serviceTask>
+<bpmn:userTask id="preparacion_publicar" name="Publicar y habilitar inscripción">
+    <bpmn:documentation>Revisar las vistas previas y elegir el estado publicado y la habilitación de inscripción.</bpmn:documentation>
+    <bpmn:incoming>preparacion_flujo_7</bpmn:incoming>
+    <bpmn:outgoing>preparacion_flujo_8</bpmn:outgoing>
+  </bpmn:userTask>
+<bpmn:endEvent id="preparacion_fin" name="Evento disponible">
+    <bpmn:documentation>El público accede al evento y el servidor evalúa las condiciones de inscripción en cada solicitud.</bpmn:documentation>
+    <bpmn:incoming>preparacion_flujo_8</bpmn:incoming>
+
+  </bpmn:endEvent>
+    <bpmn:sequenceFlow id="preparacion_flujo_0" sourceRef="preparacion_inicio" targetRef="preparacion_configurar"></bpmn:sequenceFlow>
+<bpmn:sequenceFlow id="preparacion_flujo_1" sourceRef="preparacion_configurar" targetRef="preparacion_modalidades"></bpmn:sequenceFlow>
+<bpmn:sequenceFlow id="preparacion_flujo_2" sourceRef="preparacion_modalidades" targetRef="preparacion_validar"></bpmn:sequenceFlow>
+<bpmn:sequenceFlow id="preparacion_flujo_3" sourceRef="preparacion_validar" targetRef="preparacion_valida"></bpmn:sequenceFlow>
+<bpmn:sequenceFlow id="preparacion_flujo_4" sourceRef="preparacion_valida" targetRef="preparacion_guardar" name="Sí"><bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" language="text/plain">Sí</bpmn:conditionExpression></bpmn:sequenceFlow>
+<bpmn:sequenceFlow id="preparacion_flujo_5" sourceRef="preparacion_valida" targetRef="preparacion_corregir" name="No"><bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" language="text/plain">No</bpmn:conditionExpression></bpmn:sequenceFlow>
+<bpmn:sequenceFlow id="preparacion_flujo_6" sourceRef="preparacion_corregir" targetRef="preparacion_validar" name="Reintentar"></bpmn:sequenceFlow>
+<bpmn:sequenceFlow id="preparacion_flujo_7" sourceRef="preparacion_guardar" targetRef="preparacion_publicar"></bpmn:sequenceFlow>
+<bpmn:sequenceFlow id="preparacion_flujo_8" sourceRef="preparacion_publicar" targetRef="preparacion_fin"></bpmn:sequenceFlow>
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="preparacion_diagrama"><bpmndi:BPMNPlane id="preparacion_plano" bpmnElement="preparacion_proceso"><bpmndi:BPMNShape id="preparacion_carril_di_0" bpmnElement="preparacion_carril_0" isHorizontal="true"><dc:Bounds x="40" y="80" width="1240" height="280"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="preparacion_carril_di_1" bpmnElement="preparacion_carril_1" isHorizontal="true"><dc:Bounds x="40" y="360" width="1240" height="280"/></bpmndi:BPMNShape><bpmndi:BPMNShape id="preparacion_inicio_di" bpmnElement="preparacion_inicio"><dc:Bounds x="174" y="162" width="36" height="36"/><bpmndi:BPMNLabel><dc:Bounds x="122" y="208" width="140" height="40"/></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="preparacion_configurar_di" bpmnElement="preparacion_configurar"><dc:Bounds x="315" y="140" width="144" height="80"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="preparacion_modalidades_di" bpmnElement="preparacion_modalidades"><dc:Bounds x="510" y="140" width="144" height="80"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="preparacion_validar_di" bpmnElement="preparacion_validar"><dc:Bounds x="510" y="420" width="144" height="80"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="preparacion_valida_di" bpmnElement="preparacion_valida" isMarkerVisible="true"><dc:Bounds x="751" y="434" width="52" height="52"/><bpmndi:BPMNLabel><dc:Bounds x="815" y="372" width="140" height="40"/></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="preparacion_corregir_di" bpmnElement="preparacion_corregir"><dc:Bounds x="705" y="140" width="144" height="80"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="preparacion_guardar_di" bpmnElement="preparacion_guardar"><dc:Bounds x="900" y="420" width="144" height="80"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="preparacion_publicar_di" bpmnElement="preparacion_publicar"><dc:Bounds x="900" y="140" width="144" height="80"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="preparacion_fin_di" bpmnElement="preparacion_fin"><dc:Bounds x="1149" y="162" width="36" height="36"/><bpmndi:BPMNLabel><dc:Bounds x="1097" y="208" width="140" height="40"/></bpmndi:BPMNLabel></bpmndi:BPMNShape><bpmndi:BPMNEdge id="preparacion_flujo_0_di" bpmnElement="preparacion_flujo_0"><di:waypoint x="210" y="180"/><di:waypoint x="315" y="180"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="preparacion_flujo_1_di" bpmnElement="preparacion_flujo_1"><di:waypoint x="459" y="180"/><di:waypoint x="510" y="180"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="preparacion_flujo_2_di" bpmnElement="preparacion_flujo_2"><di:waypoint x="582" y="220"/><di:waypoint x="582" y="420"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="preparacion_flujo_3_di" bpmnElement="preparacion_flujo_3"><di:waypoint x="654" y="460"/><di:waypoint x="751" y="460"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="preparacion_flujo_4_di" bpmnElement="preparacion_flujo_4"><di:waypoint x="803" y="460"/><di:waypoint x="900" y="460"/><bpmndi:BPMNLabel><dc:Bounds x="811.5" y="430" width="80" height="30"/></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="preparacion_flujo_5_di" bpmnElement="preparacion_flujo_5"><di:waypoint x="777" y="434"/><di:waypoint x="777" y="220"/><bpmndi:BPMNLabel><dc:Bounds x="786" y="313" width="80" height="30"/></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="preparacion_flujo_6_di" bpmnElement="preparacion_flujo_6"><di:waypoint x="705" y="180"/><di:waypoint x="679" y="180"/><di:waypoint x="679" y="340"/><di:waypoint x="612" y="340"/><di:waypoint x="612" y="420"/><bpmndi:BPMNLabel><dc:Bounds x="688" y="246" width="80" height="30"/></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="preparacion_flujo_7_di" bpmnElement="preparacion_flujo_7"><di:waypoint x="972" y="420"/><di:waypoint x="972" y="220"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="preparacion_flujo_8_di" bpmnElement="preparacion_flujo_8"><di:waypoint x="1044" y="180"/><di:waypoint x="1149" y="180"/></bpmndi:BPMNEdge></bpmndi:BPMNPlane></bpmndi:BPMNDiagram>
+</bpmn:definitions>

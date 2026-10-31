@@ -16,6 +16,9 @@ const eslintConfig = defineConfig([
     "output/**",
     "tmp/**",
     ".playwright-cli/**",
+    // Visor BPMN distribuido por terceros y datos documentales generados.
+    "docs/ingenieria-procesos/vendor/**",
+    "docs/ingenieria-procesos/procesos.js",
   ]),
 ]);
 

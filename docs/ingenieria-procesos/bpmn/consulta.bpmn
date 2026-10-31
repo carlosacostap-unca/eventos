@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="consulta_definiciones" targetNamespace="https://eventos.unca.edu.ar/documentacion/procesos" exporter="Eventos UNCA · documentación de procesos" exporterVersion="1">
+  <bpmn:process id="consulta_proceso" name="Consultar y descargar recursos" isExecutable="false">
+    <bpmn:documentation>Cada consulta por DNI concede acceso temporal; cada descarga vuelve a comprobar el derecho al recurso. Modelo descriptivo revisado el 2026-10-31 sobre 3c7cd6698bdf98ab5ba9ad27157cdfbfd049a45e.</bpmn:documentation>
+    <bpmn:laneSet id="consulta_carriles"><bpmn:lane id="consulta_carril_0" name="Participante"><bpmn:flowNodeRef>consulta_inicio</bpmn:flowNodeRef><bpmn:flowNodeRef>consulta_consultar</bpmn:flowNodeRef><bpmn:flowNodeRef>consulta_elegir</bpmn:flowNodeRef></bpmn:lane>
+<bpmn:lane id="consulta_carril_1" name="Sistema Eventos UNCA"><bpmn:flowNodeRef>consulta_buscar</bpmn:flowNodeRef><bpmn:flowNodeRef>consulta_hay</bpmn:flowNodeRef><bpmn:flowNodeRef>consulta_vacio</bpmn:flowNodeRef><bpmn:flowNodeRef>consulta_autorizar</bpmn:flowNodeRef><bpmn:flowNodeRef>consulta_revalidar</bpmn:flowNodeRef><bpmn:flowNodeRef>consulta_permitido</bpmn:flowNodeRef><bpmn:flowNodeRef>consulta_denegar</bpmn:flowNodeRef><bpmn:flowNodeRef>consulta_transmitir</bpmn:flowNodeRef><bpmn:flowNodeRef>consulta_fin</bpmn:flowNodeRef></bpmn:lane></bpmn:laneSet>
+    <bpmn:startEvent id="consulta_inicio" name="Necesidad de recursos">
+    <bpmn:documentation>La persona abre el portal Mis certificados.</bpmn:documentation>
+
+    <bpmn:outgoing>consulta_flujo_0</bpmn:outgoing>
+  </bpmn:startEvent>
+<bpmn:userTask id="consulta_consultar" name="Consultar DNI">
+    <bpmn:documentation>Introducir el documento utilizado en la inscripción, sin exigir email.</bpmn:documentation>
+    <bpmn:incoming>consulta_flujo_0</bpmn:incoming>
+    <bpmn:outgoing>consulta_flujo_1</bpmn:outgoing>
+  </bpmn:userTask>
+<bpmn:serviceTask id="consulta_buscar" name="Aplicar límite y resolver recursos">
+    <bpmn:documentation>Consultar identidad y elegibilidad de recursos propios y compartidos sin exponer eventos ajenos.</bpmn:documentation>
+    <bpmn:incoming>consulta_flujo_1</bpmn:incoming>
+    <bpmn:outgoing>consulta_flujo_2</bpmn:outgoing>
+  </bpmn:serviceTask>
+<bpmn:exclusiveGateway id="consulta_hay" name="¿Consulta autorizable?" gatewayDirection="Diverging">
+    <bpmn:documentation>La consulta debe superar el límite y encontrar un contexto de recursos elegibles.</bpmn:documentation>
+    <bpmn:incoming>consulta_flujo_2</bpmn:incoming>
+    <bpmn:outgoing>consulta_flujo_3</bpmn:outgoing><bpmn:outgoing>consulta_flujo_4</bpmn:outgoing>
+  </bpmn:exclusiveGateway>
+<bpmn:endEvent id="consulta_vacio" name="Respuesta genérica">
+    <bpmn:documentation>Informar ausencia de recursos o limitación sin revelar información de otras personas.</bpmn:documentation>
+    <bpmn:incoming>consulta_flujo_3</bpmn:incoming>
+
+  </bpmn:endEvent>
+<bpmn:serviceTask id="consulta_autorizar" name="Emitir autorización temporal">
+    <bpmn:documentation>Firmar el alcance limitado de la consulta durante diez minutos.</bpmn:documentation>
+    <bpmn:incoming>consulta_flujo_4</bpmn:incoming>
+    <bpmn:outgoing>consulta_flujo_5</bpmn:outgoing>
+  </bpmn:serviceTask>
+<bpmn:userTask id="consulta_elegir" name="Elegir recurso disponible">
+    <bpmn:documentation>Distinguir materiales, certificados emitidos y documentos pendientes de emisión o regeneración.</bpmn:documentation>
+    <bpmn:incoming>consulta_flujo_5</bpmn:incoming>
+    <bpmn:outgoing>consulta_flujo_6</bpmn:outgoing>
+  </bpmn:userTask>
+<bpmn:serviceTask id="consulta_revalidar" name="Revalidar permiso del recurso">
+    <bpmn:documentation>Material: presencia propia. PDF individual: titular acreditado. PDF grupal: miembro, destinatario, responsable acreditado y huella vigente.</bpmn:documentation>
+    <bpmn:incoming>consulta_flujo_6</bpmn:incoming>
+    <bpmn:outgoing>consulta_flujo_7</bpmn:outgoing>
+  </bpmn:serviceTask>
+<bpmn:exclusiveGateway id="consulta_permitido" name="¿Descarga permitida?" gatewayDirection="Diverging">
+    <bpmn:documentation>Exigir autorización vigente y volver a comprobar las condiciones actuales.</bpmn:documentation>
+    <bpmn:incoming>consulta_flujo_7</bpmn:incoming>
+    <bpmn:outgoing>consulta_flujo_8</bpmn:outgoing><bpmn:outgoing>consulta_flujo_9</bpmn:outgoing>
+  </bpmn:exclusiveGateway>
+<bpmn:endEvent id="consulta_denegar" name="Descarga rechazada">
+    <bpmn:documentation>Rechazar enlaces directos, autorización vencida, revocaciones o documentos desactualizados.</bpmn:documentation>
+    <bpmn:incoming>consulta_flujo_8</bpmn:incoming>
+
+  </bpmn:endEvent>
+<bpmn:serviceTask id="consulta_transmitir" name="Transmitir archivo privado">
+    <bpmn:documentation>Obtener el archivo en servidor y responder sin exponer credenciales ni permitir caché compartida.</bpmn:documentation>
+    <bpmn:incoming>consulta_flujo_9</bpmn:incoming>
+    <bpmn:outgoing>consulta_flujo_10</bpmn:outgoing>
+  </bpmn:serviceTask>
+<bpmn:endEvent id="consulta_fin" name="Archivo descargado">
+    <bpmn:documentation>La entrega del archivo no modifica asistencia, vínculos ni certificados.</bpmn:documentation>
+    <bpmn:incoming>consulta_flujo_10</bpmn:incoming>
+
+  </bpmn:endEvent>
+    <bpmn:sequenceFlow id="consulta_flujo_0" sourceRef="consulta_inicio" targetRef="consulta_consultar"></bpmn:sequenceFlow>
+<bpmn:sequenceFlow id="consulta_flujo_1" sourceRef="consulta_consultar" targetRef="consulta_buscar"></bpmn:sequenceFlow>
+<bpmn:sequenceFlow id="consulta_flujo_2" sourceRef="consulta_buscar" targetRef="consulta_hay"></bpmn:sequenceFlow>
+<bpmn:sequenceFlow id="consulta_flujo_3" sourceRef="consulta_hay" targetRef="consulta_vacio" name="No"><bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" language="text/plain">No</bpmn:conditionExpression></bpmn:sequenceFlow>
+<bpmn:sequenceFlow id="consulta_flujo_4" sourceRef="consulta_hay" targetRef="consulta_autorizar" name="Sí"><bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" language="text/plain">Sí</bpmn:conditionExpression></bpmn:sequenceFlow>
+<bpmn:sequenceFlow id="consulta_flujo_5" sourceRef="consulta_autorizar" targetRef="consulta_elegir"></bpmn:sequenceFlow>
+<bpmn:sequenceFlow id="consulta_flujo_6" sourceRef="consulta_elegir" targetRef="consulta_revalidar"></bpmn:sequenceFlow>
+<bpmn:sequenceFlow id="consulta_flujo_7" sourceRef="consulta_revalidar" targetRef="consulta_permitido"></bpmn:sequenceFlow>
+<bpmn:sequenceFlow id="consulta_flujo_8" sourceRef="consulta_permitido" targetRef="consulta_denegar" name="No"><bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" language="text/plain">No</bpmn:conditionExpression></bpmn:sequenceFlow>
+<bpmn:sequenceFlow id="consulta_flujo_9" sourceRef="consulta_permitido" targetRef="consulta_transmitir" name="Sí"><bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" language="text/plain">Sí</bpmn:conditionExpression></bpmn:sequenceFlow>
+<bpmn:sequenceFlow id="consulta_flujo_10" sourceRef="consulta_transmitir" targetRef="consulta_fin"></bpmn:sequenceFlow>
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="consulta_diagrama"><bpmndi:BPMNPlane id="consulta_plano" bpmnElement="consulta_proceso"><bpmndi:BPMNShape id="consulta_carril_di_0" bpmnElement="consulta_carril_0" isHorizontal="true"><dc:Bounds x="40" y="80" width="1630" height="280"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="consulta_carril_di_1" bpmnElement="consulta_carril_1" isHorizontal="true"><dc:Bounds x="40" y="360" width="1630" height="280"/></bpmndi:BPMNShape><bpmndi:BPMNShape id="consulta_inicio_di" bpmnElement="consulta_inicio"><dc:Bounds x="174" y="162" width="36" height="36"/><bpmndi:BPMNLabel><dc:Bounds x="122" y="208" width="140" height="40"/></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="consulta_consultar_di" bpmnElement="consulta_consultar"><dc:Bounds x="315" y="140" width="144" height="80"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="consulta_buscar_di" bpmnElement="consulta_buscar"><dc:Bounds x="510" y="420" width="144" height="80"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="consulta_hay_di" bpmnElement="consulta_hay" isMarkerVisible="true"><dc:Bounds x="751" y="434" width="52" height="52"/><bpmndi:BPMNLabel><dc:Bounds x="603" y="372" width="140" height="40"/></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="consulta_vacio_di" bpmnElement="consulta_vacio"><dc:Bounds x="759" y="552" width="36" height="36"/><bpmndi:BPMNLabel><dc:Bounds x="707" y="598" width="140" height="40"/></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="consulta_autorizar_di" bpmnElement="consulta_autorizar"><dc:Bounds x="900" y="420" width="144" height="80"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="consulta_elegir_di" bpmnElement="consulta_elegir"><dc:Bounds x="900" y="140" width="144" height="80"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="consulta_revalidar_di" bpmnElement="consulta_revalidar"><dc:Bounds x="1095" y="420" width="144" height="80"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="consulta_permitido_di" bpmnElement="consulta_permitido" isMarkerVisible="true"><dc:Bounds x="1336" y="434" width="52" height="52"/><bpmndi:BPMNLabel><dc:Bounds x="1188" y="372" width="140" height="40"/></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="consulta_denegar_di" bpmnElement="consulta_denegar"><dc:Bounds x="1149" y="552" width="36" height="36"/><bpmndi:BPMNLabel><dc:Bounds x="1097" y="598" width="140" height="40"/></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="consulta_transmitir_di" bpmnElement="consulta_transmitir"><dc:Bounds x="1290" y="530" width="144" height="80"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="consulta_fin_di" bpmnElement="consulta_fin"><dc:Bounds x="1539" y="552" width="36" height="36"/><bpmndi:BPMNLabel><dc:Bounds x="1487" y="598" width="140" height="40"/></bpmndi:BPMNLabel></bpmndi:BPMNShape><bpmndi:BPMNEdge id="consulta_flujo_0_di" bpmnElement="consulta_flujo_0"><di:waypoint x="210" y="180"/><di:waypoint x="315" y="180"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="consulta_flujo_1_di" bpmnElement="consulta_flujo_1"><di:waypoint x="459" y="180"/><di:waypoint x="484.5" y="180"/><di:waypoint x="484.5" y="460"/><di:waypoint x="510" y="460"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="consulta_flujo_2_di" bpmnElement="consulta_flujo_2"><di:waypoint x="654" y="460"/><di:waypoint x="751" y="460"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="consulta_flujo_3_di" bpmnElement="consulta_flujo_3"><di:waypoint x="777" y="486"/><di:waypoint x="777" y="552"/><bpmndi:BPMNLabel><dc:Bounds x="786" y="505" width="80" height="30"/></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="consulta_flujo_4_di" bpmnElement="consulta_flujo_4"><di:waypoint x="803" y="460"/><di:waypoint x="900" y="460"/><bpmndi:BPMNLabel><dc:Bounds x="811.5" y="430" width="80" height="30"/></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="consulta_flujo_5_di" bpmnElement="consulta_flujo_5"><di:waypoint x="972" y="420"/><di:waypoint x="972" y="220"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="consulta_flujo_6_di" bpmnElement="consulta_flujo_6"><di:waypoint x="1044" y="180"/><di:waypoint x="1069.5" y="180"/><di:waypoint x="1069.5" y="460"/><di:waypoint x="1095" y="460"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="consulta_flujo_7_di" bpmnElement="consulta_flujo_7"><di:waypoint x="1239" y="460"/><di:waypoint x="1336" y="460"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="consulta_flujo_8_di" bpmnElement="consulta_flujo_8"><di:waypoint x="1336" y="460"/><di:waypoint x="1260.5" y="460"/><di:waypoint x="1260.5" y="570"/><di:waypoint x="1185" y="570"/><bpmndi:BPMNLabel><dc:Bounds x="1269.5" y="501" width="80" height="30"/></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="consulta_flujo_9_di" bpmnElement="consulta_flujo_9"><di:waypoint x="1362" y="486"/><di:waypoint x="1362" y="530"/><bpmndi:BPMNLabel><dc:Bounds x="1371" y="494" width="80" height="30"/></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="consulta_flujo_10_di" bpmnElement="consulta_flujo_10"><di:waypoint x="1434" y="570"/><di:waypoint x="1539" y="570"/></bpmndi:BPMNEdge></bpmndi:BPMNPlane></bpmndi:BPMNDiagram>
+</bpmn:definitions>

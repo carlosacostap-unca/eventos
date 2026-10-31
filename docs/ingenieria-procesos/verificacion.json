@@ -1,0 +1,203 @@
+{
+  "reviewedAt": "2026-10-31",
+  "sourceRevision": "3c7cd6698bdf98ab5ba9ad27157cdfbfd049a45e",
+  "scope": "Documentación local. Sin pruebas ni escrituras contra PocketBase.",
+  "structural": {
+    "processes": 8,
+    "nodes": 80,
+    "flows": 77,
+    "uniqueIds": "passed",
+    "sourcesExist": "passed",
+    "reachableNodes": "passed",
+    "pathsToEnd": "passed",
+    "automaticTaskLanes": "passed",
+    "unrelatedNodeIntersections": 0,
+    "bpmnHashes": "passed"
+  },
+  "browser": {
+    "kind": "Chrome mediante Playwright",
+    "processes": [
+      {
+        "id": "preparacion",
+        "shapes": 11,
+        "connections": 9,
+        "state": "",
+        "overflow": false
+      },
+      {
+        "id": "inscripcion",
+        "shapes": 12,
+        "connections": 10,
+        "state": "",
+        "overflow": false
+      },
+      {
+        "id": "correcciones",
+        "shapes": 11,
+        "connections": 8,
+        "state": "",
+        "overflow": false
+      },
+      {
+        "id": "acreditacion",
+        "shapes": 12,
+        "connections": 10,
+        "state": "",
+        "overflow": false
+      },
+      {
+        "id": "presentaciones",
+        "shapes": 13,
+        "connections": 10,
+        "state": "",
+        "overflow": false
+      },
+      {
+        "id": "certificados",
+        "shapes": 12,
+        "connections": 10,
+        "state": "",
+        "overflow": false
+      },
+      {
+        "id": "consulta",
+        "shapes": 14,
+        "connections": 11,
+        "state": "",
+        "overflow": false
+      },
+      {
+        "id": "reportes",
+        "shapes": 11,
+        "connections": 9,
+        "state": "",
+        "overflow": false
+      }
+    ],
+    "exports": [
+      "certificados.bpmn",
+      "certificados.svg",
+      "certificados.png"
+    ],
+    "searchResults": 1,
+    "selection": "passed",
+    "tabs": "passed",
+    "themes": "passed",
+    "viewports": [
+      {
+        "width": 1440,
+        "height": 900,
+        "scrollWidth": 1440
+      },
+      {
+        "width": 1600,
+        "height": 1000,
+        "scrollWidth": 1600
+      },
+      {
+        "width": 1920,
+        "height": 1080,
+        "scrollWidth": 1920
+      },
+      {
+        "width": 2048,
+        "height": 1320,
+        "scrollWidth": 2048
+      },
+      {
+        "width": 390,
+        "height": 844,
+        "scrollWidth": 390
+      }
+    ],
+    "consoleErrors": [],
+    "diagramViewport": {
+      "width": 1600,
+      "height": 1000
+    },
+    "responsiveProcess": "certificados",
+    "importWarnings": 0,
+    "zoom": "passed",
+    "expandedView": "passed",
+    "watermarkVisible": true,
+    "finalFocusedCheck": {
+      "process": "presentaciones",
+      "state": "passed",
+      "connections": 10,
+      "reason": "Eliminación del cruce entre validación y confirmación de archivo."
+    },
+    "modelHashes": [
+      {
+        "id": "preparacion",
+        "sha256": "8f1daff8cf6d61ee32c2714a860a87340c3aee1573d25f58a995f5ce87e01fb4"
+      },
+      {
+        "id": "inscripcion",
+        "sha256": "b560b976e70a394c5ad15f60c2b6176affc411174f8f2e61f554b416bfb42dac"
+      },
+      {
+        "id": "correcciones",
+        "sha256": "74724666c5b43e812087675d27c3e64b3a5f49428e2d7210b7bffa0880007006"
+      },
+      {
+        "id": "acreditacion",
+        "sha256": "dab36a64a5e391e88855a272a4363995ef29019427ab16550963d7e3665e81a2"
+      },
+      {
+        "id": "presentaciones",
+        "sha256": "1048a995d4012d3ef2e2d8e34799a6439fa32a66b54f9b2133bee37670d97e1d"
+      },
+      {
+        "id": "certificados",
+        "sha256": "6bc22186b2aa989a7227ab7d4fce49215a398c4c8c38bf532bcae1e20f804ead"
+      },
+      {
+        "id": "consulta",
+        "sha256": "3d7a9f91a167887cc9b4165f0e832b631d7c03cce5faefda53304cc13eb166d6"
+      },
+      {
+        "id": "reportes",
+        "sha256": "64f91b54d5a097a3c8f890dc1bb357b10ace75614965f42b87e8c89b32f20c5d"
+      }
+    ],
+    "modelHashMatch": "passed after whitespace-only XML normalization"
+  },
+  "visualReview": {
+    "kind": "Revisión de capturas por el asistente",
+    "status": "reviewed",
+    "scope": "Los ocho diagramas a 1600×1000 y captura móvil; etiquetas, conexiones y contraste. La lectura detallada en móvil requiere zoom o lista de actividades."
+  },
+  "lint": "passed",
+  "files": [
+    {
+      "file": "index.html",
+      "sha256": "39409471adc95f630fea3c7e0c7d521cc1459385c38cc5bc6b4cfb7f89f334a9"
+    },
+    {
+      "file": "visor.js",
+      "sha256": "72f2bfa0a2138e2cff4b3c2fb57dec4822fd8791d8292dd53d9df39a5fd33752"
+    },
+    {
+      "file": "visor.css",
+      "sha256": "1171e4e304539521cee01bfab13f0a7c6ca803820ba8a0425a101011c626e5a0"
+    },
+    {
+      "file": "procesos.js",
+      "sha256": "b75fea57af2664cb233fce1e6e70879b8089be1c1e4ea04eef2ed5b2bffffda7"
+    },
+    {
+      "file": "modelos.mjs",
+      "sha256": "ab6e83ca9d52676473a32b87e4983b9d9f8df3b9b19cf8b9b48ed441987d7dc9"
+    },
+    {
+      "file": "generar.mjs",
+      "sha256": "52f1353342163c473a93f87d298e3d02435e78e7001368d99e5e446f37391e5f"
+    },
+    {
+      "file": "manifest.json",
+      "sha256": "1616d1bc15054bd12f01c186344c8dee949810993f073e6d43209cac14d9e56b"
+    }
+  ],
+  "localEvidence": "output/playwright/ (excluido de Git)",
+  "postReviewNormalization": "Se eliminaron espacios finales del XML. Comparación exacta contra la versión revisada aplicando únicamente esa normalización; sin cambios semánticos ni de geometría."
+}

@@ -1,5 +1,7 @@
 # Arquitectura de Eventos UNCA
 
+Para analizar recorridos operativos, decisiones y responsables, abrir la [vista de ingeniería de procesos con diagramas BPMN](../ingenieria-procesos/index.html). Su [guía de alcance](../ingenieria-procesos/README.md) identifica la revisión más reciente de esa perspectiva.
+
 Abrir `eventos.html` en un navegador. Arquitectura revisada el 30 de septiembre de 2026 sobre el código local, con HEAD `ef6c1a272641ef26c0eff4f33ef20cf27968c244`. El diagrama describe módulos y relaciones del repositorio; no verifica el despliegue ni la disponibilidad de servicios externos.
 
 El contenido está en español. Los controles fijos del visor y su atributo HTML lang usan el fallback en inglés de Archify.

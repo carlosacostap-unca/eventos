@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="correcciones_definiciones" targetNamespace="https://eventos.unca.edu.ar/documentacion/procesos" exporter="Eventos UNCA · documentación de procesos" exporterVersion="1">
+  <bpmn:process id="correcciones_proceso" name="Corregir una inscripción o un trabajo" isExecutable="false">
+    <bpmn:documentation>La persona recupera su inscripción por DNI y guarda cambios sobre su identidad o una exposición concreta. Modelo descriptivo revisado el 2026-10-31 sobre 3c7cd6698bdf98ab5ba9ad27157cdfbfd049a45e.</bpmn:documentation>
+    <bpmn:laneSet id="correcciones_carriles"><bpmn:lane id="correcciones_carril_0" name="Participante"><bpmn:flowNodeRef>correcciones_inicio</bpmn:flowNodeRef><bpmn:flowNodeRef>correcciones_consultar</bpmn:flowNodeRef><bpmn:flowNodeRef>correcciones_editar</bpmn:flowNodeRef><bpmn:flowNodeRef>correcciones_fin</bpmn:flowNodeRef></bpmn:lane>
+<bpmn:lane id="correcciones_carril_1" name="Sistema Eventos UNCA"><bpmn:flowNodeRef>correcciones_recuperar</bpmn:flowNodeRef><bpmn:flowNodeRef>correcciones_validar</bpmn:flowNodeRef><bpmn:flowNodeRef>correcciones_valida</bpmn:flowNodeRef><bpmn:flowNodeRef>correcciones_rechazo</bpmn:flowNodeRef><bpmn:flowNodeRef>correcciones_guardar</bpmn:flowNodeRef></bpmn:lane></bpmn:laneSet>
+    <bpmn:startEvent id="correcciones_inicio" name="Necesidad de corrección">
+    <bpmn:documentation>La persona abre el formulario del evento y consulta su documento.</bpmn:documentation>
+
+    <bpmn:outgoing>correcciones_flujo_0</bpmn:outgoing>
+  </bpmn:startEvent>
+<bpmn:userTask id="correcciones_consultar" name="Buscar DNI y elegir trabajo">
+    <bpmn:documentation>Elegir un trabajo propio o la corrección de identidad del integrante vinculado.</bpmn:documentation>
+    <bpmn:incoming>correcciones_flujo_0</bpmn:incoming>
+    <bpmn:outgoing>correcciones_flujo_1</bpmn:outgoing>
+  </bpmn:userTask>
+<bpmn:serviceTask id="correcciones_recuperar" name="Recuperar datos y permiso">
+    <bpmn:documentation>Recuperar únicamente el contexto permitido y emitir un permiso temporal con revisión del contenido.</bpmn:documentation>
+    <bpmn:incoming>correcciones_flujo_1</bpmn:incoming>
+    <bpmn:outgoing>correcciones_flujo_2</bpmn:outgoing>
+  </bpmn:serviceTask>
+<bpmn:userTask id="correcciones_editar" name="Modificar datos permitidos">
+    <bpmn:documentation>Editar identidad, respuestas y vínculos según la función y el trabajo seleccionado.</bpmn:documentation>
+    <bpmn:incoming>correcciones_flujo_2</bpmn:incoming>
+    <bpmn:outgoing>correcciones_flujo_3</bpmn:outgoing>
+  </bpmn:userTask>
+<bpmn:serviceTask id="correcciones_validar" name="Revalidar permiso y condiciones">
+    <bpmn:documentation>Comprobar vigencia, revisión concurrente, modalidad, vínculos, fechas y versión.</bpmn:documentation>
+    <bpmn:incoming>correcciones_flujo_3</bpmn:incoming>
+    <bpmn:outgoing>correcciones_flujo_4</bpmn:outgoing>
+  </bpmn:serviceTask>
+<bpmn:exclusiveGateway id="correcciones_valida" name="¿Edición válida?" gatewayDirection="Diverging">
+    <bpmn:documentation>Una edición no autoriza acreditación ni cambios en exposiciones ajenas.</bpmn:documentation>
+    <bpmn:incoming>correcciones_flujo_4</bpmn:incoming>
+    <bpmn:outgoing>correcciones_flujo_5</bpmn:outgoing><bpmn:outgoing>correcciones_flujo_6</bpmn:outgoing>
+  </bpmn:exclusiveGateway>
+<bpmn:endEvent id="correcciones_rechazo" name="Volver a consultar o corregir">
+    <bpmn:documentation>Si cambiaron los datos o venció el permiso, buscar el DNI de nuevo; los conflictos requieren corrección.</bpmn:documentation>
+    <bpmn:incoming>correcciones_flujo_5</bpmn:incoming>
+
+  </bpmn:endEvent>
+<bpmn:serviceTask id="correcciones_guardar" name="Guardar cambios consistentes">
+    <bpmn:documentation>Conservar reserva, asistencia y origen. Los cambios relevantes se reflejan en la huella de los certificados afectados.</bpmn:documentation>
+    <bpmn:incoming>correcciones_flujo_6</bpmn:incoming>
+    <bpmn:outgoing>correcciones_flujo_7</bpmn:outgoing>
+  </bpmn:serviceTask>
+<bpmn:endEvent id="correcciones_fin" name="Corrección guardada">
+    <bpmn:documentation>Los certificados con contenido desactualizado no se descargan hasta su regeneración administrativa.</bpmn:documentation>
+    <bpmn:incoming>correcciones_flujo_7</bpmn:incoming>
+
+  </bpmn:endEvent>
+    <bpmn:sequenceFlow id="correcciones_flujo_0" sourceRef="correcciones_inicio" targetRef="correcciones_consultar"></bpmn:sequenceFlow>
+<bpmn:sequenceFlow id="correcciones_flujo_1" sourceRef="correcciones_consultar" targetRef="correcciones_recuperar"></bpmn:sequenceFlow>
+<bpmn:sequenceFlow id="correcciones_flujo_2" sourceRef="correcciones_recuperar" targetRef="correcciones_editar"></bpmn:sequenceFlow>
+<bpmn:sequenceFlow id="correcciones_flujo_3" sourceRef="correcciones_editar" targetRef="correcciones_validar"></bpmn:sequenceFlow>
+<bpmn:sequenceFlow id="correcciones_flujo_4" sourceRef="correcciones_validar" targetRef="correcciones_valida"></bpmn:sequenceFlow>
+<bpmn:sequenceFlow id="correcciones_flujo_5" sourceRef="correcciones_valida" targetRef="correcciones_rechazo" name="No"><bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" language="text/plain">No</bpmn:conditionExpression></bpmn:sequenceFlow>
+<bpmn:sequenceFlow id="correcciones_flujo_6" sourceRef="correcciones_valida" targetRef="correcciones_guardar" name="Sí"><bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" language="text/plain">Sí</bpmn:conditionExpression></bpmn:sequenceFlow>
+<bpmn:sequenceFlow id="correcciones_flujo_7" sourceRef="correcciones_guardar" targetRef="correcciones_fin"></bpmn:sequenceFlow>
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="correcciones_diagrama"><bpmndi:BPMNPlane id="correcciones_plano" bpmnElement="correcciones_proceso"><bpmndi:BPMNShape id="correcciones_carril_di_0" bpmnElement="correcciones_carril_0" isHorizontal="true"><dc:Bounds x="40" y="80" width="1294" height="280"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="correcciones_carril_di_1" bpmnElement="correcciones_carril_1" isHorizontal="true"><dc:Bounds x="40" y="360" width="1294" height="280"/></bpmndi:BPMNShape><bpmndi:BPMNShape id="correcciones_inicio_di" bpmnElement="correcciones_inicio"><dc:Bounds x="174" y="162" width="36" height="36"/><bpmndi:BPMNLabel><dc:Bounds x="122" y="208" width="140" height="40"/></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="correcciones_consultar_di" bpmnElement="correcciones_consultar"><dc:Bounds x="315" y="140" width="144" height="80"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="correcciones_recuperar_di" bpmnElement="correcciones_recuperar"><dc:Bounds x="315" y="420" width="144" height="80"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="correcciones_editar_di" bpmnElement="correcciones_editar"><dc:Bounds x="510" y="140" width="144" height="80"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="correcciones_validar_di" bpmnElement="correcciones_validar"><dc:Bounds x="705" y="420" width="144" height="80"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="correcciones_valida_di" bpmnElement="correcciones_valida" isMarkerVisible="true"><dc:Bounds x="946" y="434" width="52" height="52"/><bpmndi:BPMNLabel><dc:Bounds x="798" y="372" width="140" height="40"/></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="correcciones_rechazo_di" bpmnElement="correcciones_rechazo"><dc:Bounds x="954" y="552" width="36" height="36"/><bpmndi:BPMNLabel><dc:Bounds x="902" y="598" width="140" height="40"/></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="correcciones_guardar_di" bpmnElement="correcciones_guardar"><dc:Bounds x="1095" y="420" width="144" height="80"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="correcciones_fin_di" bpmnElement="correcciones_fin"><dc:Bounds x="1149" y="162" width="36" height="36"/><bpmndi:BPMNLabel><dc:Bounds x="1097" y="110" width="140" height="40"/></bpmndi:BPMNLabel></bpmndi:BPMNShape><bpmndi:BPMNEdge id="correcciones_flujo_0_di" bpmnElement="correcciones_flujo_0"><di:waypoint x="210" y="180"/><di:waypoint x="315" y="180"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="correcciones_flujo_1_di" bpmnElement="correcciones_flujo_1"><di:waypoint x="387" y="220"/><di:waypoint x="387" y="420"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="correcciones_flujo_2_di" bpmnElement="correcciones_flujo_2"><di:waypoint x="459" y="460"/><di:waypoint x="484.5" y="460"/><di:waypoint x="484.5" y="180"/><di:waypoint x="510" y="180"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="correcciones_flujo_3_di" bpmnElement="correcciones_flujo_3"><di:waypoint x="654" y="180"/><di:waypoint x="679.5" y="180"/><di:waypoint x="679.5" y="460"/><di:waypoint x="705" y="460"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="correcciones_flujo_4_di" bpmnElement="correcciones_flujo_4"><di:waypoint x="849" y="460"/><di:waypoint x="946" y="460"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="correcciones_flujo_5_di" bpmnElement="correcciones_flujo_5"><di:waypoint x="972" y="486"/><di:waypoint x="972" y="552"/><bpmndi:BPMNLabel><dc:Bounds x="981" y="505" width="80" height="30"/></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="correcciones_flujo_6_di" bpmnElement="correcciones_flujo_6"><di:waypoint x="998" y="460"/><di:waypoint x="1095" y="460"/><bpmndi:BPMNLabel><dc:Bounds x="1006.5" y="430" width="80" height="30"/></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="correcciones_flujo_7_di" bpmnElement="correcciones_flujo_7"><di:waypoint x="1167" y="420"/><di:waypoint x="1167" y="198"/></bpmndi:BPMNEdge></bpmndi:BPMNPlane></bpmndi:BPMNDiagram>
+</bpmn:definitions>

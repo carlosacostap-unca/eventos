@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="acreditacion_definiciones" targetNamespace="https://eventos.unca.edu.ar/documentacion/procesos" exporter="Eventos UNCA · documentación de procesos" exporterVersion="1">
+  <bpmn:process id="acreditacion_proceso" name="Acreditar presencia y dar altas presenciales" isExecutable="false">
+    <bpmn:documentation>El equipo registra la presencia de cada persona, con controles diferentes para altas nuevas y registros existentes. Modelo descriptivo revisado el 2026-10-31 sobre 3c7cd6698bdf98ab5ba9ad27157cdfbfd049a45e.</bpmn:documentation>
+    <bpmn:laneSet id="acreditacion_carriles"><bpmn:lane id="acreditacion_carril_0" name="Equipo de acreditación"><bpmn:flowNodeRef>acreditacion_inicio</bpmn:flowNodeRef><bpmn:flowNodeRef>acreditacion_buscar</bpmn:flowNodeRef><bpmn:flowNodeRef>acreditacion_datos</bpmn:flowNodeRef><bpmn:flowNodeRef>acreditacion_denegada</bpmn:flowNodeRef></bpmn:lane>
+<bpmn:lane id="acreditacion_carril_1" name="Sistema Eventos UNCA"><bpmn:flowNodeRef>acreditacion_existe</bpmn:flowNodeRef><bpmn:flowNodeRef>acreditacion_acreditar</bpmn:flowNodeRef><bpmn:flowNodeRef>acreditacion_control</bpmn:flowNodeRef><bpmn:flowNodeRef>acreditacion_permitida</bpmn:flowNodeRef><bpmn:flowNodeRef>acreditacion_crear</bpmn:flowNodeRef><bpmn:flowNodeRef>acreditacion_fin</bpmn:flowNodeRef></bpmn:lane></bpmn:laneSet>
+    <bpmn:startEvent id="acreditacion_inicio" name="Llegada de una persona">
+    <bpmn:documentation>El equipo trabaja dentro de un evento asignado.</bpmn:documentation>
+
+    <bpmn:outgoing>acreditacion_flujo_0</bpmn:outgoing>
+  </bpmn:startEvent>
+<bpmn:userTask id="acreditacion_buscar" name="Buscar DNI o inscripción">
+    <bpmn:documentation>Localizar a la persona y comprobar su identidad y estado.</bpmn:documentation>
+    <bpmn:incoming>acreditacion_flujo_0</bpmn:incoming>
+    <bpmn:outgoing>acreditacion_flujo_1</bpmn:outgoing>
+  </bpmn:userTask>
+<bpmn:exclusiveGateway id="acreditacion_existe" name="¿Ya está inscripta?" gatewayDirection="Diverging">
+    <bpmn:documentation>Consultar el registro único de la persona en este evento.</bpmn:documentation>
+    <bpmn:incoming>acreditacion_flujo_1</bpmn:incoming>
+    <bpmn:outgoing>acreditacion_flujo_2</bpmn:outgoing><bpmn:outgoing>acreditacion_flujo_4</bpmn:outgoing>
+  </bpmn:exclusiveGateway>
+<bpmn:serviceTask id="acreditacion_acreditar" name="Registrar o conservar presencia">
+    <bpmn:documentation>Marcar asistencia de forma idempotente con fecha, actor y evento; no modificar otras presencias.</bpmn:documentation>
+    <bpmn:incoming>acreditacion_flujo_2</bpmn:incoming>
+    <bpmn:outgoing>acreditacion_flujo_3</bpmn:outgoing>
+  </bpmn:serviceTask>
+<bpmn:userTask id="acreditacion_datos" name="Completar alta presencial">
+    <bpmn:documentation>Si no existe, completar la modalidad e integrantes; solicitar excepción solo si el rol lo permite.</bpmn:documentation>
+    <bpmn:incoming>acreditacion_flujo_4</bpmn:incoming>
+    <bpmn:outgoing>acreditacion_flujo_5</bpmn:outgoing>
+  </bpmn:userTask>
+<bpmn:serviceTask id="acreditacion_control" name="Validar alta, plazo y cupo">
+    <bpmn:documentation>Validar permisos y cupo. El acreditador requiere disponibilidad; la excepción necesita confirmación administrativa.</bpmn:documentation>
+    <bpmn:incoming>acreditacion_flujo_5</bpmn:incoming>
+    <bpmn:outgoing>acreditacion_flujo_6</bpmn:outgoing>
+  </bpmn:serviceTask>
+<bpmn:exclusiveGateway id="acreditacion_permitida" name="¿Alta autorizada?" gatewayDirection="Diverging">
+    <bpmn:documentation>Se mantienen unicidad por DNI y los controles de la modalidad, incluso en el alta presencial.</bpmn:documentation>
+    <bpmn:incoming>acreditacion_flujo_6</bpmn:incoming>
+    <bpmn:outgoing>acreditacion_flujo_7</bpmn:outgoing><bpmn:outgoing>acreditacion_flujo_8</bpmn:outgoing>
+  </bpmn:exclusiveGateway>
+<bpmn:endEvent id="acreditacion_denegada" name="Alta no confirmada">
+    <bpmn:documentation>Informar campos, plazo, DNI o límite de cupo. No conceder excepción a un acreditador.</bpmn:documentation>
+    <bpmn:incoming>acreditacion_flujo_8</bpmn:incoming>
+
+  </bpmn:endEvent>
+<bpmn:serviceTask id="acreditacion_crear" name="Crear y acreditar al principal">
+    <bpmn:documentation>Guardar la inscripción presencial consistente; los integrantes vinculados mantienen su presencia propia.</bpmn:documentation>
+    <bpmn:incoming>acreditacion_flujo_7</bpmn:incoming>
+    <bpmn:outgoing>acreditacion_flujo_9</bpmn:outgoing>
+  </bpmn:serviceTask>
+<bpmn:endEvent id="acreditacion_fin" name="Presencia registrada">
+    <bpmn:documentation>Actualizar la operación y conservar trazabilidad. La emisión del PDF es una acción administrativa posterior.</bpmn:documentation>
+    <bpmn:incoming>acreditacion_flujo_3</bpmn:incoming><bpmn:incoming>acreditacion_flujo_9</bpmn:incoming>
+
+  </bpmn:endEvent>
+    <bpmn:sequenceFlow id="acreditacion_flujo_0" sourceRef="acreditacion_inicio" targetRef="acreditacion_buscar"></bpmn:sequenceFlow>
+<bpmn:sequenceFlow id="acreditacion_flujo_1" sourceRef="acreditacion_buscar" targetRef="acreditacion_existe"></bpmn:sequenceFlow>
+<bpmn:sequenceFlow id="acreditacion_flujo_2" sourceRef="acreditacion_existe" targetRef="acreditacion_acreditar" name="Sí"><bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" language="text/plain">Sí</bpmn:conditionExpression></bpmn:sequenceFlow>
+<bpmn:sequenceFlow id="acreditacion_flujo_3" sourceRef="acreditacion_acreditar" targetRef="acreditacion_fin"></bpmn:sequenceFlow>
+<bpmn:sequenceFlow id="acreditacion_flujo_4" sourceRef="acreditacion_existe" targetRef="acreditacion_datos" name="No"><bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" language="text/plain">No</bpmn:conditionExpression></bpmn:sequenceFlow>
+<bpmn:sequenceFlow id="acreditacion_flujo_5" sourceRef="acreditacion_datos" targetRef="acreditacion_control"></bpmn:sequenceFlow>
+<bpmn:sequenceFlow id="acreditacion_flujo_6" sourceRef="acreditacion_control" targetRef="acreditacion_permitida"></bpmn:sequenceFlow>
+<bpmn:sequenceFlow id="acreditacion_flujo_7" sourceRef="acreditacion_permitida" targetRef="acreditacion_crear" name="Sí"><bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" language="text/plain">Sí</bpmn:conditionExpression></bpmn:sequenceFlow>
+<bpmn:sequenceFlow id="acreditacion_flujo_8" sourceRef="acreditacion_permitida" targetRef="acreditacion_denegada" name="No"><bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" language="text/plain">No</bpmn:conditionExpression></bpmn:sequenceFlow>
+<bpmn:sequenceFlow id="acreditacion_flujo_9" sourceRef="acreditacion_crear" targetRef="acreditacion_fin"></bpmn:sequenceFlow>
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="acreditacion_diagrama"><bpmndi:BPMNPlane id="acreditacion_plano" bpmnElement="acreditacion_proceso"><bpmndi:BPMNShape id="acreditacion_carril_di_0" bpmnElement="acreditacion_carril_0" isHorizontal="true"><dc:Bounds x="40" y="80" width="1294" height="280"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="acreditacion_carril_di_1" bpmnElement="acreditacion_carril_1" isHorizontal="true"><dc:Bounds x="40" y="360" width="1294" height="280"/></bpmndi:BPMNShape><bpmndi:BPMNShape id="acreditacion_inicio_di" bpmnElement="acreditacion_inicio"><dc:Bounds x="174" y="162" width="36" height="36"/><bpmndi:BPMNLabel><dc:Bounds x="122" y="208" width="140" height="40"/></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="acreditacion_buscar_di" bpmnElement="acreditacion_buscar"><dc:Bounds x="315" y="140" width="144" height="80"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="acreditacion_existe_di" bpmnElement="acreditacion_existe" isMarkerVisible="true"><dc:Bounds x="556" y="434" width="52" height="52"/><bpmndi:BPMNLabel><dc:Bounds x="408" y="500" width="140" height="40"/></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="acreditacion_acreditar_di" bpmnElement="acreditacion_acreditar"><dc:Bounds x="705" y="420" width="144" height="80"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="acreditacion_datos_di" bpmnElement="acreditacion_datos"><dc:Bounds x="510" y="120" width="144" height="80"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="acreditacion_control_di" bpmnElement="acreditacion_control"><dc:Bounds x="705" y="530" width="144" height="80"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="acreditacion_permitida_di" bpmnElement="acreditacion_permitida" isMarkerVisible="true"><dc:Bounds x="946" y="544" width="52" height="52"/><bpmndi:BPMNLabel><dc:Bounds x="1010" y="482" width="140" height="40"/></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="acreditacion_denegada_di" bpmnElement="acreditacion_denegada"><dc:Bounds x="954" y="142" width="36" height="36"/><bpmndi:BPMNLabel><dc:Bounds x="902" y="90" width="140" height="40"/></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="acreditacion_crear_di" bpmnElement="acreditacion_crear"><dc:Bounds x="1095" y="530" width="144" height="80"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="acreditacion_fin_di" bpmnElement="acreditacion_fin"><dc:Bounds x="1149" y="442" width="36" height="36"/><bpmndi:BPMNLabel><dc:Bounds x="1097" y="390" width="140" height="40"/></bpmndi:BPMNLabel></bpmndi:BPMNShape><bpmndi:BPMNEdge id="acreditacion_flujo_0_di" bpmnElement="acreditacion_flujo_0"><di:waypoint x="210" y="180"/><di:waypoint x="315" y="180"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="acreditacion_flujo_1_di" bpmnElement="acreditacion_flujo_1"><di:waypoint x="459" y="180"/><di:waypoint x="507.5" y="180"/><di:waypoint x="507.5" y="460"/><di:waypoint x="556" y="460"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="acreditacion_flujo_2_di" bpmnElement="acreditacion_flujo_2"><di:waypoint x="608" y="460"/><di:waypoint x="705" y="460"/><bpmndi:BPMNLabel><dc:Bounds x="616.5" y="430" width="80" height="30"/></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="acreditacion_flujo_3_di" bpmnElement="acreditacion_flujo_3"><di:waypoint x="849" y="460"/><di:waypoint x="1149" y="460"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="acreditacion_flujo_4_di" bpmnElement="acreditacion_flujo_4"><di:waypoint x="582" y="434"/><di:waypoint x="582" y="200"/><bpmndi:BPMNLabel><dc:Bounds x="591" y="303" width="80" height="30"/></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="acreditacion_flujo_5_di" bpmnElement="acreditacion_flujo_5"><di:waypoint x="654" y="160"/><di:waypoint x="679.5" y="160"/><di:waypoint x="679.5" y="570"/><di:waypoint x="705" y="570"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="acreditacion_flujo_6_di" bpmnElement="acreditacion_flujo_6"><di:waypoint x="849" y="570"/><di:waypoint x="946" y="570"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="acreditacion_flujo_7_di" bpmnElement="acreditacion_flujo_7"><di:waypoint x="998" y="570"/><di:waypoint x="1095" y="570"/><bpmndi:BPMNLabel><dc:Bounds x="1006.5" y="540" width="80" height="30"/></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="acreditacion_flujo_8_di" bpmnElement="acreditacion_flujo_8"><di:waypoint x="972" y="544"/><di:waypoint x="972" y="178"/><bpmndi:BPMNLabel><dc:Bounds x="981" y="347" width="80" height="30"/></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="acreditacion_flujo_9_di" bpmnElement="acreditacion_flujo_9"><di:waypoint x="1167" y="530"/><di:waypoint x="1167" y="478"/></bpmndi:BPMNEdge></bpmndi:BPMNPlane></bpmndi:BPMNDiagram>
+</bpmn:definitions>

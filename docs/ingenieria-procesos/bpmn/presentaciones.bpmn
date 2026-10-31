@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="presentaciones_definiciones" targetNamespace="https://eventos.unca.edu.ar/documentacion/procesos" exporter="Eventos UNCA · documentación de procesos" exporterVersion="1">
+  <bpmn:process id="presentaciones_proceso" name="Entregar o reemplazar una presentación" isExecutable="false">
+    <bpmn:documentation>El alumno responsable o segundo alumno entrega el archivo de un trabajo dentro de su plazo independiente. Modelo descriptivo revisado el 2026-10-31 sobre 3c7cd6698bdf98ab5ba9ad27157cdfbfd049a45e.</bpmn:documentation>
+    <bpmn:laneSet id="presentaciones_carriles"><bpmn:lane id="presentaciones_carril_0" name="Alumno expositor"><bpmn:flowNodeRef>presentaciones_inicio</bpmn:flowNodeRef><bpmn:flowNodeRef>presentaciones_elegir</bpmn:flowNodeRef><bpmn:flowNodeRef>presentaciones_archivo</bpmn:flowNodeRef></bpmn:lane>
+<bpmn:lane id="presentaciones_carril_1" name="Sistema Eventos UNCA"><bpmn:flowNodeRef>presentaciones_autorizar</bpmn:flowNodeRef><bpmn:flowNodeRef>presentaciones_permiso</bpmn:flowNodeRef><bpmn:flowNodeRef>presentaciones_cerrada</bpmn:flowNodeRef><bpmn:flowNodeRef>presentaciones_validar</bpmn:flowNodeRef><bpmn:flowNodeRef>presentaciones_vigente</bpmn:flowNodeRef><bpmn:flowNodeRef>presentaciones_rechazo</bpmn:flowNodeRef><bpmn:flowNodeRef>presentaciones_guardar</bpmn:flowNodeRef><bpmn:flowNodeRef>presentaciones_fin</bpmn:flowNodeRef></bpmn:lane></bpmn:laneSet>
+    <bpmn:startEvent id="presentaciones_inicio" name="Necesidad de entrega">
+    <bpmn:documentation>Abrir la página de presentaciones del evento.</bpmn:documentation>
+
+    <bpmn:outgoing>presentaciones_flujo_0</bpmn:outgoing>
+  </bpmn:startEvent>
+<bpmn:userTask id="presentaciones_elegir" name="Consultar DNI y elegir trabajo">
+    <bpmn:documentation>El sistema ofrece únicamente exposiciones propias como responsable o segundo alumno.</bpmn:documentation>
+    <bpmn:incoming>presentaciones_flujo_0</bpmn:incoming>
+    <bpmn:outgoing>presentaciones_flujo_1</bpmn:outgoing>
+  </bpmn:userTask>
+<bpmn:serviceTask id="presentaciones_autorizar" name="Verificar permiso y plazo">
+    <bpmn:documentation>Exigir evento publicado, permiso vigente y trabajo permitido dentro de la fecha de presentaciones.</bpmn:documentation>
+    <bpmn:incoming>presentaciones_flujo_1</bpmn:incoming>
+    <bpmn:outgoing>presentaciones_flujo_2</bpmn:outgoing>
+  </bpmn:serviceTask>
+<bpmn:exclusiveGateway id="presentaciones_permiso" name="¿Entrega permitida?" gatewayDirection="Diverging">
+    <bpmn:documentation>La fecha de inscripción y el cupo no cierran esta entrega separada.</bpmn:documentation>
+    <bpmn:incoming>presentaciones_flujo_2</bpmn:incoming>
+    <bpmn:outgoing>presentaciones_flujo_3</bpmn:outgoing><bpmn:outgoing>presentaciones_flujo_4</bpmn:outgoing>
+  </bpmn:exclusiveGateway>
+<bpmn:endEvent id="presentaciones_cerrada" name="Entrega no disponible">
+    <bpmn:documentation>Informar falta de permiso, estado o plazo; conservar el archivo existente.</bpmn:documentation>
+    <bpmn:incoming>presentaciones_flujo_3</bpmn:incoming>
+
+  </bpmn:endEvent>
+<bpmn:userTask id="presentaciones_archivo" name="Elegir PDF o PowerPoint">
+    <bpmn:documentation>Seleccionar un archivo de hasta 25 MB para el trabajo concreto.</bpmn:documentation>
+    <bpmn:incoming>presentaciones_flujo_4</bpmn:incoming>
+    <bpmn:outgoing>presentaciones_flujo_5</bpmn:outgoing>
+  </bpmn:userTask>
+<bpmn:serviceTask id="presentaciones_validar" name="Validar archivo y revisión">
+    <bpmn:documentation>Validar contenido y formato, reconsultar pertenencia y revisión bajo bloqueo y volver a comprobar el plazo.</bpmn:documentation>
+    <bpmn:incoming>presentaciones_flujo_5</bpmn:incoming>
+    <bpmn:outgoing>presentaciones_flujo_6</bpmn:outgoing>
+  </bpmn:serviceTask>
+<bpmn:exclusiveGateway id="presentaciones_vigente" name="¿Validación superada?" gatewayDirection="Diverging">
+    <bpmn:documentation>Un reemplazo ajeno desde la consulta invalida la revisión; un reenvío idéntico conserva el resultado.</bpmn:documentation>
+    <bpmn:incoming>presentaciones_flujo_6</bpmn:incoming>
+    <bpmn:outgoing>presentaciones_flujo_7</bpmn:outgoing><bpmn:outgoing>presentaciones_flujo_8</bpmn:outgoing>
+  </bpmn:exclusiveGateway>
+<bpmn:endEvent id="presentaciones_rechazo" name="Entrega anterior conservada">
+    <bpmn:documentation>Volver a consultar o corregir el archivo. Un rechazo no reemplaza la entrega anterior.</bpmn:documentation>
+    <bpmn:incoming>presentaciones_flujo_7</bpmn:incoming>
+
+  </bpmn:endEvent>
+<bpmn:serviceTask id="presentaciones_guardar" name="Guardar archivo y auditoría">
+    <bpmn:documentation>Actualizar entrega y auditoría en la misma transacción. Un fallo de persistencia conserva la versión anterior.</bpmn:documentation>
+    <bpmn:incoming>presentaciones_flujo_8</bpmn:incoming>
+    <bpmn:outgoing>presentaciones_flujo_9</bpmn:outgoing>
+  </bpmn:serviceTask>
+<bpmn:endEvent id="presentaciones_fin" name="Entrega confirmada">
+    <bpmn:documentation>Conservar identidad, integrantes, asistencia y certificados existentes.</bpmn:documentation>
+    <bpmn:incoming>presentaciones_flujo_9</bpmn:incoming>
+
+  </bpmn:endEvent>
+    <bpmn:sequenceFlow id="presentaciones_flujo_0" sourceRef="presentaciones_inicio" targetRef="presentaciones_elegir"></bpmn:sequenceFlow>
+<bpmn:sequenceFlow id="presentaciones_flujo_1" sourceRef="presentaciones_elegir" targetRef="presentaciones_autorizar"></bpmn:sequenceFlow>
+<bpmn:sequenceFlow id="presentaciones_flujo_2" sourceRef="presentaciones_autorizar" targetRef="presentaciones_permiso"></bpmn:sequenceFlow>
+<bpmn:sequenceFlow id="presentaciones_flujo_3" sourceRef="presentaciones_permiso" targetRef="presentaciones_cerrada" name="No"><bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" language="text/plain">No</bpmn:conditionExpression></bpmn:sequenceFlow>
+<bpmn:sequenceFlow id="presentaciones_flujo_4" sourceRef="presentaciones_permiso" targetRef="presentaciones_archivo" name="Sí"><bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" language="text/plain">Sí</bpmn:conditionExpression></bpmn:sequenceFlow>
+<bpmn:sequenceFlow id="presentaciones_flujo_5" sourceRef="presentaciones_archivo" targetRef="presentaciones_validar"></bpmn:sequenceFlow>
+<bpmn:sequenceFlow id="presentaciones_flujo_6" sourceRef="presentaciones_validar" targetRef="presentaciones_vigente"></bpmn:sequenceFlow>
+<bpmn:sequenceFlow id="presentaciones_flujo_7" sourceRef="presentaciones_vigente" targetRef="presentaciones_rechazo" name="No"><bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" language="text/plain">No</bpmn:conditionExpression></bpmn:sequenceFlow>
+<bpmn:sequenceFlow id="presentaciones_flujo_8" sourceRef="presentaciones_vigente" targetRef="presentaciones_guardar" name="Sí"><bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" language="text/plain">Sí</bpmn:conditionExpression></bpmn:sequenceFlow>
+<bpmn:sequenceFlow id="presentaciones_flujo_9" sourceRef="presentaciones_guardar" targetRef="presentaciones_fin"></bpmn:sequenceFlow>
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="presentaciones_diagrama"><bpmndi:BPMNPlane id="presentaciones_plano" bpmnElement="presentaciones_proceso"><bpmndi:BPMNShape id="presentaciones_carril_di_0" bpmnElement="presentaciones_carril_0" isHorizontal="true"><dc:Bounds x="40" y="80" width="1489" height="280"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="presentaciones_carril_di_1" bpmnElement="presentaciones_carril_1" isHorizontal="true"><dc:Bounds x="40" y="360" width="1489" height="280"/></bpmndi:BPMNShape><bpmndi:BPMNShape id="presentaciones_inicio_di" bpmnElement="presentaciones_inicio"><dc:Bounds x="174" y="162" width="36" height="36"/><bpmndi:BPMNLabel><dc:Bounds x="122" y="208" width="140" height="40"/></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="presentaciones_elegir_di" bpmnElement="presentaciones_elegir"><dc:Bounds x="315" y="140" width="144" height="80"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="presentaciones_autorizar_di" bpmnElement="presentaciones_autorizar"><dc:Bounds x="510" y="420" width="144" height="80"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="presentaciones_permiso_di" bpmnElement="presentaciones_permiso" isMarkerVisible="true"><dc:Bounds x="751" y="434" width="52" height="52"/><bpmndi:BPMNLabel><dc:Bounds x="603" y="372" width="140" height="40"/></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="presentaciones_cerrada_di" bpmnElement="presentaciones_cerrada"><dc:Bounds x="759" y="552" width="36" height="36"/><bpmndi:BPMNLabel><dc:Bounds x="707" y="598" width="140" height="40"/></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="presentaciones_archivo_di" bpmnElement="presentaciones_archivo"><dc:Bounds x="705" y="140" width="144" height="80"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="presentaciones_validar_di" bpmnElement="presentaciones_validar"><dc:Bounds x="900" y="420" width="144" height="80"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="presentaciones_vigente_di" bpmnElement="presentaciones_vigente" isMarkerVisible="true"><dc:Bounds x="1141" y="434" width="52" height="52"/><bpmndi:BPMNLabel><dc:Bounds x="993" y="372" width="140" height="40"/></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="presentaciones_rechazo_di" bpmnElement="presentaciones_rechazo"><dc:Bounds x="1149" y="552" width="36" height="36"/><bpmndi:BPMNLabel><dc:Bounds x="1097" y="598" width="140" height="40"/></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="presentaciones_guardar_di" bpmnElement="presentaciones_guardar"><dc:Bounds x="1290" y="420" width="144" height="80"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="presentaciones_fin_di" bpmnElement="presentaciones_fin"><dc:Bounds x="1344" y="552" width="36" height="36"/><bpmndi:BPMNLabel><dc:Bounds x="1292" y="598" width="140" height="40"/></bpmndi:BPMNLabel></bpmndi:BPMNShape><bpmndi:BPMNEdge id="presentaciones_flujo_0_di" bpmnElement="presentaciones_flujo_0"><di:waypoint x="210" y="180"/><di:waypoint x="315" y="180"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="presentaciones_flujo_1_di" bpmnElement="presentaciones_flujo_1"><di:waypoint x="459" y="180"/><di:waypoint x="484.5" y="180"/><di:waypoint x="484.5" y="460"/><di:waypoint x="510" y="460"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="presentaciones_flujo_2_di" bpmnElement="presentaciones_flujo_2"><di:waypoint x="654" y="460"/><di:waypoint x="751" y="460"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="presentaciones_flujo_3_di" bpmnElement="presentaciones_flujo_3"><di:waypoint x="777" y="486"/><di:waypoint x="777" y="552"/><bpmndi:BPMNLabel><dc:Bounds x="786" y="505" width="80" height="30"/></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="presentaciones_flujo_4_di" bpmnElement="presentaciones_flujo_4"><di:waypoint x="777" y="434"/><di:waypoint x="777" y="220"/><bpmndi:BPMNLabel><dc:Bounds x="786" y="313" width="80" height="30"/></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="presentaciones_flujo_5_di" bpmnElement="presentaciones_flujo_5"><di:waypoint x="849" y="180"/><di:waypoint x="874.5" y="180"/><di:waypoint x="874.5" y="460"/><di:waypoint x="900" y="460"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="presentaciones_flujo_6_di" bpmnElement="presentaciones_flujo_6"><di:waypoint x="1044" y="460"/><di:waypoint x="1141" y="460"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="presentaciones_flujo_7_di" bpmnElement="presentaciones_flujo_7"><di:waypoint x="1167" y="486"/><di:waypoint x="1167" y="552"/><bpmndi:BPMNLabel><dc:Bounds x="1176" y="505" width="80" height="30"/></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="presentaciones_flujo_8_di" bpmnElement="presentaciones_flujo_8"><di:waypoint x="1193" y="460"/><di:waypoint x="1290" y="460"/><bpmndi:BPMNLabel><dc:Bounds x="1201.5" y="430" width="80" height="30"/></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="presentaciones_flujo_9_di" bpmnElement="presentaciones_flujo_9"><di:waypoint x="1362" y="500"/><di:waypoint x="1362" y="552"/></bpmndi:BPMNEdge></bpmndi:BPMNPlane></bpmndi:BPMNDiagram>
+</bpmn:definitions>

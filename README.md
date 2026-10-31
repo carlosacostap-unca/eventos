@@ -6,6 +6,12 @@ Toda la lógica de negocio y el acceso a PocketBase viven en el servidor de Next
 
 La agenda de inicio muestra a visitantes anónimos únicamente eventos publicados próximos o en curso. Los eventos se retiran al alcanzar su fecha y hora de finalización, incluso si siguen marcados como publicados. El personal autenticado conserva la agenda anterior y el panel administrativo mantiene su historial. El cierre de inscripción o el cupo completo no ocultan un evento que todavía no terminó.
 
+## Documentación navegable
+
+La [vista de ingeniería de procesos](docs/ingenieria-procesos/index.html) permite comprender el sistema mediante ocho diagramas BPMN, reglas, responsables y trazabilidad al código y las especificaciones. Abrir el HTML localmente conservando su carpeta completa. Ver [alcance y mantenimiento](docs/ingenieria-procesos/README.md).
+
+La [vista de arquitectura técnica](docs/arquitectura/README.md) documenta los componentes y sus relaciones.
+
 ## Requisitos
 
 - Node.js 22

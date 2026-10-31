@@ -1,0 +1,65 @@
+{
+  "revision": "3c7cd6698bdf98ab5ba9ad27157cdfbfd049a45e",
+  "reviewedAt": "2026-10-31",
+  "notation": "BPMN 2.0",
+  "executable": false,
+  "viewer": "bpmn-js@18.31.0",
+  "processes": [
+    {
+      "id": "preparacion",
+      "file": "bpmn/preparacion.bpmn",
+      "nodes": 9,
+      "flows": 9,
+      "sha256": "8f1daff8cf6d61ee32c2714a860a87340c3aee1573d25f58a995f5ce87e01fb4"
+    },
+    {
+      "id": "inscripcion",
+      "file": "bpmn/inscripcion.bpmn",
+      "nodes": 10,
+      "flows": 10,
+      "sha256": "b560b976e70a394c5ad15f60c2b6176affc411174f8f2e61f554b416bfb42dac"
+    },
+    {
+      "id": "correcciones",
+      "file": "bpmn/correcciones.bpmn",
+      "nodes": 9,
+      "flows": 8,
+      "sha256": "74724666c5b43e812087675d27c3e64b3a5f49428e2d7210b7bffa0880007006"
+    },
+    {
+      "id": "acreditacion",
+      "file": "bpmn/acreditacion.bpmn",
+      "nodes": 10,
+      "flows": 10,
+      "sha256": "dab36a64a5e391e88855a272a4363995ef29019427ab16550963d7e3665e81a2"
+    },
+    {
+      "id": "presentaciones",
+      "file": "bpmn/presentaciones.bpmn",
+      "nodes": 11,
+      "flows": 10,
+      "sha256": "1048a995d4012d3ef2e2d8e34799a6439fa32a66b54f9b2133bee37670d97e1d"
+    },
+    {
+      "id": "certificados",
+      "file": "bpmn/certificados.bpmn",
+      "nodes": 10,
+      "flows": 10,
+      "sha256": "6bc22186b2aa989a7227ab7d4fce49215a398c4c8c38bf532bcae1e20f804ead"
+    },
+    {
+      "id": "consulta",
+      "file": "bpmn/consulta.bpmn",
+      "nodes": 12,
+      "flows": 11,
+      "sha256": "3d7a9f91a167887cc9b4165f0e832b631d7c03cce5faefda53304cc13eb166d6"
+    },
+    {
+      "id": "reportes",
+      "file": "bpmn/reportes.bpmn",
+      "nodes": 9,
+      "flows": 9,
+      "sha256": "64f91b54d5a097a3c8f890dc1bb357b10ace75614965f42b87e8c89b32f20c5d"
+    }
+  ]
+}

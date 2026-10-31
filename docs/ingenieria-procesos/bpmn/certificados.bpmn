@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="certificados_definiciones" targetNamespace="https://eventos.unca.edu.ar/documentacion/procesos" exporter="Eventos UNCA · documentación de procesos" exporterVersion="1">
+  <bpmn:process id="certificados_proceso" name="Emitir o regenerar certificados" isExecutable="false">
+    <bpmn:documentation>La organización inicia la emisión y el sistema aplica la política individual o compartida de cada modalidad. Modelo descriptivo revisado el 2026-10-31 sobre 3c7cd6698bdf98ab5ba9ad27157cdfbfd049a45e.</bpmn:documentation>
+    <bpmn:laneSet id="certificados_carriles"><bpmn:lane id="certificados_carril_0" name="Organización"><bpmn:flowNodeRef>certificados_inicio</bpmn:flowNodeRef><bpmn:flowNodeRef>certificados_solicitar</bpmn:flowNodeRef></bpmn:lane>
+<bpmn:lane id="certificados_carril_1" name="Sistema Eventos UNCA"><bpmn:flowNodeRef>certificados_resolver</bpmn:flowNodeRef><bpmn:flowNodeRef>certificados_elegible</bpmn:flowNodeRef><bpmn:flowNodeRef>certificados_omitir</bpmn:flowNodeRef><bpmn:flowNodeRef>certificados_reusar</bpmn:flowNodeRef><bpmn:flowNodeRef>certificados_conservar</bpmn:flowNodeRef><bpmn:flowNodeRef>certificados_componer</bpmn:flowNodeRef><bpmn:flowNodeRef>certificados_guardar</bpmn:flowNodeRef><bpmn:flowNodeRef>certificados_fin</bpmn:flowNodeRef></bpmn:lane></bpmn:laneSet>
+    <bpmn:startEvent id="certificados_inicio" name="Solicitud de emisión">
+    <bpmn:documentation>El administrador revisa plantilla y textos mediante vista previa.</bpmn:documentation>
+
+    <bpmn:outgoing>certificados_flujo_0</bpmn:outgoing>
+  </bpmn:startEvent>
+<bpmn:userTask id="certificados_solicitar" name="Elegir generar o regenerar">
+    <bpmn:documentation>Generar mantiene los PDFs existentes. Regenerar reemplaza explícitamente su contenido.</bpmn:documentation>
+    <bpmn:incoming>certificados_flujo_0</bpmn:incoming>
+    <bpmn:outgoing>certificados_flujo_1</bpmn:outgoing>
+  </bpmn:userTask>
+<bpmn:serviceTask id="certificados_resolver" name="Resolver sujetos y elegibilidad">
+    <bpmn:documentation>Resolver modalidad, alcance, responsable, integrantes y entrega habilitada.</bpmn:documentation>
+    <bpmn:incoming>certificados_flujo_1</bpmn:incoming>
+    <bpmn:outgoing>certificados_flujo_2</bpmn:outgoing>
+  </bpmn:serviceTask>
+<bpmn:exclusiveGateway id="certificados_elegible" name="¿Sujeto elegible?" gatewayDirection="Diverging">
+    <bpmn:documentation>Individual: titular acreditado. Grupo: alumno responsable acreditado.</bpmn:documentation>
+    <bpmn:incoming>certificados_flujo_2</bpmn:incoming>
+    <bpmn:outgoing>certificados_flujo_3</bpmn:outgoing><bpmn:outgoing>certificados_flujo_4</bpmn:outgoing>
+  </bpmn:exclusiveGateway>
+<bpmn:endEvent id="certificados_omitir" name="Sin emisión para ese sujeto">
+    <bpmn:documentation>El lote excluye sujetos no elegibles y continúa con los demás.</bpmn:documentation>
+    <bpmn:incoming>certificados_flujo_3</bpmn:incoming>
+
+  </bpmn:endEvent>
+<bpmn:exclusiveGateway id="certificados_reusar" name="¿Existe y no se pidió regenerar?" gatewayDirection="Diverging">
+    <bpmn:documentation>La generación habitual no sustituye el PDF. Un documento desactualizado sigue bloqueado hasta regenerar.</bpmn:documentation>
+    <bpmn:incoming>certificados_flujo_4</bpmn:incoming>
+    <bpmn:outgoing>certificados_flujo_5</bpmn:outgoing><bpmn:outgoing>certificados_flujo_7</bpmn:outgoing>
+  </bpmn:exclusiveGateway>
+<bpmn:serviceTask id="certificados_conservar" name="Reutilizar documento">
+    <bpmn:documentation>Conservar archivo e identificador; el acceso vuelve a comprobar elegibilidad y huella.</bpmn:documentation>
+    <bpmn:incoming>certificados_flujo_5</bpmn:incoming>
+    <bpmn:outgoing>certificados_flujo_6</bpmn:outgoing>
+  </bpmn:serviceTask>
+<bpmn:serviceTask id="certificados_componer" name="Componer y revalidar PDF">
+    <bpmn:documentation>Serializar por sujeto, componer con todos los integrantes y revalidar huella antes de publicar.</bpmn:documentation>
+    <bpmn:incoming>certificados_flujo_7</bpmn:incoming>
+    <bpmn:outgoing>certificados_flujo_8</bpmn:outgoing>
+  </bpmn:serviceTask>
+<bpmn:serviceTask id="certificados_guardar" name="Guardar documento y destinatarios">
+    <bpmn:documentation>Persistir una sola emisión por sujeto y los destinatarios consistentes. Auditar resultados del lote.</bpmn:documentation>
+    <bpmn:incoming>certificados_flujo_8</bpmn:incoming>
+    <bpmn:outgoing>certificados_flujo_9</bpmn:outgoing>
+  </bpmn:serviceTask>
+<bpmn:endEvent id="certificados_fin" name="Resultado del sujeto">
+    <bpmn:documentation>Documento creado, regenerado o reutilizado. Un fallo no se informa como una emisión exitosa.</bpmn:documentation>
+    <bpmn:incoming>certificados_flujo_6</bpmn:incoming><bpmn:incoming>certificados_flujo_9</bpmn:incoming>
+
+  </bpmn:endEvent>
+    <bpmn:sequenceFlow id="certificados_flujo_0" sourceRef="certificados_inicio" targetRef="certificados_solicitar"></bpmn:sequenceFlow>
+<bpmn:sequenceFlow id="certificados_flujo_1" sourceRef="certificados_solicitar" targetRef="certificados_resolver"></bpmn:sequenceFlow>
+<bpmn:sequenceFlow id="certificados_flujo_2" sourceRef="certificados_resolver" targetRef="certificados_elegible"></bpmn:sequenceFlow>
+<bpmn:sequenceFlow id="certificados_flujo_3" sourceRef="certificados_elegible" targetRef="certificados_omitir" name="No"><bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" language="text/plain">No</bpmn:conditionExpression></bpmn:sequenceFlow>
+<bpmn:sequenceFlow id="certificados_flujo_4" sourceRef="certificados_elegible" targetRef="certificados_reusar" name="Sí"><bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" language="text/plain">Sí</bpmn:conditionExpression></bpmn:sequenceFlow>
+<bpmn:sequenceFlow id="certificados_flujo_5" sourceRef="certificados_reusar" targetRef="certificados_conservar" name="Sí"><bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" language="text/plain">Sí</bpmn:conditionExpression></bpmn:sequenceFlow>
+<bpmn:sequenceFlow id="certificados_flujo_6" sourceRef="certificados_conservar" targetRef="certificados_fin" name="Reutilizado"></bpmn:sequenceFlow>
+<bpmn:sequenceFlow id="certificados_flujo_7" sourceRef="certificados_reusar" targetRef="certificados_componer" name="No"><bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" language="text/plain">No</bpmn:conditionExpression></bpmn:sequenceFlow>
+<bpmn:sequenceFlow id="certificados_flujo_8" sourceRef="certificados_componer" targetRef="certificados_guardar"></bpmn:sequenceFlow>
+<bpmn:sequenceFlow id="certificados_flujo_9" sourceRef="certificados_guardar" targetRef="certificados_fin"></bpmn:sequenceFlow>
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="certificados_diagrama"><bpmndi:BPMNPlane id="certificados_plano" bpmnElement="certificados_proceso"><bpmndi:BPMNShape id="certificados_carril_di_0" bpmnElement="certificados_carril_0" isHorizontal="true"><dc:Bounds x="40" y="80" width="1489" height="280"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="certificados_carril_di_1" bpmnElement="certificados_carril_1" isHorizontal="true"><dc:Bounds x="40" y="360" width="1489" height="280"/></bpmndi:BPMNShape><bpmndi:BPMNShape id="certificados_inicio_di" bpmnElement="certificados_inicio"><dc:Bounds x="174" y="162" width="36" height="36"/><bpmndi:BPMNLabel><dc:Bounds x="122" y="208" width="140" height="40"/></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="certificados_solicitar_di" bpmnElement="certificados_solicitar"><dc:Bounds x="315" y="140" width="144" height="80"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="certificados_resolver_di" bpmnElement="certificados_resolver"><dc:Bounds x="510" y="420" width="144" height="80"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="certificados_elegible_di" bpmnElement="certificados_elegible" isMarkerVisible="true"><dc:Bounds x="751" y="434" width="52" height="52"/><bpmndi:BPMNLabel><dc:Bounds x="603" y="372" width="140" height="40"/></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="certificados_omitir_di" bpmnElement="certificados_omitir"><dc:Bounds x="759" y="552" width="36" height="36"/><bpmndi:BPMNLabel><dc:Bounds x="707" y="598" width="140" height="40"/></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="certificados_reusar_di" bpmnElement="certificados_reusar" isMarkerVisible="true"><dc:Bounds x="946" y="434" width="52" height="52"/><bpmndi:BPMNLabel><dc:Bounds x="798" y="372" width="140" height="40"/></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="certificados_conservar_di" bpmnElement="certificados_conservar"><dc:Bounds x="900" y="530" width="144" height="80"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="certificados_componer_di" bpmnElement="certificados_componer"><dc:Bounds x="1095" y="420" width="144" height="80"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="certificados_guardar_di" bpmnElement="certificados_guardar"><dc:Bounds x="1290" y="420" width="144" height="80"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="certificados_fin_di" bpmnElement="certificados_fin"><dc:Bounds x="1344" y="552" width="36" height="36"/><bpmndi:BPMNLabel><dc:Bounds x="1292" y="598" width="140" height="40"/></bpmndi:BPMNLabel></bpmndi:BPMNShape><bpmndi:BPMNEdge id="certificados_flujo_0_di" bpmnElement="certificados_flujo_0"><di:waypoint x="210" y="180"/><di:waypoint x="315" y="180"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="certificados_flujo_1_di" bpmnElement="certificados_flujo_1"><di:waypoint x="459" y="180"/><di:waypoint x="484.5" y="180"/><di:waypoint x="484.5" y="460"/><di:waypoint x="510" y="460"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="certificados_flujo_2_di" bpmnElement="certificados_flujo_2"><di:waypoint x="654" y="460"/><di:waypoint x="751" y="460"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="certificados_flujo_3_di" bpmnElement="certificados_flujo_3"><di:waypoint x="777" y="486"/><di:waypoint x="777" y="552"/><bpmndi:BPMNLabel><dc:Bounds x="786" y="505" width="80" height="30"/></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="certificados_flujo_4_di" bpmnElement="certificados_flujo_4"><di:waypoint x="803" y="460"/><di:waypoint x="946" y="460"/><bpmndi:BPMNLabel><dc:Bounds x="834.5" y="430" width="80" height="30"/></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="certificados_flujo_5_di" bpmnElement="certificados_flujo_5"><di:waypoint x="972" y="486"/><di:waypoint x="972" y="530"/><bpmndi:BPMNLabel><dc:Bounds x="981" y="494" width="80" height="30"/></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="certificados_flujo_6_di" bpmnElement="certificados_flujo_6"><di:waypoint x="1044" y="570"/><di:waypoint x="1344" y="570"/><bpmndi:BPMNLabel><dc:Bounds x="1154" y="540" width="80" height="30"/></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="certificados_flujo_7_di" bpmnElement="certificados_flujo_7"><di:waypoint x="998" y="460"/><di:waypoint x="1095" y="460"/><bpmndi:BPMNLabel><dc:Bounds x="1006.5" y="430" width="80" height="30"/></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="certificados_flujo_8_di" bpmnElement="certificados_flujo_8"><di:waypoint x="1239" y="460"/><di:waypoint x="1290" y="460"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="certificados_flujo_9_di" bpmnElement="certificados_flujo_9"><di:waypoint x="1362" y="500"/><di:waypoint x="1362" y="552"/></bpmndi:BPMNEdge></bpmndi:BPMNPlane></bpmndi:BPMNDiagram>
+</bpmn:definitions>
