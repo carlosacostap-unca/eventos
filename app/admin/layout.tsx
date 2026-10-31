@@ -33,7 +33,13 @@ export default async function AdminLayout({
       <nav className="admin-global-nav" aria-label="Administración">
         <div className="container">
           <ActiveNavLink href="/admin" exact>Mis eventos</ActiveNavLink>
-          {admin.role === "admin" && <><ActiveNavLink href="/admin/tipos">Tipos de eventos</ActiveNavLink><ActiveNavLink href="/admin/personal">Personal</ActiveNavLink></>}
+          {admin.role === "admin" && <>
+            <ActiveNavLink href="/admin/tipos">Tipos de eventos</ActiveNavLink>
+            <ActiveNavLink href="/admin/personal">Personal</ActiveNavLink>
+            {/* El visor es un documento HTML servido por un Route Handler; requiere navegación completa. */}
+            {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+            <a href="/admin/documentacion/procesos">Procesos BPMN</a>
+          </>}
           <Link href="/">Ver agenda pública <span aria-hidden="true">↗</span></Link>
         </div>
       </nav>

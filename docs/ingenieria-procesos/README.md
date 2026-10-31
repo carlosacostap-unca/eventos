@@ -2,6 +2,8 @@
 
 Abrir [index.html](index.html) en un navegador. La carpeta completa funciona localmente, sin instalar dependencias, iniciar Next.js ni conectarse a PocketBase. También puede servirse como documentación estática. Para compartirla hay que conservar `vendor/`, `procesos.js`, `visor.js` y `visor.css` junto al HTML.
 
+En la aplicación, iniciar sesión como administrador general y elegir **Procesos BPMN** en la navegación del panel. La ruta `/admin/documentacion/procesos` abre el visor y permite volver al panel. El HTML, los scripts, las hojas de estilo, los modelos y la vista técnica enlazada comprueban la misma autorización en cada solicitud. La documentación no concede acceso adicional a datos de eventos ni modifica los roles del personal. La configuración de empaquetado incluye los archivos documentales necesarios para producción.
+
 La documentación está en español y representa el comportamiento observado en la revisión `3c7cd6698bdf98ab5ba9ad27157cdfbfd049a45e`, con fecha de análisis 31 de octubre de 2026. No contiene datos de personas ni métricas de producción.
 
 ## Navegación

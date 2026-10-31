@@ -8,7 +8,7 @@ La agenda de inicio muestra a visitantes anónimos únicamente eventos publicado
 
 ## Documentación navegable
 
-La [vista de ingeniería de procesos](docs/ingenieria-procesos/index.html) permite comprender el sistema mediante ocho diagramas BPMN, reglas, responsables y trazabilidad al código y las especificaciones. Abrir el HTML localmente conservando su carpeta completa. Ver [alcance y mantenimiento](docs/ingenieria-procesos/README.md).
+La [vista de ingeniería de procesos](docs/ingenieria-procesos/index.html) permite comprender el sistema mediante ocho diagramas BPMN, reglas, responsables y trazabilidad al código y las especificaciones. En la aplicación, iniciar sesión como administrador general y abrir **Procesos BPMN** desde el panel, o acceder a `/admin/documentacion/procesos`. La documentación y sus archivos verifican el permiso administrativo en cada solicitud. También se puede abrir el HTML localmente conservando su carpeta completa. Ver [alcance y mantenimiento](docs/ingenieria-procesos/README.md).
 
 La [vista de arquitectura técnica](docs/arquitectura/README.md) documenta los componentes y sus relaciones.
 
