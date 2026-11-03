@@ -20,7 +20,7 @@ import {
   type CertificateTextSections,
 } from "@/lib/domain/certificate-texts";
 import type { EventRecord, RegistrationRecord } from "@/lib/domain/models";
-import { drawCertificateLayout, readCertificateLayout, type CertificateLayout } from "./template-layout";
+import { drawCertificateLayout, readCertificateLayout, type CertificateLayout, type CertificateMember } from "./template-layout";
 import { CERTIFICATE_CODE_LABEL, certificateVerificationCode } from "./verification-code";
 
 const PAGE_WIDTH = 842;
@@ -336,7 +336,7 @@ async function drawSignatures(
 
 export async function createCertificatePdf(input: {
   certificateId?: string;
-  members?: Array<{ nombres: string; apellidos: string; documento: string; role: string }>;
+  members?: CertificateMember[];
   event: EventRecord;
   eventTypeName?: string;
   registration: Pick<

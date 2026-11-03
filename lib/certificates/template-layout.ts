@@ -6,6 +6,7 @@ const fieldNames = ["certificado.cuerpo", "certificado.integrantes", "certificad
 type FieldName = typeof fieldNames[number];
 type Box = { x: number; y: number; width: number; height: number; size: number };
 export type CertificateLayout = Partial<Record<FieldName, Box>>;
+export type CertificateMember = { nombres: string; apellidos: string; documento: string; role: string; roleId?: string };
 type Run = { text: string; bold?: boolean };
 type Word = Run[];
 
@@ -88,22 +89,39 @@ function textRuns(template: string, variables: CertificateTextVariables, bold = 
 export async function drawCertificateLayout(input: {
   document: PDFDocument; page: PDFPage; source: PDFDocument; layout: CertificateLayout;
   texts: CertificateTextSections; variables: CertificateTextVariables; identifier: string;
-  members?: Array<{ nombres: string; apellidos: string; documento: string; role: string }>;
+  members?: CertificateMember[];
 }) {
   const italic = await input.document.embedFont(StandardFonts.TimesRomanItalic);
   const bold = await input.document.embedFont(StandardFonts.TimesRomanBoldItalic);
   const roman = await input.document.embedFont(StandardFonts.TimesRoman);
   const sans = await input.document.embedFont(StandardFonts.HelveticaOblique);
+  const normalized = (value: string) => value.replace(/[^\p{L}\p{N}]/gu, "").toUpperCase();
+  const secondExhibitors = input.members?.filter(m => m.roleId === "segundo_expositor" && normalized(m.documento) !== normalized(input.variables.documento)) ?? [];
+  const students = [
+    { participant: input.variables.participante, document: input.variables.documento },
+    ...secondExhibitors.map(m => ({ participant: `${m.apellidos.trim()}, ${m.nombres.trim()}`, document: m.documento.trim() })),
+  ];
+  const participantTemplate = input.texts.participant || (input.members?.length ? "{participante}" : "");
+  const documentTemplate = input.texts.document || (input.members?.length ? "D.N.I. {documento}" : "");
+  const identities = students.flatMap((student, index) => {
+    const variables = { ...input.variables, participante: student.participant, documento: student.document };
+    const separator = index ? [{ text: index === students.length - 1 ? " y " : ", " }] : [];
+    const document = index === students.length - 1 ? documentTemplate : documentTemplate.replace(/[,;:\s]+$/, "");
+    return [...separator, ...textRuns(participantTemplate, variables, true), { text: " " }, ...textRuns(document, variables)];
+  });
+  const participation = secondExhibitors.length ? input.texts.participation
+    .replace(/^ha\s+participado\b/iu, "han participado")
+    .replace(/\ben carácter de expositor\b/giu, "en carácter de expositores")
+    .replace(/\bcomo expositor\b/giu, "como expositores") : input.texts.participation;
   const body = [
     textRuns(input.texts.introduction, input.variables),
-    textRuns(input.texts.participant || (input.members?.length ? "{participante}" : ""), input.variables, true),
-    textRuns(input.texts.document || (input.members?.length ? "D.N.I. {documento}" : ""), input.variables),
-    textRuns(input.texts.participation, input.variables),
+    identities,
+    textRuns(participation, input.variables),
     textRuns(input.texts.event, input.variables, true),
   ].filter(runs => runs.some(r => r.text)).flatMap((runs, i) => [...(i ? [{ text: " " }] : []), ...runs]);
-  // La persona principal ya figura con DNI en el cuerpo; las otras funciones se detallan debajo.
-  const normalized = (value: string) => value.replace(/[^\p{L}\p{N}]/gu, "").toUpperCase();
-  const linked = input.members?.filter(m => normalized(m.documento) !== normalized(input.variables.documento)) ?? [];
+  // Los alumnos expositores figuran con sus DNI en el cuerpo; las otras funciones van debajo.
+  const studentDocuments = new Set(students.map(student => normalized(student.document)));
+  const linked = input.members?.filter(m => !studentDocuments.has(normalized(m.documento))) ?? [];
   const paragraphs: Record<FieldName, Run[][]> = {
     "certificado.cuerpo": [body],
     "certificado.integrantes": linked.map(m => [{ text: `${m.role}: ${m.apellidos}, ${m.nombres}; D.N.I. ${m.documento}.` }]),

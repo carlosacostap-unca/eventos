@@ -15,6 +15,27 @@ async function template(overlap = false) {
   return { bytes: await pdf.save(), mimeType: "application/pdf" };
 }
 describe("plantillas PDF con composición propia", () => {
+  it("presenta a ambos alumnos con DNI en el cuerpo y deja solo al director y codirector debajo", async () => {
+    const background = await template(); const drawn = vi.spyOn(PDFPage.prototype, "drawText");
+    try {
+      const members = [
+        { nombres: "Ana", apellidos: "Pérez", documento: "12000001", role: "Alumno expositor", roleId: "principal" },
+        { nombres: "Lucas", apellidos: "Gómez", documento: "12000002", role: "Coexpositor del equipo", roleId: "segundo_expositor" },
+        { nombres: "Luis", apellidos: "Sosa", documento: "12000003", role: "Director", roleId: "director" },
+        { nombres: "María", apellidos: "Díaz", documento: "12000004", role: "Codirector", roleId: "codirector" },
+      ];
+      await createCertificatePdf({ template: background, event, registration: { id: "alumno", ...members[0], respuestas: { titulo_trabajo: "Robótica aplicada" } }, members });
+      const calls = drawn.mock.calls;
+      const body = calls.filter(([, options]) => (options?.y ?? 0) >= 280).map(([text]) => text).join(" ");
+      expect(body).toContain("Pérez, Ana, D.N.I. 12000001 y Gómez, Lucas, D.N.I. 12000002,");
+      expect(body).toContain("han participado como expositores");
+      expect(body).not.toContain("Coexpositor");
+      const linked = calls.filter(([, options]) => (options?.y ?? 0) >= 230 && (options?.y ?? 0) <= 275).map(([text]) => text).join(" ");
+      expect(linked).toContain("Director: Sosa, Luis; D.N.I. 12000003.");
+      expect(linked).toContain("Codirector: Díaz, María; D.N.I. 12000004.");
+      expect(linked).not.toContain("12000002");
+    } finally { drawn.mockRestore(); }
+  });
   it("incluye el título y todos los integrantes en áreas independientes y elimina los campos interactivos", async () => {
     const background = await template(); const drawn = vi.spyOn(PDFPage.prototype, "drawText");
     try {

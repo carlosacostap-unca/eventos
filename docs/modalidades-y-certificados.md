@@ -67,6 +67,8 @@ Los textos pueden incluir respuestas principales mediante `{campo:identificador}
 
 Una plantilla PDF puede definir campos de texto vacíos `certificado.cuerpo`, `certificado.integrantes` y `certificado.fecha` en su primera página. El primero activa la composición de párrafo y es obligatorio; el segundo es necesario para grupos; el tercero coloca Lugar y fecha. Sus rectángulos y tamaños de fuente fijan las áreas de impresión. Deben quedar dentro de la página y sin superponerse, con fuente entre 9 y 30 puntos. El cuerpo une introducción, participante, documento, participación y evento; los campos del formulario y el participante se destacan en negrita cursiva. Los integrantes vinculados se detallan por función con su DNI; la persona principal figura en el cuerpo.
 
+Si se incorpora un segundo alumno expositor, ambos alumnos aparecen con sus DNI en el párrafo principal, antes de la participación, con concordancia en plural. La función se identifica por su código `segundo_expositor`, aunque cambie su etiqueta visible. El director y el codirector quedan en el bloque de integrantes; las funciones optativas solo se incluyen cuando existen. La vista previa predeterminada muestra únicamente las funciones obligatorias.
+
 El generador conserva las imágenes y textos estáticos de esa plantilla, elimina los campos interactivos del PDF final y ajusta los textos dentro de sus áreas. Si no caben a nueve puntos, continúa en otras páginas del mismo documento. Las plantillas sin esos campos conservan la composición anterior. Los fondos deben estar limpios de nombres, DNI y trabajos de ejemplo: subir un certificado completo como fondo duplica sus datos al generar uno nuevo.
 
 ## Recuperación de datos por DNI al inscribirse

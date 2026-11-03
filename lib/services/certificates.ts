@@ -80,7 +80,7 @@ export async function previewCertificate(eventId: string, modalityId?: string) {
     const mode = modes.find((m) => m.id === modalityId);
     if (!mode) throw new DomainError("NOT_FOUND", "La modalidad no pertenece al evento.");
     const definition = (await modalityVersion(mode.version_publicada)).esquema;
-    const members = definition.certificate === "grupo" ? [{ nombres: "Nombre del alumno", apellidos: "Apellido", documento: "12345678", role: definition.principal }, ...definition.roles.flatMap((r) => Array.from({ length: r.min }, () => ({ nombres: "Nombre de ejemplo", apellidos: "Apellido del integrante", documento: "23456789", role: r.label })))] : undefined;
+    const members = definition.certificate === "grupo" ? [{ nombres: "Nombre del alumno", apellidos: "Apellido", documento: "12345678", role: definition.principal, roleId: "principal" }, ...definition.roles.flatMap((r) => Array.from({ length: r.min }, () => ({ nombres: "Nombre de ejemplo", apellidos: "Apellido del integrante", documento: "23456789", role: r.label, roleId: r.id })))] : undefined;
     return createCertificatePdf({ event: { ...event, textos_certificado: mode.textos_certificado }, eventTypeName: await loadEventTypeName(event), registration: { id: "vista-previa", nombres: members?.[0].nombres ?? "Nombre", apellidos: members?.[0].apellidos ?? "Apellido", documento: "12345678", respuestas: Object.fromEntries(definition.fields.map(field => [field.id, field.label + " de ejemplo"])) }, members, template: mode.plantilla_certificado ? await fetchProtectedFile(mode as unknown as RecordModel, mode.plantilla_certificado) : undefined });
   }
   if (!offersAttendanceCertificate(event)) {
@@ -242,7 +242,7 @@ async function generateModalCertificates(event: EventRecord, adminId: string, re
         if (existing && !regenerate) { reused++; continue; }
         const template = subject.mode.plantilla_certificado ? await fetchProtectedFile(subject.mode as unknown as RecordModel, subject.mode.plantilla_certificado) : undefined;
         const id = existing?.id ?? recordId();
-        const pdf = await createCertificatePdf({ certificateId: id, event: { ...event, textos_certificado: subject.mode.textos_certificado }, eventTypeName: await loadEventTypeName(event), registration: subject.registration, template, members: subject.exhibition ? subject.members.map((m) => ({ ...m.person, role: m.role })) : undefined });
+        const pdf = await createCertificatePdf({ certificateId: id, event: { ...event, textos_certificado: subject.mode.textos_certificado }, eventTypeName: await loadEventTypeName(event), registration: subject.registration, template, members: subject.exhibition ? subject.members.map((m) => ({ ...m.person, role: m.role, roleId: m.functionId })) : undefined });
         const current = await pb.collection("inscripciones").getOne<RegistrationRecord>(registration.id);
         const finalSubject = await certificateSubject(pb, event, current, subject.exhibition?.id);
         if (!finalSubject?.eligible || finalSubject.hash !== subject.hash) throw new DomainError("INVALID", "Los datos cambiaron durante la emisión. Volvé a generar el lote.");
