@@ -86,6 +86,8 @@ En **Evento → Configuración → Página pública de inscripción** se puede m
 
 Los eventos anteriores mantienen toda la información visible hasta que se guarden otras preferencias. Antes del despliegue en una base existente, ejecutar `npm run schema:public-page -- --apply` con las credenciales existentes, después de respaldar PocketBase. Sin `--apply` solo informa el estado. La migración agrega únicamente el campo JSON opcional `eventos.pagina_publica`, es reejecutable y no actualiza registros, inscripciones ni certificados.
 
+La página de las XII Jornadas Estudiantiles de Investigación e Innovación Tecnológica incluye **Ver programa completo**: horarios, títulos y expositores de los 31 trabajos, acreditaciones, apertura, pausa, preguntas y cierre. El programa se puede consultar sin inscripción y descargar en PDF, incluso con la inscripción cerrada. La transcripción oficial está en `lib/content/event-programs.ts`, vinculada al ID del evento, y el PDF original en `public/programas/`. Se publican con el despliegue de la aplicación; no requieren migrar PocketBase.
+
 ### Comandos locales
 
     npm run dev

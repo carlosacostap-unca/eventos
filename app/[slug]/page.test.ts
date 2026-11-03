@@ -55,4 +55,26 @@ describe("página pública por evento", () => {
     mocks.event.mockResolvedValue({ ...event, ...change });
     expect(await html()).not.toContain("Formulario de inscripción");
   });
+  it("permite consultar las 31 exposiciones y descargar el programa aunque la inscripción esté cerrada y la descripción oculta", async () => {
+    mocks.event.mockResolvedValue({ ...event, id: "f1e49cae123d848", estado: "finalizado", pagina_publica: { descripcion: false, disertantes: false } });
+    const output = await html();
+    expect(output).toContain('href="#programa"');
+    expect(output).toContain('id="programa"');
+    expect(output.match(/class="program-talk"/g)).toHaveLength(31);
+    expect(output).toContain("Lautaro Agustín Moya Salcedo");
+    expect(output).toContain("Hitos de la migración del RIAA de DSpace 6 a DSpace 8");
+    expect(output).toContain("Francisco Nicolás Leiva");
+    expect(output).toContain("Espacio para preguntas y palabras de cierre");
+    expect(output).toContain('href="/programas/xii-jornadas-estudiantiles-2026.pdf" download=""');
+    expect(output).not.toContain("Formulario de inscripción");
+    expect(output).not.toContain("Descripción detallada de prueba");
+  });
+  it("no muestra el programa de las jornadas en otros eventos", async () => {
+    const output = await html();
+    expect(output).not.toContain('id="programa"');
+    expect(output).not.toContain("Ver programa completo");
+    expect(output).not.toContain("Lautaro Agustín Moya Salcedo");
+    expect(output).toContain('href="#inscripcion"');
+    expect(output).toContain("Formulario de inscripción");
+  });
 });

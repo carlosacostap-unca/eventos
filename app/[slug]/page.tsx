@@ -15,6 +15,8 @@ import { getEventBySlug } from "@/lib/services/events";
 import { countPublicRegistrations } from "@/lib/services/registrations";
 import { resolvePublicEventPage } from "@/lib/domain/public-event-page";
 import { formatDeadline } from "@/lib/domain/modality-deadlines";
+import { getEventProgram } from "@/lib/content/event-programs";
+import { EventProgram } from "@/components/event-program";
 
 export const dynamic = "force-dynamic";
 
@@ -60,6 +62,7 @@ export default async function PublicEventPage({
     publicModalities(event),
   ]);
   const availability = getRegistrationAvailability(event, count);
+  const program = getEventProgram(event.id);
 
   return (
     <main className="public-event">
@@ -75,7 +78,7 @@ export default async function PublicEventPage({
               priority
             />
           </Link>
-          <nav className="public-page-nav" aria-label="Navegación del evento"><Link href="/">← Todos los eventos</Link><Link href="/mis-certificados">Mis certificados</Link><Link href="/validar-certificado">Validar certificado</Link></nav>
+          <nav className="public-page-nav" aria-label="Navegación del evento"><Link href="/">← Todos los eventos</Link>{program && <a href="#programa">Programa</a>}<Link href="/mis-certificados">Mis certificados</Link><Link href="/validar-certificado">Validar certificado</Link></nav>
           <div className="event-hero-copy">
             {availability === "disponible" && <span className="badge badge-disponible">Inscripción abierta</span>}
             {availability !== "disponible" && (
@@ -112,8 +115,11 @@ export default async function PublicEventPage({
                 <dd>{modes.some((m) => m.id !== "legacy") ? modes.map((m) => `${m.nombre}: ${m.entrega ? "sí" : "no"}`).join(" · ") : offersAttendanceCertificate(event) ? "Se entregará" : "No se entregará"}</dd>
               </div>}
             </dl>}
-            {availability === "disponible" && <a className="button button-primary" href="#inscripcion">Reservar mi lugar <span aria-hidden="true">↓</span></a>}
-            {availability === "completo" && <a className="button button-primary" href="#inscripcion">Consultar mi inscripción <span aria-hidden="true">↓</span></a>}
+            {(program || availability === "disponible" || availability === "completo") && <div className="actions-row public-event-actions">
+              {availability === "disponible" && <a className="button button-primary" href="#inscripcion">Reservar mi lugar <span aria-hidden="true">↓</span></a>}
+              {availability === "completo" && <a className="button button-primary" href="#inscripcion">Consultar mi inscripción <span aria-hidden="true">↓</span></a>}
+              {program && <a className="button button-secondary" href="#programa">Ver programa completo <span aria-hidden="true">↓</span></a>}
+            </div>}
           </div>
           {speakers.length > 0 && (
             <section className="speaker-section" aria-labelledby="speakers-heading">
@@ -127,6 +133,7 @@ export default async function PublicEventPage({
           )}
         </div>
       </section>
+      {program && <div className="container program-section"><EventProgram program={program} /></div>}
       <section className="container registration-section" id="inscripcion">
         {modes.some((mode) => mode.codigo === "expositor") && <div id="presentaciones" className="panel form-stack presentation-callout"><h2>Presentación final de los trabajos</h2><p>Si ya te inscribiste como alumno expositor, podés entregar o reemplazar tu PDF o PowerPoint sin volver a inscribirte.</p>
           {modes.filter((mode) => mode.codigo === "expositor").map((mode) => <div key={mode.id}>

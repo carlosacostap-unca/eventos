@@ -1211,6 +1211,38 @@ td small {
   max-width: 100%;
 }
 
+.public-event-actions { margin-top: 1.5rem; justify-content: flex-start; flex-wrap: wrap; }
+.program-section { position: relative; margin-top: -2.5rem; margin-bottom: 2.5rem; }
+.program-section + .registration-section { margin-top: 0; }
+.event-program { scroll-margin-top: 1.5rem; }
+.program-header { margin-bottom: 1.75rem; }
+.program-header h2 { margin-bottom: .75rem; }
+.program-header > p:not(.eyebrow) { color: var(--ink-soft); }
+.program-segments { display: grid; gap: .75rem; }
+.program-time { white-space: nowrap; font-size: .85rem; font-weight: 750; font-variant-numeric: tabular-nums; }
+.program-activity { display: flex; flex-wrap: wrap; align-items: baseline; gap: .4rem 1.25rem; padding: 1rem; border-radius: 8px; background: #eaf4f3; color: var(--teal-dark); }
+.program-block { overflow: hidden; border: 1px solid var(--line); border-radius: 10px; }
+.program-block > summary { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem 1.5rem; padding: 1rem; background: var(--navy); color: white; cursor: pointer; }
+.program-block > summary::-webkit-details-marker { display: none; }
+.program-block > summary::after { content: "+"; margin-left: auto; font-size: 1.5rem; line-height: 1; }
+.program-block[open] > summary::after { content: "−"; }
+.program-block h3 { margin: 0; color: white; font-family: inherit; font-size: 1.1rem; }
+.program-block h3 span { display: block; margin-top: .25rem; color: #cbdde9; font-size: .8rem; font-weight: 400; }
+.program-talks { margin: 0; padding: 0; list-style: none; }
+.program-talk { display: grid; grid-template-columns: 7.5rem minmax(0, 1fr); align-items: baseline; gap: 1rem; padding: 1.1rem 1rem; }
+.program-talk + .program-talk { border-top: 1px solid var(--line); }
+.program-talk:nth-child(even) { background: #f4f7fa; }
+.program-talk > .program-time { color: var(--teal-dark); }
+.program-talk h4 { margin: 0 0 .5rem; font-size: .95rem; font-weight: 650; line-height: 1.5; overflow-wrap: anywhere; }
+.program-number { color: var(--ink-soft); }
+.program-speakers { margin: 0; color: var(--ink-soft); font-size: .85rem; line-height: 1.6; overflow-wrap: anywhere; }
+.program-speakers > span { font-weight: 650; }
+@media (max-width: 680px) {
+  .program-talk { grid-template-columns: minmax(0, 1fr); gap: .5rem; }
+  .program-block > summary { gap: .5rem 1rem; }
+  .program-header .button { white-space: normal; text-align: center; }
+}
+
 .auth-shell {
   display: grid;
   min-height: 100svh;
