@@ -2,11 +2,11 @@ import { ClientResponseError } from "pocketbase";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
-vi.mock("@/lib/services/modalities", () => ({ listModalities: async () => [] }));
 const mocks = vi.hoisted(() => ({
   getEvent: vi.fn(), registrations: vi.fn(), pdf: vi.fn(),
-  find: vi.fn(), create: vi.fn(), update: vi.fn(), audit: vi.fn(),
+  find: vi.fn(), create: vi.fn(), update: vi.fn(), audit: vi.fn(), modes: vi.fn(), version: vi.fn(),
 }));
+vi.mock("@/lib/services/modalities", () => ({ listModalities: mocks.modes, modalityVersion: mocks.version }));
 vi.mock("@/lib/services/events", () => ({ getEventById: mocks.getEvent }));
 vi.mock("@/lib/services/event-types", () => ({ getEventTypeById: vi.fn() }));
 vi.mock("@/lib/services/registrations", () => ({ listRegistrations: mocks.registrations }));
@@ -19,7 +19,8 @@ vi.mock("@/lib/pocketbase/client", () => ({
   }),
 }));
 
-import { generateCertificates } from "./certificates";
+import { generateCertificates, previewCertificate } from "./certificates";
+import { exhibitorDefinition } from "@/lib/domain/modalities";
 
 const event = { id: "event", certificado_asistencia: "si", textos_certificado: { participation: "Texto actualizado" } };
 const registration = { id: "student", acreditado: true, documento_normalizado: "123456" };
@@ -28,6 +29,7 @@ describe("emisión y regeneración de certificados", () => {
   beforeEach(() => {
     vi.resetAllMocks();
     mocks.getEvent.mockResolvedValue(event);
+    mocks.modes.mockResolvedValue([]);
     mocks.registrations.mockResolvedValue([registration, { id: "absent", acreditado: false }]);
     mocks.find.mockResolvedValue({ id: "existing", archivo: "anterior.pdf" });
     mocks.pdf.mockResolvedValue(new TextEncoder().encode("PDF actualizado"));
@@ -79,6 +81,16 @@ describe("emisión y regeneración de certificados", () => {
   it("rechaza la regeneración si el evento no entrega certificados", async () => {
     mocks.getEvent.mockResolvedValue({ ...event, certificado_asistencia: "no" });
     await expect(generateCertificates("event", "admin", { regenerate: true })).rejects.toMatchObject({ code: "DISABLED" });
+    expect(mocks.update).not.toHaveBeenCalled();
+  });
+
+  it("muestra solo los integrantes obligatorios en la vista previa de expositor", async () => {
+    mocks.modes.mockResolvedValue([{ id: "expositor", version_publicada: "version", textos_certificado: {} }]);
+    mocks.version.mockResolvedValue({ esquema: exhibitorDefinition });
+    await previewCertificate("event", "expositor");
+    const { members } = mocks.pdf.mock.calls[0][0];
+    expect(members.map((member: { role: string }) => member.role)).toEqual(["Alumno expositor", "Director"]);
+    expect(mocks.create).not.toHaveBeenCalled();
     expect(mocks.update).not.toHaveBeenCalled();
   });
 });
