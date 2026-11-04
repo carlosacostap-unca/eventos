@@ -44,14 +44,17 @@ export async function getParticipantResources(access: ParticipantAccess) {
     const event = registration.expand!.evento as unknown as EventRecord;
     if (registration.modalidad) {
       const certificates = await participantCertificates(pb, registration, event);
-      const materials = registration.acreditado ? await pb.collection("materiales_evento").getFullList<Material>({ filter: pb.filter("evento = {:eventId}", { eventId: registration.evento }), sort: "created", fields: "id,titulo,nombre_original,tamano" }) : [];
-      return { eventId: registration.evento, title: event.titulo, date: event.inicio, certificateId: undefined, offersCertificate: certificates.length > 0, certificates, materials, accredited: registration.acreditado };
+      const filter = pb.filter("evento = {:eventId}", { eventId: registration.evento });
+      const materials = registration.acreditado ? await pb.collection("materiales_evento").getFullList<Material>({ filter, sort: "created", fields: "id,titulo,nombre_original,tamano" }) : [];
+      const materialsRestricted = !registration.acreditado && certificates.length > 0 &&
+        (await pb.collection("materiales_evento").getList(1, 1, { filter, fields: "id", skipTotal: true })).items.length > 0;
+      return { eventId: registration.evento, title: event.titulo, date: event.inicio, certificateId: undefined, offersCertificate: certificates.length > 0, certificates, materials, materialsRestricted, accredited: registration.acreditado };
     }
     const [certificates, materials] = await Promise.all([
       pb.collection("certificados").getFullList({ filter: pb.filter("inscripcion = {:id} && evento = {:eventId}", { id: registration.id, eventId: registration.evento }), fields: "id" }),
       pb.collection("materiales_evento").getFullList<Material>({ filter: pb.filter("evento = {:eventId}", { eventId: registration.evento }), sort: "created", fields: "id,titulo,nombre_original,tamano" }),
     ]);
-    return { eventId: registration.evento, title: event.titulo, date: event.inicio, certificateId: certificates[0]?.id, offersCertificate: event.certificado_asistencia !== "no", certificates: [], materials, accredited: registration.acreditado };
+    return { eventId: registration.evento, title: event.titulo, date: event.inicio, certificateId: certificates[0]?.id, offersCertificate: event.certificado_asistencia !== "no", certificates: [], materials, materialsRestricted: false, accredited: registration.acreditado };
   }));
   const available = events.filter((event) => event.accredited || event.certificates.length > 0);
   if (!available.length) return null;
